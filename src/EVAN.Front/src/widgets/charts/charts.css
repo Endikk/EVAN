@@ -1,0 +1,103 @@
+/* ============================================================
+   Graphiques : entrée des barres, encre des valeurs, légendes en formes.
+   Les animations ne touchent que transform et opacity ; les animations réduites sont neutralisées globalement.
+   ============================================================ */
+
+/* Barres horizontales : chaque segment se remplit depuis la gauche, une fois, à son arrivée. Les séries empilées
+   suivent la première avec un léger décalage, pour qu'on lise « panne, puis réglage ».
+   `.arrivee` ne vit que le temps de cette entrée (useArrivee, charts.tsx) : Recharts recrée les rectangles à chaque
+   rendu, et l'animation rejouerait sinon au moindre survol. */
+.hbar.arrivee .recharts-bar-rectangle {
+  transform-box: fill-box;
+  transform-origin: 0 50%;
+  animation: barre-x 700ms var(--ease-out) backwards;
+}
+.hbar.arrivee .hbar-s1 .recharts-bar-rectangle {
+  animation-delay: 180ms;
+}
+.hbar.arrivee .hbar-s2 .recharts-bar-rectangle {
+  animation-delay: 300ms;
+}
+.hbar.arrivee .hbar-s3 .recharts-bar-rectangle {
+  animation-delay: 420ms;
+}
+
+/* Colonnes par jour : elles montent depuis l'axe. */
+.chart-colonnes.arrivee .recharts-bar-rectangle {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: barre-y 650ms var(--ease-out) backwards;
+}
+
+/* Les valeurs écrites arrivent une fois les barres posées. */
+.hbar.arrivee .recharts-label-list,
+.chart-colonnes.arrivee .recharts-label-list {
+  animation: valeurs 320ms var(--ease) 480ms backwards;
+}
+
+@keyframes barre-x {
+  from {
+    transform: scaleX(0);
+  }
+}
+@keyframes barre-y {
+  from {
+    transform: scaleY(0);
+  }
+}
+@keyframes valeurs {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Valeur écrite dans un segment : encre sombre sur les couleurs vives du thème nuit, claire sur les couleurs
+   plus soutenues du thème jour. Le contraste tient dans les deux cas. */
+.hbar-dans {
+  fill: var(--bg);
+}
+:root[data-theme='light'] .hbar-dans {
+  fill: var(--surface);
+}
+
+/* Hachures d'une série distinguée par un motif (réglage à côté d'une panne). */
+.hbar-hachure {
+  fill: var(--surface);
+  fill-opacity: 0.38;
+}
+
+/* Pastilles de légende en formes : trait, plage, carré, hachures, repère. */
+.chart-legend i.cl-trait {
+  width: 14px;
+  height: 3px;
+  border-radius: 2px;
+}
+/* Plage normale : gris calme, comme la bande qu'elle désigne (le normal ne prend pas de couleur). */
+.chart-legend i.cl-plage {
+  background: var(--idle-soft);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--idle) 60%, transparent);
+}
+.chart-legend i.cl-carre {
+  width: 9px;
+  height: 9px;
+  border-radius: 1px;
+  background: var(--crit);
+}
+.chart-legend i.cl-hachures {
+  background: repeating-linear-gradient(45deg, var(--c) 0 3px, color-mix(in srgb, var(--c) 45%, var(--surface)) 3px 5px);
+}
+.chart-legend i.cl-repere {
+  width: 2px;
+  height: 14px;
+  border-radius: 0;
+  background: repeating-linear-gradient(180deg, var(--text-2) 0 4px, transparent 4px 7px);
+}
+
+/* Carte des arrêts : une machine cliquable se désigne aussi au clavier. */
+.heatplan g[role='button'] {
+  outline: none;
+}
+.heatplan g[role='button']:focus-visible rect {
+  stroke: var(--accent-text);
+  stroke-width: 3px;
+}

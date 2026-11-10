@@ -1,0 +1,31 @@
+<Project>
+  <!--
+    Réglages communs à tous les projets .NET d'EVAN (src/, tests/, tools/).
+    Un nouveau projet n'a rien à répéter : cible, nullabilité, analyse, accès des tests aux membres internes.
+  -->
+  <PropertyGroup>
+    <!--
+      Cible .NET 10 (images Docker mcr.microsoft.com/dotnet/*:10.0). Avec un SDK 9 (MSBuild 17), on compile en net9.0
+      sans option ; forçable dans les deux sens : dotnet build -p:EvanTfm=net9.0
+    -->
+    <EvanTfm Condition="'$(EvanTfm)' == '' and $([MSBuild]::VersionLessThan('$(MSBuildVersion)', '18.0'))">net9.0</EvanTfm>
+    <EvanTfm Condition="'$(EvanTfm)' == ''">net10.0</EvanTfm>
+    <TargetFramework>$(EvanTfm)</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <!-- En CI (GitHub Actions pose CI=true), une dépendance à faille haute ou critique casse le build. -->
+    <WarningsAsErrors Condition="'$(CI)' == 'true'">$(WarningsAsErrors);NU1903;NU1904</WarningsAsErrors>
+
+    <!-- Données de référence partagées avec le front : catalogue, usine d'exemple, kit machines. -->
+    <EvanDataDir>$(MSBuildThisFileDirectory)data\</EvanDataDir>
+  </PropertyGroup>
+
+  <!-- Convention : EVAN.X est testé par EVAN.X.Tests, qui voit ses membres internes. -->
+  <ItemGroup Condition="'$(IsTestProject)' != 'true'">
+    <InternalsVisibleTo Include="$(AssemblyName).Tests" />
+  </ItemGroup>
+</Project>

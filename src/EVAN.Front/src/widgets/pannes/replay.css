@@ -1,0 +1,291 @@
+/* ============================================================
+   « Revoir la panne » : le récit en trois temps (avant, la panne, après). Une étape passée se remplit et le fil
+   qui la relie à la suivante se trace ; l'étape en cours pulse ; les suivantes attendent, estompées. Sous la courbe,
+   le curseur de lecture avance par translation, sans redessiner le graphique.
+   ============================================================ */
+
+/* Une seule colonne qui ne s'élargit jamais au-delà de l'écran, même si un bouton est long. La plage normale de la
+   courbe reste grise (var(--idle-soft), comme dans l'historique) : seuls les seuils d'alarme prennent la couleur. */
+.replay.rp {
+  grid-template-columns: minmax(0, 1fr);
+}
+.rp .rp-sous-titre {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+/* Noms propres au rejeu : .rp-titre et .rp-valeur sont ceux du repère (explain.css), dont la valeur fait 32 px. */
+.rp-cote-titre {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--text-2);
+}
+.rp-recit + .rp-cote-titre {
+  margin-top: 8px;
+}
+
+/* ---------- Les trois temps ---------- */
+.rp-recit {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+}
+.rp-phase {
+  margin-bottom: 16px;
+  transition: opacity 300ms var(--ease);
+}
+.rp-phase:not(.atteinte) .rp-phase-phrase,
+.rp-phase:not(.atteinte) h4 {
+  opacity: 0.7;
+}
+.rp-phase h4 {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text);
+}
+.rp-phase-phrase {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--text-3);
+}
+.rp-etapes {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+}
+.rp-etape {
+  position: relative;
+}
+/* Le fil entre deux étapes : gris, puis rempli de la couleur de l'étape quand la lecture l'a dépassée. */
+.rp-etape:not(:last-child)::before,
+.rp-etape:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 18px;
+  top: 32px;
+  bottom: -4px;
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 2px;
+  background: var(--border);
+}
+.rp-etape:not(:last-child)::after {
+  background: var(--c);
+  transform: scaleY(0);
+  transform-origin: top center;
+  transition: transform 420ms var(--ease-out);
+}
+.rp-etape.fait:not(:last-child)::after {
+  transform: scaleY(1);
+}
+.rp-etape button {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 8px 8px 4px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    opacity 300ms var(--ease),
+    background var(--dur) var(--ease);
+}
+.rp-etape button:hover {
+  background: var(--surface-2);
+}
+.rp-etape.avenir button {
+  opacity: 0.55;
+}
+.rp-etape.courant button {
+  background: var(--surface-2);
+}
+.rp-point {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin-left: 2px;
+  border-radius: 50%;
+  color: var(--c);
+  background: color-mix(in srgb, var(--c) 16%, var(--surface));
+  transition:
+    background 300ms var(--ease),
+    color 300ms var(--ease);
+}
+.rp-point svg {
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+}
+.rp-etape.fait .rp-point {
+  background: var(--c);
+  color: var(--surface);
+}
+.rp-etape.courant .rp-point::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 2px solid var(--c);
+  animation: rp-pouls 1.6s var(--ease-out) infinite;
+}
+@keyframes rp-pouls {
+  from {
+    transform: scale(0.85);
+    opacity: 0.9;
+  }
+  to {
+    transform: scale(1.45);
+    opacity: 0;
+  }
+}
+/* L'étape qui vient d'être atteinte s'annonce une fois. */
+.rp-etape.courant .rp-etape-texte {
+  animation: rp-arrive 480ms var(--ease-out);
+}
+@keyframes rp-arrive {
+  from {
+    opacity: 0.4;
+    transform: translateX(-6px);
+  }
+}
+.rp-etape-texte {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.rp-etape-texte b {
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--text);
+}
+.rp-etape-texte time {
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+
+/* ---------- Sans 3D ---------- */
+.rp-sans-3d {
+  position: absolute;
+  inset: 70px 16px auto;
+  margin: 0;
+  max-width: 420px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+
+/* ---------- Bandeau de l'étape en cours, sur la 3D ---------- */
+.rp-now-phase {
+  font-size: 11.5px;
+  font-weight: 650;
+  color: var(--text-2);
+}
+
+/* ---------- Mesures : le niveau dit en mot, pas seulement en couleur ---------- */
+.rp-mesure {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  flex: none;
+}
+.rp-mesure small {
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+.replay-value.niv-attention .rp-mesure small,
+.replay-value.niv-alarme .rp-mesure small {
+  color: var(--c);
+  font-weight: 650;
+}
+
+/* ---------- Courbe et curseur de lecture ---------- */
+.rp-courbe {
+  position: relative;
+}
+/* Le curseur couvre la zone tracée : mêmes marges que la courbe (axe vertical de 44 px, unité au-dessus). */
+.rp-curseur {
+  position: absolute;
+  left: 44px;
+  right: 12px;
+  top: 22px;
+  bottom: 24px;
+  pointer-events: none;
+}
+.rp-curseur i {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+.rp-curseur i::before,
+.rp-curseur i::after {
+  content: '';
+  position: absolute;
+  background: var(--text);
+}
+.rp-curseur i::before {
+  left: -1px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  border-radius: 2px;
+}
+/* Le rond en haut du curseur le distingue de la courbe et des traits des étapes. */
+.rp-curseur i::after {
+  left: -5px;
+  top: -4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--surface);
+}
+.rp-courbe-titre {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.rp .replay-controls {
+  flex-wrap: wrap;
+}
+.rp .replay-controls input[type='range'] {
+  flex: 1 1 160px;
+}
+.rp-quand,
+.rp-vitesse-label {
+  font-size: 12px;
+}
+.rp-quand {
+  min-width: 130px;
+}
+
+@media (max-width: 600px) {
+  .rp-compte-rendu {
+    width: 40px;
+    padding: 0;
+  }
+  .rp-compte-rendu span {
+    display: none;
+  }
+  .rp .replay-head {
+    padding: 8px 8px 8px 12px;
+    gap: 8px;
+  }
+  .rp .replay-head .chip,
+  .rp-vitesse-label {
+    display: none;
+  }
+}

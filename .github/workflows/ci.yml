@@ -1,0 +1,182 @@
+# CI d'EVAN : back, front et secrets en parallèle sur chaque PR et chaque push de main/dev.
+# Les images Docker ne se construisent que vers main, pour garder les minutes Actions, et ne sont publiées sur GHCR
+# qu'au push de main.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, dev]
+
+# Un nouveau push annule le run en cours sur la même branche.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  back:
+    name: Back (.NET)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+      - uses: actions/cache@v6
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('Directory.Packages.props') }}
+          restore-keys: nuget-${{ runner.os }}-
+      # Faille NuGet haute ou critique = erreur (Directory.Build.props, CI=true).
+      - run: dotnet build EVAN.slnx -c Release
+      # Le banc temps réel et l'évaluation de l'assistant restent sautés (EVAN_BANC, EVAN_EVAL non posés). Les tests
+      # TimescaleDB tournent : Testcontainers lance la base sur le Docker du runner, et CI=true leur interdit de s'ignorer.
+      - run: dotnet test EVAN.slnx -c Release --no-build
+
+  front:
+    name: Front (React)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: src/EVAN.Front
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: src/EVAN.Front/package-lock.json
+      - run: npm ci
+      # tsc --noEmit puis vite build.
+      - run: npm run build
+      - run: npm test
+      - run: npm audit --omit=dev --audit-level=high
+
+  # Bout en bout : la pile Docker complète (broker, base, API, simulateur, front) et Chromium piloté par Playwright.
+  e2e:
+    name: Bout en bout (Playwright)
+    needs: [back, front]
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: tests/e2e
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: tests/e2e/package-lock.json
+      # Sans .env : mot de passe de base par défaut, assistant indisponible (pas de clé), ce que les scénarios supposent.
+      - name: Pile Docker
+        working-directory: .
+        run: docker compose up -d --build --wait --wait-timeout 300
+        # Compose récent construit par buildx bake, qui demande sinon une autorisation de lecture du dépôt sans terminal.
+        env:
+          BUILDX_BAKE_ENTITLEMENTS_FS: "0"
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm test
+        env:
+          EVAN_URL: http://localhost:8088
+      - name: Journaux de la pile
+        if: failure()
+        working-directory: .
+        run: docker compose logs --no-color --timestamps
+      # Rapport HTML, avec traces et captures des tests en échec.
+      - uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          name: rapport-playwright
+          path: tests/e2e/playwright-report/
+          retention-days: 7
+      - name: Arrêt de la pile
+        if: always()
+        working-directory: .
+        run: docker compose down -v
+
+  secrets:
+    name: Secrets
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # Sur une PR, gitleaks-action lit la liste de ses commits par l'API : sans pull-requests: read, elle reçoit 403.
+    # Des permissions de job remplacent celles du workflow, d'où contents: read répété.
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e  # v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Une image par entrée de la matrice, construites en parallèle. Sur une PR vers main : build seul, pour vérifier
+  # que les images se construisent. Au push de main : publication sur ghcr.io/endikk, étiquetée par SHA court et latest.
+  docker:
+    name: Image ${{ matrix.image }}
+    needs: [back, front]
+    if: github.ref == 'refs/heads/main' || github.base_ref == 'main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Seul job à écrire dans le registre ; contents: read pour le checkout (les permissions de job remplacent celles du
+    # workflow).
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      # Une image en échec n'annule pas la construction des autres.
+      fail-fast: false
+      matrix:
+        include:
+          - image: evan-api
+            dockerfile: infra/docker/dotnet.Dockerfile
+            arguments: PROJECT=EVAN.Api
+          - image: evan-simulator
+            dockerfile: infra/docker/dotnet.Dockerfile
+            arguments: PROJECT=EVAN.Simulator
+          - image: evan-gateway
+            dockerfile: infra/docker/dotnet.Dockerfile
+            arguments: PROJECT=EVAN.Gateway
+          - image: evan-web
+            dockerfile: infra/docker/front.Dockerfile
+    env:
+      # GHCR veut un nom en minuscules : le propriétaire du dépôt est écrit en dur.
+      REGISTRE: ghcr.io/endikk
+      PUBLIER: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069  # v4.4.1
+      - if: env.PUBLIER == 'true'
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f  # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: version
+        run: echo "sha=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+      # Contexte = racine du dépôt, comme dans docker-compose.yml : BuildKit applique .dockerignore, ou
+      # dotnet.Dockerfile.dockerignore pour les images .NET.
+      # Le cache est lu partout mais écrit seulement depuis main : une PR s'en sert sans remplir la place de cache du
+      # dépôt, partagée avec les caches NuGet et npm. Les montages de cache des Dockerfiles (NuGet, npm) n'y entrent pas.
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc  # v7.4.0
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          build-args: ${{ matrix.arguments }}
+          push: ${{ env.PUBLIER == 'true' }}
+          tags: |
+            ${{ env.REGISTRE }}/${{ matrix.image }}:${{ steps.version.outputs.sha }}
+            ${{ env.REGISTRE }}/${{ matrix.image }}:latest
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: ${{ env.PUBLIER == 'true' && format('type=gha,mode=max,scope={0}', matrix.image) || '' }}

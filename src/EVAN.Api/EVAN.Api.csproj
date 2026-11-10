@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <!-- Présentation : API REST, hub SignalR, diffusion temps réel, assistant, serveur MCP ; racine de composition du back. -->
+  <PropertyGroup>
+    <!--
+      Ramasse-miettes « station de travail » (concurrent) au lieu du mode serveur d'ASP.NET Core : le tas managé de
+      l'API tient en quelques Mo. Mesuré sur la pile Docker (14 cœurs visibles), même débit sous charge, 30 % de CPU et
+      24 Mo de mémoire en moins ; au repos, mémoire identique.
+    -->
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Traces et métriques OpenTelemetry, exportées en OTLP seulement si OTEL_EXPORTER_OTLP_ENDPOINT est posée. -->
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Http" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" />
+    <PackageReference Include="Npgsql.OpenTelemetry" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\EVAN.Application\EVAN.Application.csproj" />
+    <ProjectReference Include="..\EVAN.Infrastructure\EVAN.Infrastructure.csproj" />
+    <ProjectReference Include="..\EVAN.Mcp\EVAN.Mcp.csproj" />
+  </ItemGroup>
+</Project>

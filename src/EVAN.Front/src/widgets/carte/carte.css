@@ -1,0 +1,91 @@
+/* ============================================================
+   Carte satellite (étape 1) : ce qui se pose sur la photo.
+   Le bâtiment retenu et ses cotes sont à la braise de la charte (--map-line) ; les bâtiments proposés restent ambre.
+   Préfixe .carte-satellite : ces règles passent devant celles d'app.css sans les toucher.
+   ============================================================ */
+
+/* La photo satellite ne change pas avec le thème : ce qui s'y pose garde les mêmes couleurs de jour comme de nuit.
+   Elles sont nommées une fois ici, pour ne pas les répéter. */
+.carte-satellite {
+  --carte-blanc: #fff;
+  --carte-encre: #1a0b03;
+  --carte-fond-cote: rgba(8, 10, 16, 0.84);
+}
+
+/* Cotes des côtés : chiffre blanc sur fond nuit (lisible sur un toit clair comme sur l'herbe), filet braise. */
+.carte-satellite .edge-label {
+  background: var(--carte-fond-cote);
+  color: var(--carte-blanc);
+  border: 1px solid color-mix(in srgb, var(--map-line) 75%, transparent);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+}
+
+/* Surface : pastille braise, texte encre (le blanc sur cet orange n'atteint pas le contraste AA). */
+.carte-satellite .area-label {
+  color: var(--carte-encre);
+  background: var(--map-line);
+}
+.carte-satellite .area-label small {
+  opacity: 0.8;
+}
+
+/* Bâtiment qui vient d'être relevé : sa surface apparaît une fois le contour tracé sur la photo. */
+.carte-satellite .area-label.neuf {
+  animation: carte-surface 460ms var(--ease-out) 1.25s backwards;
+}
+@keyframes carte-surface {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+}
+
+/* Point de l'adresse : blanc cerclé d'encre, pour ne pas le confondre avec une panne (rose) ni avec le bâtiment. */
+.carte-satellite .addr-pin i {
+  background: var(--carte-blanc);
+  border-color: var(--carte-encre);
+}
+
+/* Coin du contour : cible tactile plus grande au doigt, déjà prévue par app.css ; ici, un focus visible. */
+.carte-satellite .vx:focus-visible {
+  outline: 2px solid var(--carte-blanc);
+  outline-offset: 2px;
+}
+
+/* Lettre d'un bâtiment déjà retenu (une coche) : brun profond sur la braise, plutôt que le bleu-noir d'app.css. */
+.cand-letter.ok,
+.cand-item[aria-pressed='true'] .cand-letter {
+  color: var(--accent-deep);
+}
+
+/* Désignée depuis « Comment lire cet écran » : la carte occupe toute la scène, le halo se dessine à l'intérieur. */
+.carte-satellite.guide-spot {
+  box-shadow: none;
+  animation: none;
+}
+.carte-satellite.guide-spot::after {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  z-index: 3;
+  border-radius: var(--r-md);
+  border: 2px solid var(--accent-2);
+  pointer-events: none;
+  animation: carte-spot 2.4s var(--ease-out) both;
+}
+@keyframes carte-spot {
+  0% {
+    opacity: 0;
+    transform: scale(0.985);
+  }
+  18% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}

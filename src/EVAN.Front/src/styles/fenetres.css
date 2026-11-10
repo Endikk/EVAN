@@ -1,0 +1,338 @@
+/* Fenêtres, poignées de rotation, barre du haut étroite, légende des barres, carte des arrêts. */
+
+/* Fenêtre d'accès */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  /* Voile sans flou : la scène 3D peut continuer de tourner dessous sans recalculer un flou plein écran. */
+  background: var(--scrim);
+  animation: fadein 200ms var(--ease);
+}
+.modal {
+  position: relative;
+  width: min(520px, 100%);
+  padding: 24px;
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-3);
+  animation: rise3 260ms var(--ease);
+}
+.modal h2 {
+  margin: 12px 0 8px;
+  font-size: 20px;
+}
+.modal p {
+  margin: 0;
+}
+.modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+.modal-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-md);
+  display: grid;
+  place-items: center;
+  color: var(--warn);
+  background: var(--warn-soft);
+}
+.modal-icon svg {
+  width: var(--icon-lg);
+  height: var(--icon-lg);
+}
+.modal-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+.modal-steps span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: var(--r-sm);
+  font-size: 12.5px;
+  background: var(--surface-2);
+  color: var(--text-2);
+}
+.modal-steps span.on {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-weight: 650;
+}
+
+/* Accès à la configuration : ce qu'on va faire (les cinq étapes, celle où l'on arrive), pourquoi c'est protégé. */
+.modal.acces {
+  width: min(560px, 100%);
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+}
+.acces-texte {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-2);
+}
+.acces-texte b {
+  color: var(--text);
+  font-weight: 620;
+  white-space: nowrap;
+}
+.acces-etapes {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+.acces-etapes li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border-radius: var(--r-md);
+  border: 1px solid transparent;
+  animation: entree 360ms var(--ease-out) backwards;
+  animation-delay: calc(120ms + var(--i, 0) * 45ms);
+}
+.acces-etapes li.ici {
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.acces-num {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--text-3);
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+}
+.acces-num svg {
+  width: var(--icon);
+  height: var(--icon);
+}
+.acces-etapes li.ici .acces-num {
+  color: var(--accent-contrast);
+  background: var(--accent);
+  border-color: transparent;
+}
+.acces-ligne {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+.acces-ligne b {
+  font-size: 13.5px;
+  font-weight: 620;
+}
+.acces-ligne span {
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+.acces-ici {
+  flex: none;
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--accent-text);
+}
+.acces-pourquoi {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 12px 16px;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+.acces-pourquoi > svg {
+  flex: none;
+  width: var(--icon-lg);
+  height: var(--icon-lg);
+  margin-top: 1px;
+  color: var(--ok);
+}
+.acces-pourquoi b {
+  color: var(--text);
+  font-weight: 620;
+}
+.acces-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+@media (max-width: 600px) {
+  .modal.acces {
+    padding: 24px 16px;
+  }
+  .acces-ici {
+    display: none;
+  }
+  /* La fenêtre défile sur téléphone : les deux choix restent au bas de l'écran. */
+  .acces-actions {
+    position: sticky;
+    bottom: -24px;
+    margin: 16px -16px -24px;
+    padding: 12px 16px 16px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+  }
+  .acces-actions .btn {
+    flex: 1 1 100%;
+  }
+}
+@keyframes fadein {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes rise3 {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+}
+
+/* Poignées de rotation des machines */
+.rot-handle {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--surface);
+  color: var(--accent-text);
+  border: 2px solid var(--accent);
+  box-shadow: var(--shadow-2);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  transition: transform 120ms var(--ease);
+}
+.rot-handle:hover {
+  transform: scale(1.12);
+}
+.rot-handle:active {
+  cursor: grabbing;
+}
+.rot-handle svg {
+  width: var(--icon);
+  height: var(--icon);
+}
+.rot-angle {
+  font: 700 12px/1 var(--font);
+  font-variant-numeric: tabular-nums;
+  padding: 4px 8px;
+  border-radius: var(--r-sm);
+  background: var(--accent);
+  color: var(--accent-contrast);
+  white-space: nowrap;
+  pointer-events: none;
+}
+@media (max-width: 1500px) {
+  .topbar .hide-lg {
+    display: none;
+  }
+}
+/* Barre du haut : libellés des actions jusqu'à 1200 px (portable 1280 compris), icônes seules en dessous. */
+@media (max-width: 1200px) {
+  .topbar .hide-ml {
+    display: none;
+  }
+}
+
+/* Légende explicite au-dessus des barres empilées */
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 4px 0 8px;
+  font-size: 12px;
+  color: var(--text-2);
+}
+.chart-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.chart-legend i {
+  width: 12px;
+  height: 12px;
+  border-radius: var(--r-xs);
+}
+.chart-legend b {
+  color: var(--text);
+  font-weight: 650;
+}
+
+/* Carte des arrêts */
+/* Carte des arrêts : remplit toute la hauteur de sa carte (à côté du graphique), ou une hauteur fixe seule sur sa ligne. */
+.map-card {
+  display: flex;
+  flex-direction: column;
+}
+.heatplan {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.heatplan-box {
+  position: relative;
+  flex: 1;
+  min-height: 340px;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+}
+.heatplan-box svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+/* Seule sur sa ligne : la carte prend la proportion du site, sans bande vide autour. */
+@media (max-width: 900px) {
+  .heatplan-box {
+    flex: none;
+    min-height: 0;
+    aspect-ratio: var(--plan-ar, 1);
+    max-height: 72vh;
+    width: 100%;
+  }
+}
+.hp-building {
+  fill: var(--surface-3);
+  stroke: var(--text-2);
+}
+.heat-legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 20px;
+  font-size: 12px;
+  color: var(--text-2);
+}
+.heat-legend i {
+  flex: 1;
+  max-width: 180px;
+  height: 8px;
+  border-radius: var(--r-xs);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--crit) 10%, var(--surface)), var(--crit));
+}

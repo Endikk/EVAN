@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Présentation, sur un serveur de test : la garde de l'assistant et du serveur MCP (accès, origine, bornes, débit, coût),
+    les routes d'écriture et le hub (passerelle et usine visées, bornes, cohérence d'usine).
+  -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\EVAN.Api\EVAN.Api.csproj" />
+  </ItemGroup>
+</Project>

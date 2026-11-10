@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Cas d'usage (supervision temps réel, test de liaison, exploitation, assistant) et ports implémentés par
+    l'infrastructure et l'API. Le client de modèle de l'assistant est l'abstraction IChatClient : aucun fournisseur ici.
+  -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.AI.Abstractions" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\EVAN.Core\EVAN.Core.csproj" />
+  </ItemGroup>
+</Project>

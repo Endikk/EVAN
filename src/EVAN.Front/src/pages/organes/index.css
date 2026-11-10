@@ -1,0 +1,732 @@
+/* ============================================================
+   Étape 4 · Organes : fiche du modèle en chiffres, organes en liste compacte, bande des seuils, coche « vérifiée ».
+   ============================================================ */
+
+.og-compte {
+  margin-left: 4px;
+  white-space: nowrap;
+}
+.ecran-organes .og-texte {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+.ecran-organes .og-texte b {
+  color: var(--text);
+  font-weight: 620;
+}
+
+/* ---------- Choix de la machine ---------- */
+.og-choix {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+.og-choix-fleches {
+  display: flex;
+  gap: 4px;
+}
+.og-choix-fleches .btn {
+  --h: 40px;
+}
+/* Au doigt, la liste de choix passe à 44 px (ui/select.css) : les flèches et les champs voisins la suivent. */
+@media (pointer: coarse) {
+  .og-choix-fleches .btn {
+    --h: var(--touch);
+  }
+  .og-import-ligne .input {
+    height: var(--touch);
+  }
+}
+
+/* ---------- Fiche du modèle ---------- */
+.og-fiche {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+}
+.og-fiche-tete {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.og-fiche-sur {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-text);
+}
+.og-fiche h3 {
+  margin: 4px 0 0;
+  font-size: 16px;
+  line-height: 1.3;
+}
+.og-fiche-source {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+}
+.og-fiche-chiffres {
+  padding-block: 8px;
+}
+/* Trois chiffres sur une ligne dans la largeur du panneau : gouttières de 12 px. */
+.og-fiche-chiffres .cs-item {
+  padding-inline: 12px;
+}
+.og-fiche-chiffres .cs-item:first-child {
+  padding-left: 4px;
+}
+.ecran-organes .og-procede {
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: var(--text);
+}
+.og-carac {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  margin: 0 0 8px;
+  padding: 8px 12px;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+}
+.og-carac dt {
+  font-size: 12px;
+  color: var(--text-3);
+}
+.og-carac dd {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text);
+}
+.og-a-verifier {
+  display: flex;
+  gap: 8px;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+.og-a-verifier svg {
+  flex: none;
+  width: var(--icon);
+  height: var(--icon);
+  margin-top: 2px;
+  color: var(--warn);
+}
+.og-a-verifier b {
+  color: var(--text);
+  font-weight: 620;
+}
+
+/* ---------- Machine importée ---------- */
+.og-import-diag {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+.og-import-ligne {
+  display: flex;
+  gap: 8px;
+}
+.og-import-type {
+  flex: none;
+  width: 132px;
+}
+.og-import-unite {
+  flex: none;
+  width: 90px;
+}
+
+/* ---------- Organes ---------- */
+.og-legende {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: var(--text-3);
+}
+.og-legende span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.og-pastille {
+  display: inline-block;
+  width: 18px;
+  height: 8px;
+  border-radius: var(--r-xs);
+}
+.og-pastille-curseur {
+  display: inline-block;
+  width: 3px;
+  height: 12px;
+  border-radius: 2px;
+  background: var(--text);
+}
+.og-cartes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.og-carte {
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  transition: border-color var(--dur) var(--ease);
+}
+.og-carte.ouvert {
+  background: color-mix(in srgb, var(--surface-2) 55%, var(--surface));
+}
+.og-carte.actif {
+  border-color: var(--accent-text);
+}
+.og-carte-tete {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 8px 8px 4px;
+}
+.og-carte-bouton {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 4px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.og-chevron {
+  flex: none;
+  width: var(--icon);
+  height: var(--icon);
+  color: var(--text-3);
+  transition: transform 260ms var(--ease-out);
+}
+.og-carte.ouvert .og-chevron {
+  transform: rotate(90deg);
+}
+.og-numero {
+  flex: none;
+  min-width: 30px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-size: 11.5px;
+  font-weight: 700;
+  text-align: center;
+}
+.og-carte-titre {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.og-carte-titre b {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 640;
+  line-height: 1.3;
+}
+/* Un point par mesure : gris quand c'est normal, en couleur seulement quand ça sort de la plage. */
+.og-points {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px;
+  flex: none;
+  max-width: 52px;
+  margin-left: auto;
+}
+.og-points i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--text-3) 55%, transparent);
+}
+.og-points .og-point-attention {
+  background: var(--warn);
+}
+.og-points .og-point-alarme {
+  background: var(--crit);
+}
+.og-points .og-point-vide {
+  background: none;
+  box-shadow: inset 0 0 0 1.2px var(--border-strong);
+}
+/* La rangée de chiffres d'un organe déplié : plus petite que celle de la fiche. */
+.og-organe-chiffres {
+  padding: 8px 0;
+}
+.og-organe-chiffres .cs-item {
+  padding: 4px 12px 4px 8px;
+}
+.og-organe-chiffres .cs-item:first-child {
+  padding-left: 4px;
+}
+.og-organe-chiffres .cs-item dd {
+  font-size: 15px;
+}
+.og-carte-alerte {
+  display: inline-flex;
+}
+.og-viser {
+  flex: none;
+}
+.og-viser svg {
+  color: var(--accent-text);
+}
+.og-carte-corps {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 16px 12px 42px;
+  animation: entree 360ms var(--ease-out) both;
+}
+.og-mesures {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.og-mesure-tete {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.og-mesure-nom {
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 560;
+  color: var(--text);
+}
+.og-etat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  font-size: 12px;
+  font-weight: 620;
+  color: var(--text-3);
+}
+.og-etat .ton-glyph {
+  width: 14px;
+  height: 14px;
+}
+.og-etat .ton-glyph svg {
+  width: 11px;
+  height: 11px;
+}
+/* Normal reste calme : le mot en gris, seul le petit rond est vert. */
+.og-etat.ton-ok {
+  color: var(--text-3);
+}
+.og-etat.ton-warn {
+  color: var(--warn);
+}
+.og-etat.ton-crit {
+  color: var(--crit);
+}
+.og-sans-seuil {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+/* La bande : trois plages, chacune avec sa couleur et son motif (l'alarme est hachurée), et le repère du moment. */
+.og-bande {
+  position: relative;
+  height: 10px;
+  margin: 4px 0;
+}
+.og-bande-fond {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--r-xs);
+  overflow: hidden;
+  background: var(--surface-3);
+}
+.og-seg,
+.og-pastille {
+  background: var(--surface-3);
+}
+.og-seg {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  box-shadow: inset 1px 0 0 var(--surface);
+}
+.og-seg:first-child {
+  box-shadow: none;
+}
+.og-normal {
+  background: color-mix(in srgb, var(--ok) 42%, transparent);
+}
+.og-attention {
+  background: color-mix(in srgb, var(--warn) 62%, transparent);
+}
+.og-alarme {
+  background: repeating-linear-gradient(135deg, var(--crit) 0 3px, color-mix(in srgb, var(--crit) 30%, transparent) 3px 6px);
+}
+.og-curseur-piste {
+  position: absolute;
+  inset: -4px 0;
+  pointer-events: none;
+}
+/* Le repère occupe toute la largeur et se déplace d'une fraction de lui-même : la valeur glisse sans recalcul de mise en page. */
+.og-curseur {
+  position: absolute;
+  inset: 0;
+  transition: transform 700ms var(--ease-out);
+}
+.og-curseur::before {
+  content: '';
+  position: absolute;
+  left: -1.5px;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--text);
+  box-shadow: 0 0 0 2px var(--surface);
+}
+.og-bande.maj .og-bande-fond {
+  animation: og-maj 900ms var(--ease-out);
+}
+@keyframes og-maj {
+  0% {
+    opacity: 0.25;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+
+/* ---------- Chiffres et réglage des seuils ---------- */
+.og-chiffres-point {
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+}
+.og-chiffres-point:first-child {
+  border-top: 0;
+  padding-top: 4px;
+}
+.og-chiffres-nom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 8px;
+  margin: 0;
+  font-size: 13px;
+}
+.og-chiffres-nom span {
+  font-size: 12px;
+}
+.og-chiffres-lecture {
+  margin: 4px 0 8px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--text-2);
+}
+.og-seuils-champs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.og-seuils-champs .field > span {
+  font-size: 11.5px;
+  font-weight: 560;
+}
+.og-repere-3d {
+  font-size: 11.5px;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Coche « vérifiée » ---------- */
+.og-verifier {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: var(--r-lg);
+  border: 1px dashed var(--border-strong);
+  transition:
+    border-color 400ms var(--ease),
+    background 400ms var(--ease);
+}
+.og-verifier.fait {
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--ok) 45%, var(--border));
+  background: var(--ok-soft);
+}
+.og-verifier-ligne {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+}
+.og-verifier-ligne .infotip {
+  flex: none;
+  margin-top: 0;
+}
+.og-verifier-coche {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  cursor: pointer;
+  border-radius: var(--r-sm);
+}
+.og-verifier-coche:has(input:focus-visible) {
+  box-shadow: var(--ring);
+}
+.og-verifier-coche b {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 620;
+  line-height: 1.35;
+}
+.og-coche {
+  flex: none;
+}
+.og-coche-cadre {
+  fill: var(--surface);
+  stroke: var(--border-strong);
+  stroke-width: 1.6;
+  transition:
+    fill 300ms var(--ease),
+    stroke 300ms var(--ease);
+}
+.og-coche-trait {
+  fill: none;
+  stroke: var(--bg);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 16;
+  stroke-dashoffset: 16;
+  transition: stroke-dashoffset 380ms var(--ease-out) 120ms;
+}
+.og-verifier.fait .og-coche-cadre {
+  fill: var(--ok);
+  stroke: var(--ok);
+}
+.og-verifier.fait .og-coche-trait {
+  stroke-dashoffset: 0;
+}
+.og-suivante {
+  align-self: flex-start;
+  animation: entree 380ms var(--ease-out) both;
+}
+.og-toutes {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ok);
+}
+
+/* ---------- Aucune machine ---------- */
+.og-vide {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 16px;
+}
+.og-vide-titre {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 14.5px;
+  font-weight: 620;
+}
+
+/* ---------- Schémas du guide ---------- */
+.og-schema-organes {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.og-so-organe rect {
+  fill: var(--surface);
+  stroke: var(--border-strong);
+}
+.og-so-num {
+  fill: var(--accent-text);
+  font: 700 10px var(--mono);
+}
+.og-so-nom {
+  fill: var(--text-2);
+  font: 560 11px var(--font);
+}
+.og-so-bande {
+  stroke: var(--text-3);
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+  animation: og-defile 1.2s linear infinite;
+}
+@keyframes og-defile {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+.og-so-point line {
+  stroke: var(--accent-2);
+  stroke-width: 1.2;
+}
+.og-so-point circle {
+  fill: var(--accent-2);
+}
+.og-so-point .og-so-onde {
+  fill: none;
+  stroke: var(--accent-2);
+  stroke-width: 1.5;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: og-onde 1.8s var(--ease-out) infinite;
+}
+@keyframes og-onde {
+  from {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(3);
+  }
+}
+.og-so-point rect {
+  fill: var(--accent-soft);
+  stroke: var(--accent-2);
+}
+.og-so-point text {
+  fill: var(--text);
+  font: 600 10.5px var(--font);
+}
+
+.og-schema-bande {
+  padding: 8px 4px 0;
+}
+.og-sb-curseur {
+  animation: og-sb-curseur 7s var(--ease) infinite;
+}
+@keyframes og-sb-curseur {
+  0%,
+  26% {
+    transform: translateX(45%);
+  }
+  34%,
+  58% {
+    transform: translateX(76%);
+  }
+  66%,
+  90% {
+    transform: translateX(93%);
+  }
+  100% {
+    transform: translateX(45%);
+  }
+}
+.og-sb-mots {
+  position: relative;
+  height: 20px;
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  font-weight: 620;
+}
+.og-sb-mot {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  animation: 7s var(--ease) infinite;
+}
+.og-sb-mot.ton-ok {
+  color: var(--ok);
+}
+.og-sb-mot.ton-warn {
+  color: var(--warn);
+}
+.og-sb-mot.ton-crit {
+  color: var(--crit);
+}
+.og-sb-normal {
+  animation-name: og-sb-normal;
+}
+.og-sb-attention {
+  animation-name: og-sb-attention;
+}
+.og-sb-alarme {
+  animation-name: og-sb-alarme;
+}
+@keyframes og-sb-normal {
+  0%,
+  28% {
+    opacity: 1;
+  }
+  32%,
+  94% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes og-sb-attention {
+  0%,
+  30% {
+    opacity: 0;
+  }
+  34%,
+  60% {
+    opacity: 1;
+  }
+  64%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes og-sb-alarme {
+  0%,
+  62% {
+    opacity: 0;
+  }
+  66%,
+  92% {
+    opacity: 1;
+  }
+  96%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (max-width: 420px) {
+  .og-carte-corps {
+    padding-left: 16px;
+  }
+}

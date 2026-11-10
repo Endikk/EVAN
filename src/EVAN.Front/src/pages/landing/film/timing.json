@@ -1,0 +1,76 @@
+{
+  "description": "Film d'ouverture de l'accueil, version 9 : un travelling le long de la presse que la lumière d'EVAN balaie poste après poste, jusqu'au dernier rouleau, puis la caméra recule et la page se pose. Images à 60 i/s, grille à 120 BPM (30 images par temps). Muet.",
+  "version": 9,
+  "fps": 60,
+  "bpm": 120,
+  "imagesParTemps": 30,
+  "duree": 330,
+  "chute": 210,
+  "voix": [],
+  "reperes": {
+    "attenteTitre": 0,
+    "attente": 0,
+    "travelling": [
+      0,
+      210
+    ],
+    "scan": [
+      0,
+      210
+    ],
+    "elan": [
+      20,
+      210
+    ],
+    "impact": 210,
+    "onde": [
+      210,
+      246
+    ],
+    "recul": [
+      210,
+      300
+    ],
+    "nuage": [
+      225,
+      285
+    ],
+    "voile": [
+      220,
+      300
+    ],
+    "surtitre": [
+      235,
+      260
+    ],
+    "ligne1": [
+      235,
+      260
+    ],
+    "ligne2": [
+      255,
+      280
+    ],
+    "pointVol": [
+      255,
+      285
+    ],
+    "carte": [
+      265,
+      295
+    ],
+    "phrase": [
+      270,
+      300
+    ],
+    "actions": [
+      275,
+      305
+    ],
+    "puces": [
+      280,
+      310
+    ],
+    "fin": 330
+  }
+}

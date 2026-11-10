@@ -1,0 +1,253 @@
+{
+  "description": "Cas de test communs du moteur de règles d'alarme (seuils, escalade, hystérésis, dérive, répétitif, automate), joués par src/EVAN.Front/src/sim/rules.test.ts et tests/EVAN.Core.Tests/RulesEngineTests.cs. « classement » donne le niveau attendu d'une valeur. Chaque cas part d'un moteur neuf, avec le point et l'organe ci-dessous sauf ce que le cas redéfinit. Les mesures arrivent toutes les secondes (t = 1000, 2000…) ; une série vaut depart + pente × i + amplitude × sin(pulsation × i) pour i = 0…n-1 ; « resoudre » clôt à la main l'alarme numérotée (1 = la première apparue) et prend aussi une seconde. « panne » et « dynamique » sont ce que le catalogue dit de l'organe et de la mesure ; « recentes », le nombre d'alarmes critiques du même code sur la machine dans les 8 h. « evenements » liste dans l'ordre tout ce que le moteur émet (raised, cleared, updated) ; seuls les champs écrits sont comparés, null voulant dire absent.",
+  "point": {
+    "id": "m1.o1.tension",
+    "machineId": "m1",
+    "organeId": "m1.o1",
+    "cle": "tension",
+    "libelle": "Tension de bande",
+    "type": "tension",
+    "unite": "N",
+    "nominal": 180,
+    "seuils": { "alarmeBas": 120, "attentionBas": 150, "attentionHaut": 212, "alarmeHaut": 235 }
+  },
+  "organe": {
+    "numero": 1,
+    "nom": "Dérouleur et guide-bande",
+    "methode": "Croiser la courbe de tension avec le diamètre : une tension qui décroche toujours au même diamètre désigne le frein ou le capteur, pas la matière.",
+    "alarme": { "code": "TB-101", "message": "Tension hors tolérance au dérouleur" }
+  },
+  "classement": [
+    { "v": 180, "niveau": "ok" },
+    { "v": 211.9, "niveau": "ok" },
+    { "v": 212, "niveau": "attention" },
+    { "v": 220, "niveau": "attention" },
+    { "v": 235, "niveau": "alarme" },
+    { "v": 240, "niveau": "alarme" },
+    { "v": 150.1, "niveau": "ok" },
+    { "v": 150, "niveau": "attention" },
+    { "v": 120, "niveau": "alarme" },
+    { "v": 110, "niveau": "alarme" },
+    { "v": 0.4, "seuils": { "alarmeHaut": 0.5 }, "niveau": "ok" },
+    { "v": 0.5, "seuils": { "alarmeHaut": 0.5 }, "niveau": "alarme" },
+    { "v": 1000000, "seuils": {}, "niveau": "ok" }
+  ],
+  "cas": [
+    {
+      "nom": "Attention puis escalade en critique, sans doublon pendant une oscillation",
+      "etapes": [{ "mesures": [180, 215, 240, 214, 241, 216, 238] }],
+      "niveaux": ["ok", "attention", "alarme", "attention", "alarme", "attention", "alarme"],
+      "evenements": [
+        {
+          "type": "raised", "alarme": 1, "gravite": "attention", "regle": "seuil", "statut": "active", "code": "TB-17",
+          "message": "Tension de bande proche de la limite",
+          "cause": "Croiser la courbe de tension avec le diamètre : une tension qui décroche toujours au même diamètre désigne le frein ou le capteur, pas la matière.",
+          "horodatage": 2000, "valeur": 215, "seuil": 212, "finLe": null, "repetitions": null
+        },
+        { "type": "cleared", "alarme": 1, "statut": "resolue", "finLe": 3000, "message": "Tension de bande proche de la limite (escaladée)" },
+        {
+          "type": "raised", "alarme": 2, "gravite": "critique", "regle": "seuil", "statut": "active", "code": "TB-17",
+          "message": "Tension de bande hors limite", "horodatage": 3000, "valeur": 240, "seuil": 235, "repetitions": null
+        }
+      ]
+    },
+    {
+      "nom": "Une alarme critique attend l'intervention, puis se clôt à la main",
+      "etapes": [{ "mesures": [240, 180, 180, 180, 180] }, { "resoudre": 1 }, { "mesures": [180, 240] }],
+      "niveaux": ["alarme", "ok", "ok", "ok", "ok", "ok", "alarme"],
+      "evenements": [
+        { "type": "raised", "alarme": 1, "gravite": "critique", "regle": "seuil", "horodatage": 1000, "valeur": 240, "seuil": 235 },
+        { "type": "cleared", "alarme": 1, "gravite": "critique", "statut": "resolue", "finLe": 6000, "message": "Tension de bande hors limite" },
+        { "type": "raised", "alarme": 2, "gravite": "critique", "regle": "seuil", "horodatage": 8000 }
+      ]
+    },
+    {
+      "nom": "Une attention se clôt seule après trois mesures de suite dans la plage",
+      "etapes": [{ "mesures": [215, 180, 180, 216, 180, 180, 180] }],
+      "niveaux": ["attention", "ok", "ok", "attention", "ok", "ok", "ok"],
+      "evenements": [
+        { "type": "raised", "alarme": 1, "gravite": "attention", "horodatage": 1000, "valeur": 215 },
+        { "type": "cleared", "alarme": 1, "gravite": "attention", "statut": "resolue", "finLe": 7000, "message": "Tension de bande proche de la limite" }
+      ]
+    },
+    {
+      "nom": "Sous le seuil bas, l'alarme retient le seuil bas franchi",
+      "etapes": [{ "mesures": [145, 110] }],
+      "niveaux": ["attention", "alarme"],
+      "evenements": [
+        { "type": "raised", "alarme": 1, "gravite": "attention", "valeur": 145, "seuil": 150 },
+        { "type": "cleared", "alarme": 1, "finLe": 2000 },
+        { "type": "raised", "alarme": 2, "gravite": "critique", "valeur": 110, "seuil": 120 }
+      ]
+    },
+    {
+      "nom": "Sans méthode connue pour l'organe, la cause invite à contrôler le capteur puis l'organe",
+      "organe": { "methode": null },
+      "etapes": [{ "mesures": [180, 215] }],
+      "niveaux": ["ok", "attention"],
+      "evenements": [
+        {
+          "type": "raised", "alarme": 1, "gravite": "attention", "regle": "seuil", "code": "TB-17",
+          "message": "Tension de bande proche de la limite", "cause": "Mesure hors plage : contrôler le capteur puis l’organe."
+        }
+      ]
+    },
+    {
+      "nom": "Troisième occurrence en 8 h marquée répétitive",
+      "recentes": 2,
+      "etapes": [{ "mesures": [240] }],
+      "evenements": [
+        {
+          "type": "raised", "alarme": 1, "gravite": "critique", "regle": "repetitif", "repetitions": 3,
+          "message": "Tension de bande hors limite · 3ᵉ fois en 8 h"
+        }
+      ]
+    },
+    {
+      "nom": "Deuxième occurrence en 8 h : pas encore répétitive",
+      "recentes": 1,
+      "etapes": [{ "mesures": [240] }],
+      "evenements": [{ "type": "raised", "alarme": 1, "gravite": "critique", "regle": "seuil", "repetitions": null, "message": "Tension de bande hors limite" }]
+    },
+    {
+      "nom": "Une attention n'est jamais comptée comme répétitive",
+      "recentes": 5,
+      "etapes": [{ "mesures": [215] }],
+      "evenements": [{ "type": "raised", "alarme": 1, "gravite": "attention", "regle": "seuil", "repetitions": null }]
+    },
+    {
+      "nom": "Signal discret de l'automate : alarme critique, règle automate",
+      "point": {
+        "id": "m1.o7.casse", "organeId": "m1.o7", "cle": "casse", "libelle": "Détection de casse du squelette", "type": "alarme",
+        "unite": "", "nominal": 0, "seuils": { "alarmeHaut": 0.5 }
+      },
+      "organe": { "numero": 7, "nom": "Échenillage", "alarme": { "code": "EM-01", "message": "Casse du squelette d’échenillage" } },
+      "panne": { "mesure": "tension_dechet", "cause": "Casse du squelette d'échenillage, rapprochée de la pression de découpe et de l'outil." },
+      "etapes": [{ "mesures": [0, 1, 1, 0, 0, 0] }],
+      "niveaux": ["ok", "alarme", "alarme", "ok", "ok", "ok"],
+      "evenements": [
+        {
+          "type": "raised", "alarme": 1, "gravite": "critique", "regle": "automate", "code": "AL-75",
+          "message": "Détection de casse du squelette hors limite", "horodatage": 2000, "valeur": 1, "seuil": 0.5
+        }
+      ]
+    },
+    {
+      "nom": "Un signal d'automate qui revient une troisième fois en 8 h devient répétitif",
+      "point": {
+        "id": "m1.o7.casse", "organeId": "m1.o7", "cle": "casse", "libelle": "Détection de casse du squelette", "type": "alarme",
+        "unite": "", "nominal": 0, "seuils": { "alarmeHaut": 0.5 }
+      },
+      "organe": { "numero": 7, "nom": "Échenillage" },
+      "recentes": 2,
+      "etapes": [{ "mesures": [1] }],
+      "evenements": [{ "type": "raised", "alarme": 1, "gravite": "critique", "regle": "repetitif", "repetitions": 3, "code": "AL-75" }]
+    },
+    {
+      "nom": "Mesure de la panne type : code, message et cause du catalogue",
+      "point": {
+        "id": "m1.o7.tension_dechet", "organeId": "m1.o7", "cle": "tension_dechet", "libelle": "Tension du déchet", "type": "tension",
+        "unite": "N", "nominal": 26, "seuils": { "alarmeBas": 10, "attentionBas": 18, "attentionHaut": 36, "alarmeHaut": 45 }
+      },
+      "organe": { "numero": 7, "nom": "Échenillage", "alarme": { "code": "EM-01", "message": "Casse du squelette d’échenillage" } },
+      "panne": { "mesure": "tension_dechet", "cause": "Casse du squelette d'échenillage, rapprochée de la pression de découpe et de l'outil." },
+      "etapes": [{ "mesures": [26, 3] }],
+      "niveaux": ["ok", "alarme"],
+      "evenements": [
+        {
+          "type": "raised", "alarme": 1, "gravite": "critique", "regle": "seuil", "code": "EM-01", "message": "Casse du squelette d’échenillage",
+          "cause": "Casse du squelette d'échenillage, rapprochée de la pression de découpe et de l'outil.", "horodatage": 2000, "valeur": 3, "seuil": 10
+        }
+      ]
+    },
+    {
+      "nom": "Dérive régulière annoncée avant le seuil, close quand la mesure franchit la limite",
+      "etapes": [{ "serie": { "n": 90, "depart": 200, "pente": -0.6, "amplitude": 0.3, "pulsation": 1 } }],
+      "evenements": [
+        {
+          "type": "raised", "alarme": 1, "gravite": "attention", "regle": "derive", "statut": "active", "code": "DR-TB-17",
+          "message": "Dérive : tension de bande atteindra 120 N dans ~1 min", "horodatage": 60000, "seuil": 120,
+          "cause": "Tendance régulière sur Dérouleur et guide-bande : intervenir avant le franchissement du seuil."
+        },
+        { "type": "updated", "alarme": 1, "regle": "derive", "statut": "active", "message": "Dérive : tension de bande atteindra 120 N dans ~1 min" },
+        { "type": "updated", "alarme": 1, "regle": "derive", "statut": "active", "message": "Dérive : tension de bande atteindra 120 N dans ~1 min" },
+        { "type": "raised", "alarme": 2, "gravite": "attention", "regle": "seuil", "code": "TB-17", "horodatage": 85000, "seuil": 150 },
+        { "type": "cleared", "alarme": 1, "regle": "derive", "statut": "resolue", "finLe": 85000 }
+      ]
+    },
+    {
+      "nom": "Dérive vers un seuil décimal : le nombre s'écrit à la française",
+      "point": {
+        "id": "m1.o1.jeu", "cle": "jeu", "libelle": "Jeu du palier", "type": "position", "unite": "mm", "nominal": 4,
+        "seuils": { "alarmeBas": 2.5, "attentionBas": 3.25, "attentionHaut": 4.8, "alarmeHaut": 5.375 }
+      },
+      "etapes": [{ "serie": { "n": 90, "depart": 4.5, "pente": -0.015, "amplitude": 0.0075, "pulsation": 1 } }],
+      "evenements": [
+        {
+          "type": "raised", "alarme": 1, "gravite": "attention", "regle": "derive", "code": "DR-EV-13",
+          "message": "Dérive : jeu du palier atteindra 2,5 mm dans ~1 min", "horodatage": 60000, "seuil": 2.5
+        },
+        { "type": "updated", "alarme": 1, "regle": "derive", "message": "Dérive : jeu du palier atteindra 2,5 mm dans ~1 min" },
+        { "type": "updated", "alarme": 1, "regle": "derive", "message": "Dérive : jeu du palier atteindra 2,5 mm dans ~1 min" },
+        { "type": "raised", "alarme": 2, "gravite": "attention", "regle": "seuil", "code": "EV-13", "horodatage": 85000, "seuil": 3.25 },
+        { "type": "cleared", "alarme": 1, "regle": "derive", "statut": "resolue", "finLe": 85000 }
+      ]
+    },
+    {
+      "nom": "Le bruit autour de la nominale n'est pas une dérive",
+      "etapes": [{ "serie": { "n": 90, "depart": 180, "pente": 0, "amplitude": 3, "pulsation": 1.7 } }],
+      "evenements": []
+    },
+    {
+      "nom": "Pas de dérive annoncée quand la machine ne produit pas",
+      "enService": false,
+      "etapes": [{ "serie": { "n": 90, "depart": 200, "pente": -0.6, "amplitude": 0.3, "pulsation": 1 } }],
+      "evenements": [{ "type": "raised", "alarme": 1, "gravite": "attention", "regle": "seuil", "code": "TB-17", "horodatage": 85000, "seuil": 150 }]
+    },
+    {
+      "nom": "Pas de dérive sur un consommable dont la pente est normale",
+      "dynamique": "decroit",
+      "etapes": [{ "serie": { "n": 90, "depart": 200, "pente": -0.6, "amplitude": 0.3, "pulsation": 1 } }],
+      "evenements": [{ "type": "raised", "alarme": 1, "gravite": "attention", "regle": "seuil", "code": "TB-17", "horodatage": 85000, "seuil": 150 }]
+    },
+    {
+      "nom": "Une dérive se referme quand la tendance disparaît",
+      "etapes": [
+        { "serie": { "n": 70, "depart": 200, "pente": -0.6 } },
+        { "serie": { "n": 90, "depart": 158, "pente": 0 } }
+      ],
+      "evenements": [
+        { "type": "raised", "alarme": 1, "regle": "derive", "horodatage": 60000, "valeur": 164.6, "seuil": 120, "message": "Dérive : tension de bande atteindra 120 N dans ~1 min" },
+        { "type": "updated", "alarme": 1, "valeur": 158, "message": "Dérive : tension de bande atteindra 120 N dans ~1 min" },
+        { "type": "updated", "alarme": 1, "valeur": 158, "message": "Dérive : tension de bande atteindra 120 N dans ~1 min" },
+        { "type": "updated", "alarme": 1, "valeur": 158, "message": "Dérive : tension de bande atteindra 120 N dans ~1 min" },
+        { "type": "updated", "alarme": 1, "valeur": 158, "message": "Dérive : tension de bande atteindra 120 N dans ~2 min" },
+        { "type": "updated", "alarme": 1, "valeur": 158, "message": "Dérive : tension de bande atteindra 120 N dans ~2 min" },
+        { "type": "cleared", "alarme": 1, "regle": "derive", "statut": "resolue", "finLe": 126000 }
+      ]
+    },
+    {
+      "nom": "Dérive de la mesure de la panne type : code et cause du catalogue",
+      "point": {
+        "id": "m1.o7.tension_dechet", "organeId": "m1.o7", "cle": "tension_dechet", "libelle": "Tension du déchet", "type": "tension",
+        "unite": "N", "nominal": 26, "seuils": { "alarmeBas": 10, "attentionBas": 18, "attentionHaut": 36, "alarmeHaut": 45 }
+      },
+      "organe": { "numero": 7, "nom": "Échenillage", "alarme": { "code": "EM-01", "message": "Casse du squelette d’échenillage" } },
+      "panne": { "mesure": "tension_dechet", "cause": "Casse du squelette d'échenillage, rapprochée de la pression de découpe et de l'outil." },
+      "etapes": [{ "serie": { "n": 90, "depart": 26, "pente": -0.1, "amplitude": 0.05, "pulsation": 1 } }],
+      "evenements": [
+        {
+          "type": "raised", "alarme": 1, "gravite": "attention", "regle": "derive", "code": "DR-EM-01",
+          "message": "Dérive : tension du déchet atteindra 10 N dans ~2 min",
+          "cause": "Casse du squelette d'échenillage, rapprochée de la pression de découpe et de l'outil.", "horodatage": 60000, "seuil": 10
+        },
+        { "type": "updated", "alarme": 1, "regle": "derive", "message": "Dérive : tension du déchet atteindra 10 N dans ~2 min" },
+        {
+          "type": "raised", "alarme": 2, "gravite": "attention", "regle": "seuil", "code": "EM-01", "message": "Casse du squelette d’échenillage",
+          "horodatage": 81000, "seuil": 18
+        },
+        { "type": "cleared", "alarme": 1, "regle": "derive", "statut": "resolue", "finLe": 81000 }
+      ]
+    }
+  ]
+}

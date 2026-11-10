@@ -1,0 +1,420 @@
+/* Composants partagés : boutons, segments, champs, puces et badges, états machine, surfaces. */
+
+/* ---------- Boutons ---------- */
+a.btn {
+  text-decoration: none;
+}
+.btn {
+  --h: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: var(--h);
+  min-width: var(--h);
+  padding: 0 16px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  font-weight: 560;
+  font-size: 13.5px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background var(--dur) var(--ease),
+    border-color var(--dur) var(--ease),
+    transform 120ms var(--ease),
+    box-shadow var(--dur) var(--ease);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn:hover {
+  background: var(--surface-3);
+  border-color: var(--border-strong);
+}
+.btn:active {
+  transform: translateY(1px) scale(0.99);
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.btn svg {
+  width: var(--icon);
+  height: var(--icon);
+  flex: none;
+}
+.btn.sm {
+  --h: 32px;
+  padding: 0 8px;
+  font-size: 12.5px;
+  border-radius: var(--r-sm);
+}
+.btn.lg {
+  --h: 48px;
+  padding: 0 24px;
+  font-size: 15px;
+  border-radius: var(--r-md);
+}
+.btn.icon {
+  padding: 0;
+}
+.btn.primary {
+  background: var(--accent);
+  border-color: transparent;
+  color: var(--accent-contrast);
+  border-radius: 999px;
+}
+.btn.primary:hover {
+  /* Plus sombre au survol : le texte blanc garde son contraste. */
+  background: color-mix(in srgb, var(--accent) 84%, var(--accent-deep));
+}
+.btn.primary:disabled:hover {
+  background: var(--accent);
+}
+.btn.danger {
+  background: var(--crit);
+  border-color: transparent;
+  color: var(--on-crit);
+}
+.btn.danger:hover {
+  background: color-mix(in srgb, var(--crit) 88%, var(--text));
+}
+.btn.danger-soft {
+  color: var(--crit);
+  background: var(--crit-soft);
+  border-color: color-mix(in srgb, var(--crit) 28%, transparent);
+}
+.btn.danger-soft:hover {
+  background: color-mix(in srgb, var(--crit) 18%, transparent);
+  border-color: color-mix(in srgb, var(--crit) 45%, transparent);
+}
+/* Panne d'exercice (simuler une panne) : reconnaissable à son pointillé cramoisi, sans crier plus fort que les
+   alarmes réelles. Le libellé reste dans la couleur du texte ; seule l'icône porte la couleur de la panne. */
+.btn.exercice {
+  background: transparent;
+  border: 1px dashed color-mix(in srgb, var(--crit) 55%, var(--border));
+}
+.btn.exercice svg {
+  color: var(--crit);
+}
+.btn.exercice:hover {
+  background: var(--crit-soft);
+  border-color: color-mix(in srgb, var(--crit) 70%, transparent);
+}
+.btn.ghost {
+  background: transparent;
+  border-color: transparent;
+}
+.btn.ghost:hover {
+  background: var(--surface-2);
+}
+.btn.subtle {
+  background: var(--surface-2);
+  border-color: transparent;
+}
+.btn.subtle:hover {
+  background: var(--surface-3);
+}
+.btn.active,
+.btn[aria-pressed='true'] {
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  color: var(--accent-text);
+}
+
+@media (pointer: coarse) {
+  .btn {
+    --h: var(--touch);
+  }
+  .btn.sm {
+    --h: 40px;
+  }
+}
+
+/* ---------- Segmented ---------- */
+.seg {
+  display: inline-flex;
+  padding: 4px;
+  gap: 4px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+.seg button {
+  height: 32px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  cursor: pointer;
+  font-weight: 560;
+  font-size: 13px;
+  color: var(--text-2);
+  transition: all var(--dur) var(--ease);
+}
+.seg button svg {
+  width: var(--icon);
+  height: var(--icon);
+}
+.seg button[aria-pressed='true'] {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-1);
+}
+@media (pointer: coarse) {
+  .seg button {
+    height: 40px;
+  }
+}
+
+/* ---------- Champs ---------- */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.field > span {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.input {
+  height: 40px;
+  width: 100%;
+  padding: 0 16px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  transition:
+    border-color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease);
+}
+.input:focus {
+  outline: none;
+  border-color: var(--accent-text);
+  box-shadow: var(--ring);
+}
+.input.mono {
+  font-family: var(--mono);
+  font-size: 13px;
+}
+
+input[type='range'] {
+  width: 100%;
+  accent-color: var(--accent-text);
+  height: 28px;
+}
+
+/* ---------- Puces et badges ---------- */
+/* Une puce dit une information de second rang : sans aplat, en gris. Les tons gardent leur couleur sur le texte et
+   l'icône seulement, le bord se teinte à peine. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 560;
+  background: transparent;
+  color: var(--text-3);
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+.chip svg {
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+}
+.chip.accent {
+  color: var(--accent-text);
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+}
+.chip.ok {
+  color: var(--ok);
+  border-color: color-mix(in srgb, var(--ok) 35%, var(--border));
+}
+.chip.warn {
+  color: var(--warn);
+  border-color: color-mix(in srgb, var(--warn) 35%, var(--border));
+}
+.chip.crit {
+  color: var(--crit);
+  border-color: color-mix(in srgb, var(--crit) 35%, var(--border));
+}
+.chip.setup {
+  color: var(--setup);
+  border-color: color-mix(in srgb, var(--setup) 35%, var(--border));
+}
+/* Une touche du clavier : une case à sa largeur, un bord bas plus épais comme une touche enfoncée. */
+.kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 4px;
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  vertical-align: 1px;
+  border: 1px solid var(--border-strong);
+  border-bottom-width: 2px;
+  border-radius: var(--r-xs);
+  color: var(--text-2);
+  background: var(--surface-2);
+}
+
+/* ---------- Dépliables natifs ---------- */
+/* Le même chevron que les dépliables de l'application (lucide chevron-down, trait de 1,5 px à 16 px), tourné vers la
+   droite tant que c'est replié. Il remplace le triangle du navigateur, qui ne ressemblait à aucune autre icône. */
+details > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  list-style: none;
+  cursor: pointer;
+}
+details > summary::-webkit-details-marker {
+  display: none;
+}
+details > summary::before {
+  content: '';
+  flex: none;
+  width: var(--icon);
+  height: var(--icon);
+  background: currentColor;
+  -webkit-mask: var(--chevron) center / contain no-repeat;
+  mask: var(--chevron) center / contain no-repeat;
+  transform: rotate(-90deg);
+  transition: transform 260ms var(--ease-out);
+}
+details[open] > summary::before {
+  transform: none;
+}
+
+/* ---------- États machine (couleur + forme) ---------- */
+.st {
+  --c: var(--idle);
+  color: var(--c);
+}
+.st-marche {
+  --c: var(--ok);
+}
+.st-attention {
+  --c: var(--warn);
+}
+.st-panne {
+  --c: var(--crit);
+}
+.st-calage {
+  --c: var(--setup);
+}
+.st-arret {
+  --c: var(--idle);
+}
+.st-bg {
+  background: color-mix(in srgb, var(--c) 14%, transparent);
+}
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--c);
+  background: color-mix(in srgb, var(--c) 14%, transparent);
+  /* L'état ne se coupe jamais en deux lignes à côté d'un nom de machine long. */
+  flex: none;
+  white-space: nowrap;
+}
+.status-icon {
+  flex: none;
+}
+.pulse {
+  animation: pulse 1.15s var(--ease) infinite;
+}
+.blink {
+  animation: blink 1.6s steps(1) infinite;
+}
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.25);
+    opacity: 0.65;
+  }
+}
+@keyframes blink {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* ---------- Surfaces ---------- */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+}
+.glass {
+  background: var(--glass);
+  border: 1px solid var(--border);
+}
+.section-title {
+  font-size: 12.5px;
+  font-weight: 650;
+  letter-spacing: 0;
+  color: var(--text-3);
+  margin: 0 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 16px 0;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.row.wrap {
+  flex-wrap: wrap;
+}
+.row.between {
+  justify-content: space-between;
+}
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.grow {
+  flex: 1;
+  min-width: 0;
+}
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

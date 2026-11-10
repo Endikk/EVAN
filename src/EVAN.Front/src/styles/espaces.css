@@ -1,0 +1,292 @@
+/* Espaces : bandeau d'indicateurs, panneau d'exploitation, sélecteur d'usine. */
+
+/* ---------- Espaces : configuration (rail d'étapes) et exploitation (tableau de bord) ---------- */
+.app.exploitation .panel {
+  background: var(--bg);
+  border-left: 1px solid var(--border);
+}
+
+/* Onglets d'exploitation : icône et nom. L'onglet courant a son texte en clair, son icône en rouge, et un trait rouge
+   sous lui qui glisse d'un onglet à l'autre (transform seulement) : on voit d'où l'on vient et où l'on arrive. */
+.config-chip {
+  margin-left: 4px;
+}
+
+/* Bandeau d'indicateurs */
+/* TRS : la tendance prend toute la largeur restante de la carte, avec sa référence 7 jours. */
+.kpi-viz-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 10.5px;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+.kpi-viz-head .ref {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-2);
+}
+.kpi-viz-head .ref i {
+  width: 14px;
+  border-top: 1.5px dashed var(--text-3);
+}
+button.kpi {
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  transition:
+    border-color var(--dur) var(--ease),
+    background var(--dur) var(--ease);
+}
+button.kpi:disabled {
+  cursor: default;
+}
+
+/* Panneau d'exploitation */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px 12px;
+  text-align: center;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-md);
+}
+.speed {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  width: 104px;
+}
+.speed i {
+  display: block;
+  width: 100%;
+  height: 4px;
+  border-radius: var(--r-xs);
+  background: var(--surface-3);
+  overflow: hidden;
+}
+.speed i b {
+  display: block;
+  height: 100%;
+  border-radius: var(--r-xs);
+  background: var(--c);
+  transition: width 600ms var(--ease);
+}
+.table-view {
+  margin-top: 8px;
+  font-size: 12.5px;
+}
+.journal-more {
+  margin-top: 8px;
+}
+/* Tablette et téléphone : chaque alarme devient une fiche ; les tableaux ne débordent pas. */
+@media (max-width: 900px) {
+  .table.journal thead {
+    display: none;
+  }
+  .table.journal,
+  .table.journal tbody {
+    display: block;
+  }
+  .table.journal tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .table.journal td {
+    display: block;
+    padding: 0;
+    border: 0;
+    text-align: left !important;
+    white-space: normal !important;
+  }
+  .table.journal td::before {
+    content: attr(data-l);
+    display: block;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--text-3);
+  }
+  .table.journal td[data-l='Message'] {
+    grid-column: 1 / -1;
+  }
+  .table-view .table {
+    width: 100%;
+    table-layout: fixed;
+  }
+  .table-view .table th,
+  .table-view .table td {
+    padding-left: 4px;
+    padding-right: 4px;
+    font-size: 11px;
+    overflow-wrap: anywhere;
+  }
+}
+.table-view summary {
+  cursor: pointer;
+  color: var(--text-2);
+  font-weight: 600;
+}
+
+/* Rail de configuration */
+
+/* Organisation et usines : sélecteur de la barre du haut */
+.usine-menu {
+  position: relative;
+  min-width: 0;
+}
+.usine-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  max-width: 300px;
+  padding: 0 8px;
+  border-radius: var(--r-md);
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition:
+    background var(--dur) var(--ease),
+    border-color var(--dur) var(--ease);
+}
+.usine-switch:hover,
+.usine-switch[aria-expanded='true'] {
+  background: var(--surface-2);
+  border-color: var(--border);
+}
+.usine-switch > svg {
+  flex: none;
+  width: var(--icon-lg);
+  height: var(--icon-lg);
+  color: var(--text-2);
+}
+.usine-switch .usine-chevron {
+  width: var(--icon);
+  height: var(--icon);
+  color: var(--text-3);
+}
+.usine-switch-txt {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.2;
+}
+.usine-switch-txt small {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-3);
+}
+.usine-switch-txt b {
+  font-size: 13px;
+  font-weight: 650;
+}
+.usine-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 60;
+  width: min(380px, calc(100vw - 24px));
+  padding: 8px;
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-3);
+  animation: rise3 180ms var(--ease);
+}
+.usine-org {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+.usine-org > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.usine-org b {
+  font-size: 15px;
+}
+.usine-org .muted {
+  font-size: 12px;
+}
+.usine-kicker {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--text-3);
+}
+.usine-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: min(52vh, 420px);
+  overflow-y: auto;
+}
+.usine-item {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px;
+  border-radius: var(--r-md);
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+.usine-item:hover {
+  background: var(--surface-2);
+}
+.usine-item.on {
+  background: var(--accent-soft);
+}
+.usine-item-txt {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.usine-item-txt b {
+  font-size: 13.5px;
+}
+.usine-item-txt span {
+  font-size: 12px;
+}
+.usine-check {
+  flex: none;
+  width: var(--icon);
+  height: var(--icon);
+  margin-top: 4px;
+  color: var(--accent-text);
+}
+.usine-add {
+  width: 100%;
+  margin-top: 8px;
+  justify-content: flex-start;
+}
+.usine-note {
+  margin: 8px 8px 4px;
+  font-size: 12px;
+}
+.modal-icon.accent {
+  color: var(--accent-text);
+  background: var(--accent-soft);
+}

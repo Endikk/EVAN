@@ -1,0 +1,208 @@
+/* Scène : calques, repères posés dessus (échelle, légende des états), emplacement rempli par la page. */
+
+/* Scène */
+.stage {
+  grid-area: stage;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg);
+  isolation: isolate;
+  /* Glisser sur le plan ne sélectionne pas le texte des étiquettes. */
+  user-select: none;
+  -webkit-user-select: none;
+}
+.stage input,
+.stage textarea,
+.organ-card {
+  user-select: text;
+  -webkit-user-select: text;
+}
+.stage-layer {
+  position: absolute;
+  inset: 0;
+  transition: opacity 700ms var(--ease);
+}
+.stage-layer.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+.hud {
+  position: absolute;
+  z-index: 5;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.hud.tl {
+  top: 16px;
+  left: 16px;
+}
+.hud.tr {
+  top: 16px;
+  right: 16px;
+}
+.hud.bl {
+  bottom: 16px;
+  left: 16px;
+}
+.hud.br {
+  bottom: 16px;
+  right: 16px;
+}
+.hud .glass {
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-2);
+}
+/* Indication d'échelle de la carte satellite (étape 1). */
+.hud-echelle {
+  padding: 8px;
+  font-size: 12px;
+  color: var(--text-2);
+}
+.hud-echelle b {
+  color: var(--text);
+  font-weight: 620;
+}
+
+/* Légende des états posée sur la scène : la forme et le nom de chaque état ; le survol ou un clic ouvre un petit
+   volet qui dit ce que chacun veut dire pour l'atelier. */
+.legende-etats {
+  position: relative;
+}
+.legende-barre {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 36px;
+  padding: 0 8px 0 12px;
+  border-radius: var(--r-md);
+  font-size: 12px;
+  font-weight: 560;
+  color: var(--text);
+  cursor: pointer;
+}
+.legende-barre:hover,
+.legende-barre[aria-expanded='true'] {
+  border-color: var(--border-strong);
+}
+.legende-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.legende-aide {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding-left: 8px;
+  border-left: 1px solid var(--border);
+  color: var(--text-2);
+}
+.legende-aide svg {
+  width: var(--icon);
+  height: var(--icon);
+}
+.legende-volet {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 8px);
+  width: min(380px, calc(100vw - 28px));
+  padding: 16px 16px 12px;
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow-3);
+  transform-origin: bottom left;
+  animation: volet-haut 240ms var(--ease-out);
+}
+.legende-volet h3 {
+  margin: 0 0 4px;
+  font-size: 14px;
+}
+.legende-volet > p {
+  margin: 0 0 12px;
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+.legende-volet dl {
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+.legende-ligne {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 4px 8px;
+  animation: entree 320ms var(--ease-out) backwards;
+  animation-delay: calc(var(--i, 0) * 40ms);
+}
+.legende-ligne dt {
+  display: contents;
+}
+.legende-ligne .status-icon {
+  grid-row: span 2;
+  margin-top: 4px;
+}
+.legende-ligne b {
+  font-size: 13px;
+}
+.legende-ligne b small {
+  margin-left: 8px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--text-3);
+}
+.legende-ligne dd {
+  grid-column: 2;
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--text-2);
+}
+@keyframes volet-haut {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+}
+@media (max-width: 900px) {
+  /* La scène est basse sur tablette et téléphone : le volet défile au lieu d'être rogné par le haut de la scène. */
+  .legende-volet {
+    max-height: calc(46vh - 64px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+/* Pendant la visite guidée, la légende narrée occupe le bas de la scène : la légende des états remonte au-dessus. */
+.stage .hud.bl {
+  transition: transform 360ms var(--ease-out);
+}
+.app:has(.caption) .stage .hud.bl {
+  transform: translateY(-100px);
+}
+.hud .hud-etiquettes {
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+}
+/* Enfoncé, il garde son verre sous la teinte de l'accent : sans lui, le libellé se posait à nu sur la photo. */
+.hud .hud-etiquettes[aria-pressed='true'] {
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+}
+@media (max-width: 600px) {
+  /* Téléphone : la barre garde les formes, le nom des états passe dans le volet ; les commandes gardent leur icône. */
+  .legende-item span {
+    display: none;
+  }
+  .legende-barre {
+    gap: 8px;
+  }
+  .hud-libelle {
+    display: none;
+  }
+}
+
+/* Emplacement que remplit la page affichée (widgets/shell/zones.tsx) : sans boîte à lui, son contenu se place
+   directement dans la grille de l'application ou dans le panneau. */
+.zone-hote {
+  display: contents;
+}

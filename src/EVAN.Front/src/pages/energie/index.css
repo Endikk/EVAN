@@ -1,0 +1,486 @@
+/* ============================================================
+   Énergie : verdict, trois repères et leur rangée de chiffres, courbe de charge, où part l'énergie, où économiser.
+   Tout est préfixé par .energie (ou en- pour le guide et le volet, rendus hors de l'écran) : rien ne déborde sur
+   les autres écrans. Couleurs par jetons seulement, pour les deux thèmes.
+   ============================================================ */
+
+.history.energie {
+  /* Le nuage de pixels de la tête déborde un peu à droite (marge négative) : l'écran ne doit jamais défiler de côté. */
+  overflow-x: hidden;
+}
+
+/* ---------- Repères, rangée des chiffres de second rang, réglages repliés ---------- */
+.energie .en-reperes {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+.energie .en-plus {
+  margin: 8px 0 16px;
+}
+.energie .en-plus .details:last-child {
+  border-bottom: 1px solid var(--border);
+}
+/* La rangée et le pli des réglages se suivent : un seul filet entre les deux. */
+.energie .en-chiffres {
+  border-bottom: 0;
+}
+
+/* ---------- Courbe de charge ---------- */
+.energie .en-courbe-chart {
+  height: 250px;
+}
+.energie .en-legende i.en-leg-trait {
+  width: 14px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--series-1);
+}
+.energie .en-legende i.en-leg-creux {
+  background: color-mix(in srgb, var(--idle) 28%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--idle) 45%, transparent);
+}
+.energie .en-legende i.en-leg-pic {
+  width: 14px;
+  height: 0;
+  border-radius: 0;
+  border-top: 2px dashed var(--text-3);
+}
+.energie .en-legende .faint {
+  font-weight: 450;
+}
+
+/* ---------- Où part l'énergie : une barre qui se remplit par état ---------- */
+/* La carte a la hauteur de la courbe voisine : ses quatre lignes se répartissent sur toute la hauteur. */
+.energie .en-repartition {
+  display: flex;
+  flex-direction: column;
+}
+.energie .en-repartition .en-parts {
+  flex: 1;
+  justify-content: space-evenly;
+}
+.en-parts {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.en-parts li {
+  color: var(--text);
+}
+.en-part-tete {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+}
+.en-part-tete .status-icon {
+  color: var(--c);
+}
+.en-part-nom {
+  flex: 1;
+  min-width: 0;
+  font-weight: 560;
+}
+.en-part-kwh {
+  font-size: 12.5px;
+  color: var(--text-3);
+}
+.en-part-tete b {
+  min-width: 52px;
+  text-align: right;
+  font-size: 15px;
+  font-weight: 680;
+}
+.en-part-barre {
+  position: relative;
+  height: 8px;
+  margin-top: 8px;
+  border-radius: var(--r-xs);
+  background: var(--surface-3);
+  overflow: hidden;
+}
+.en-part-barre i {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--c);
+  transform-origin: left center;
+  transition: transform 900ms var(--ease-out);
+  animation: en-remplir 1100ms var(--ease-out) backwards;
+  animation-delay: calc(260ms + var(--i, 0) * 110ms);
+}
+@keyframes en-remplir {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+/* ---------- Où économiser ---------- */
+.en-actions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+/* Une ligne : rang, quoi faire, gain par an, chevron ; la barre dessous. Le pourquoi est dans le volet. */
+.en-action {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) auto 16px;
+  grid-template-areas:
+    'rang texte gain chevron'
+    '. barre barre .';
+  align-items: center;
+  column-gap: 12px;
+  row-gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 8px 12px;
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--dur) var(--ease),
+    border-color var(--dur) var(--ease);
+}
+.en-action:hover {
+  background: var(--surface-2);
+  border-color: var(--border);
+}
+.en-actions li + li .en-action {
+  border-top-color: var(--border);
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+.en-actions li + li .en-action:hover {
+  border-radius: var(--r-md);
+}
+.en-action-rang {
+  grid-area: rang;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--r-sm);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-size: 12px;
+  font-weight: 700;
+}
+.en-action-titre {
+  grid-area: texte;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 620;
+  line-height: 1.35;
+}
+.en-action-gain {
+  grid-area: gain;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  white-space: nowrap;
+}
+.en-action-gain b {
+  font-size: 18px;
+  font-weight: 680;
+  letter-spacing: -0.01em;
+}
+.en-action-gain small {
+  font-size: 12px;
+  color: var(--text-3);
+}
+.en-action-chevron {
+  grid-area: chevron;
+  width: var(--icon);
+  height: var(--icon);
+  color: var(--text-3);
+  transition: color var(--dur) var(--ease);
+}
+.en-action:hover .en-action-chevron {
+  color: var(--accent-text);
+}
+.en-action-barre {
+  grid-area: barre;
+  position: relative;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--surface-3);
+  overflow: hidden;
+}
+.en-action-barre i {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--accent-2);
+  transform-origin: left center;
+  transition: transform 900ms var(--ease-out);
+  animation: en-remplir 1000ms var(--ease-out) backwards;
+  animation-delay: calc(420ms + var(--i, 0) * 110ms);
+}
+
+/* ---------- Volet du calcul ---------- */
+.en-volet-gain {
+  margin: -8px 0 8px;
+  font-size: 14px;
+  color: var(--text-2);
+}
+.en-volet-gain b {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+.en-volet-titre {
+  margin: 24px 0 8px;
+  font-size: 14px;
+  font-weight: 650;
+}
+.en-calcul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: etape;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.en-calcul li {
+  position: relative;
+  padding: 8px 8px 8px 38px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text);
+  counter-increment: etape;
+  /* Les étapes se posent l'une après l'autre : on suit le calcul dans l'ordre. */
+  animation: entree 420ms var(--ease-out) backwards;
+  animation-delay: calc(220ms + var(--i, 0) * 160ms);
+}
+.en-calcul li::before {
+  content: counter(etape);
+  position: absolute;
+  left: 10px;
+  top: 9px;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--r-sm);
+  display: grid;
+  place-items: center;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--accent-text);
+  background: var(--accent-soft);
+}
+.en-volet-hyp {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  color: var(--text-3);
+}
+.en-volet-conseil {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text-2);
+}
+
+/* ---------- Réglages du calcul ---------- */
+.en-reglages {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 4px 4px 8px;
+}
+.en-champs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 24px;
+}
+.en-champ-tete {
+  display: flex;
+  align-items: center;
+}
+.en-champ-tete label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.en-champs small {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-3);
+}
+.en-champs small.en-erreur {
+  color: var(--crit);
+}
+.en-saisie {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+.en-saisie .input {
+  width: 110px;
+  text-align: right;
+}
+.en-saisie .input[aria-invalid='true'] {
+  border-color: var(--crit);
+}
+.en-reglages-pied {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+.en-reglages-resultat {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--text-2);
+}
+.en-reglages-resultat b {
+  color: var(--text);
+}
+
+/* ---------- Schémas du guide ---------- */
+.en-schema-pt,
+.en-schema-cent {
+  margin: 0;
+}
+.en-schema-pt svg {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  height: auto;
+  overflow: visible;
+}
+.en-schema-pt text {
+  font-size: 12px;
+  fill: var(--text-2);
+}
+.en-pt-axe {
+  stroke: var(--border-strong);
+  stroke-width: 1.5;
+}
+.en-pt-niveau {
+  stroke: var(--series-1);
+  stroke-width: 2.5;
+}
+/* L'aire sous la puissance se remplit de gauche à droite : l'énergie, c'est cette surface. */
+.en-pt-aire {
+  fill: var(--series-1);
+  fill-opacity: 0.2;
+  transform-box: fill-box;
+  transform-origin: left center;
+  animation: en-pt-remplir 5s var(--ease-out) infinite;
+}
+.en-schema-pt text.en-pt-resultat {
+  font-size: 16px;
+  font-weight: 700;
+  fill: var(--text);
+  animation: en-pt-resultat 5s var(--ease) infinite;
+}
+@keyframes en-pt-remplir {
+  0% {
+    transform: scaleX(0);
+  }
+  40%,
+  100% {
+    transform: scaleX(1);
+  }
+}
+@keyframes en-pt-resultat {
+  0%,
+  36% {
+    opacity: 0;
+  }
+  48%,
+  100% {
+    opacity: 1;
+  }
+}
+.en-schema-pt figcaption,
+.en-schema-cent figcaption {
+  margin-top: 8px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+.en-cent-grille {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 4px;
+  max-width: 210px;
+}
+/* Un carré par kWh, posé l'un après l'autre : on voit la production remplir presque toute la grille. */
+.en-cent-grille i {
+  aspect-ratio: 1;
+  border-radius: 2px;
+  background: var(--c);
+  animation: en-carre 260ms var(--ease-out) backwards;
+  animation-delay: calc(200ms + var(--i, 0) * 12ms);
+}
+@keyframes en-carre {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+.en-schema-cent figcaption {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+}
+.en-schema-cent figcaption span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-2);
+}
+.en-schema-cent figcaption i {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--c);
+}
+
+/* ---------- Téléphone ---------- */
+@media (max-width: 760px) {
+  .energie .details-apercu {
+    display: none;
+  }
+  .en-champs {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  /* Deux chiffres par ligne sur téléphone : un nom long passe à la ligne plutôt que de sortir de l'écran. */
+  .energie .en-chiffres .cs-item dt {
+    white-space: normal;
+  }
+  .en-action {
+    grid-template-columns: 24px minmax(0, 1fr) 14px;
+    grid-template-areas:
+      'rang texte chevron'
+      '. gain .'
+      '. barre .';
+    row-gap: 4px;
+  }
+  .en-action-rang {
+    align-self: start;
+  }
+}
+
+/* Montant en euros dans la note d'un repère : la somme qui compte, lisible d'un coup d'œil. */
+.en-note-fort {
+  color: var(--text);
+  font-weight: 650;
+}

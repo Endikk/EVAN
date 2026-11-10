@@ -1,0 +1,218 @@
+{
+  "description": "Jeu d'évaluation de « Demander à EVAN » : questions d'atelier posées sur l'organisation d'exemple, à un instant figé. Aucune réponse attendue n'est écrite ici : chaque calcul nomme l'outil d'EVAN (ExploitationService) qui la donne et les champs de sa réponse qui doivent se retrouver dans le texte du modèle (nombres avec une tolérance relative et, pour une durée ou une énergie, l'autre unité acceptée : h ou min, kWh ou MWh ; textes ; machines). Rejoué par tests/EVAN.Infrastructure.Tests/Assistant/Evaluation : le correcteur et les calculs dans la suite normale, les questions au modèle avec EVAN_EVAL=1.",
+  "maintenant": 1791448200000,
+  "fuseau": "Europe/Paris",
+  "questions": [
+    {
+      "id": "trs-usine-semaine",
+      "usine": "site-tours",
+      "question": "Quel est le TRS de l'usine sur les 7 derniers jours ?",
+      "calculs": [
+        { "outil": "arrets", "arguments": { "usine": "site-tours", "jours": 7 }, "nombres": [{ "chemin": "trsPct", "tolerance": 0.01 }] }
+      ]
+    },
+    {
+      "id": "trs-r07",
+      "usine": "site-tours",
+      "question": "Quels sont le TRS et la disponibilité de la R07 cette semaine ?",
+      "calculs": [
+        {
+          "outil": "arrets",
+          "arguments": { "usine": "site-tours", "jours": 7, "machine": "R07" },
+          "nombres": [{ "chemin": "parMachine[0].trsPct", "tolerance": 0.01 }, { "chemin": "parMachine[0].disponibilitePct", "tolerance": 0.01 }],
+          "machines": ["parMachine[0].machine"]
+        }
+      ]
+    },
+    {
+      "id": "machine-la-plus-arretee",
+      "usine": "site-tours",
+      "question": "Quelle machine a passé le plus de temps en panne cette semaine, et combien de temps ?",
+      "calculs": [
+        {
+          "outil": "arrets",
+          "arguments": { "usine": "site-tours", "jours": 7 },
+          "nombres": [{ "chemin": "parMachine[0].panneH", "tolerance": 0.03, "unite": "h" }],
+          "machines": ["parMachine[0].machine"]
+        }
+      ]
+    },
+    {
+      "id": "organe-en-cause-r05",
+      "usine": "site-tours",
+      "question": "Sur la R05, quel organe cause le plus de pannes depuis une semaine ?",
+      "calculs": [
+        {
+          "outil": "arrets",
+          "arguments": { "usine": "site-tours", "jours": 7, "machine": "R05" },
+          "nombres": [{ "chemin": "parMachine[0].parOrgane[0].panneMin", "tolerance": 0.03, "unite": "min" }],
+          "textes": ["parMachine[0].parOrgane[0].organe.nom"],
+          "machines": ["parMachine[0].machine"]
+        }
+      ]
+    },
+    {
+      "id": "gallus-ce-matin",
+      "usine": "site-tours",
+      "question": "Pourquoi la Gallus s'est-elle arrêtée ce matin ?",
+      "calculs": [
+        {
+          "outil": "alarmes",
+          "arguments": { "usine": "site-tours", "machine": "Gallus", "heures": 24 },
+          "textes": ["alarmes[0].code", "alarmes[0].organe.nom"],
+          "machines": ["alarmes[0].machine"]
+        }
+      ]
+    },
+    {
+      "id": "alarmes-repetitives-gallus",
+      "usine": "site-tours",
+      "question": "Y a-t-il une alarme qui revient en boucle sur la Gallus ? Combien de fois ?",
+      "calculs": [
+        {
+          "outil": "alarmes",
+          "arguments": { "usine": "site-tours", "machine": "Gallus", "heures": 168 },
+          "nombres": [{ "chemin": "alarmes[regle=repetitif].repetitions", "tolerance": 0 }],
+          "textes": ["alarmes[regle=repetitif].code"],
+          "machines": ["alarmes[regle=repetitif].machine"]
+        }
+      ]
+    },
+    {
+      "id": "pannes-r02",
+      "usine": "site-tours",
+      "question": "Combien de pannes la R02 a-t-elle eues sur les 7 derniers jours, et pour combien d'heures d'arrêt ?",
+      "calculs": [
+        {
+          "outil": "arrets",
+          "arguments": { "usine": "site-tours", "jours": 7, "machine": "R02" },
+          "nombres": [{ "chemin": "parMachine[0].pannes", "tolerance": 0 }, { "chemin": "parMachine[0].panneH", "tolerance": 0.03, "unite": "h" }],
+          "machines": ["parMachine[0].machine"]
+        }
+      ]
+    },
+    {
+      "id": "causes-arret-crissey",
+      "usine": "site-crissey",
+      "question": "Quelle est la principale cause d'arrêt à Crissey cette semaine, en durée ?",
+      "calculs": [
+        {
+          "outil": "arrets",
+          "arguments": { "usine": "site-crissey", "jours": 7 },
+          "nombres": [{ "chemin": "codesLesPlusLongs[0].arretH", "tolerance": 0.03, "unite": "h" }],
+          "textes": ["codesLesPlusLongs[0].code"],
+          "machines": ["codesLesPlusLongs[0].machine"]
+        }
+      ]
+    },
+    {
+      "id": "mttr-crissey",
+      "usine": "site-crissey",
+      "question": "Quel est notre temps moyen de réparation sur la semaine ?",
+      "calculs": [
+        { "outil": "arrets", "arguments": { "usine": "site-crissey", "jours": 7 }, "nombres": [{ "chemin": "tempsMoyenReparationMin", "tolerance": 0.03, "unite": "min" }] }
+      ]
+    },
+    {
+      "id": "mtbf-crissey",
+      "usine": "site-crissey",
+      "question": "Quel est le MTBF de l'usine sur les 7 derniers jours ?",
+      "calculs": [
+        { "outil": "carnet_maintenance", "arguments": { "usine": "site-crissey" }, "nombres": [{ "chemin": "indicateurs7Jours.mtbfH", "tolerance": 0.03, "unite": "h" }] }
+      ]
+    },
+    {
+      "id": "kwh-1000-tours",
+      "usine": "site-tours",
+      "question": "Combien de kWh nous faut-il pour imprimer 1 000 étiquettes ?",
+      "calculs": [
+        { "outil": "energie", "arguments": { "usine": "site-tours", "jours": 7 }, "nombres": [{ "chemin": "kwhPour1000EtiquettesImprimees", "tolerance": 0.03 }] }
+      ]
+    },
+    {
+      "id": "energie-semaine-tours",
+      "usine": "site-tours",
+      "question": "Quelle a été la consommation d'électricité de l'usine sur 7 jours ?",
+      "calculs": [
+        { "outil": "energie", "arguments": { "usine": "site-tours", "jours": 7 }, "nombres": [{ "chemin": "energieKwh", "tolerance": 0.01, "unite": "kWh" }] }
+      ]
+    },
+    {
+      "id": "machine-energivore-crissey",
+      "usine": "site-crissey",
+      "question": "Quelle machine consomme le plus d'énergie chez nous, et combien sur la semaine ?",
+      "calculs": [
+        {
+          "outil": "energie",
+          "arguments": { "usine": "site-crissey", "jours": 7 },
+          "nombres": [{ "chemin": "parMachine[0].energieKwh", "tolerance": 0.01, "unite": "kWh" }],
+          "machines": ["parMachine[0].machine"]
+        }
+      ]
+    },
+    {
+      "id": "veille-cout-annuel",
+      "usine": "site-tours",
+      "question": "Combien nous coûte la veille des machines par an ?",
+      "calculs": [
+        { "outil": "energie", "arguments": { "usine": "site-tours", "jours": 7 }, "nombres": [{ "chemin": "gisements[type=veille].eurosParAn", "tolerance": 0.02 }] }
+      ]
+    },
+    {
+      "id": "comparaison-usines",
+      "usine": "site-tours",
+      "question": "Compare Tours et Crissey sur la semaine : TRS et kWh pour 1 000 étiquettes.",
+      "calculs": [
+        {
+          "outil": "organisation",
+          "arguments": {},
+          "nombres": [
+            { "chemin": "usines[id=site-tours].septJours.trsPct", "tolerance": 0.001 },
+            { "chemin": "usines[id=site-crissey].septJours.trsPct", "tolerance": 0.001 },
+            { "chemin": "usines[id=site-tours].septJours.kwhPour1000Etiquettes", "tolerance": 0.03 },
+            { "chemin": "usines[id=site-crissey].septJours.kwhPour1000Etiquettes", "tolerance": 0.03 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "derive-r04",
+      "usine": "site-tours",
+      "question": "Le carnet a-t-il repéré une dérive sur la R04 ? Où en est la mesure par rapport à son seuil ?",
+      "calculs": [
+        {
+          "outil": "carnet_maintenance",
+          "arguments": { "usine": "site-tours", "machine": "R04" },
+          "nombres": [
+            { "chemin": "derivesDetectees[0].valeurActuelle", "tolerance": 0.01 },
+            { "chemin": "derivesDetectees[0].seuil", "tolerance": 0 },
+            { "chemin": "derivesDetectees[0].variationParJour", "tolerance": 0.05 }
+          ],
+          "machines": ["derivesDetectees[0].machine"]
+        }
+      ]
+    },
+    {
+      "id": "defaut-repetitif-r01",
+      "usine": "site-tours",
+      "question": "Un défaut revient tous les 339,5 mm sur la R01 : quelle pièce faut-il regarder ?",
+      "calculs": [
+        {
+          "outil": "diagnostic_defaut_repetitif",
+          "arguments": { "machine": "R01", "pasMm": 339.5, "usine": "site-tours" },
+          "textes": ["candidats[0].piece"],
+          "machines": ["machine"]
+        }
+      ]
+    },
+    {
+      "id": "maintenance-en-retard",
+      "usine": "site-tours",
+      "question": "Combien de tâches de maintenance sont en retard, et sur quelles machines ?",
+      "calculs": [
+        { "outil": "organisation", "arguments": {}, "nombres": [{ "chemin": "usines[id=site-tours].septJours.maintenanceEnRetard", "tolerance": 0 }] },
+        { "outil": "carnet_maintenance", "arguments": { "usine": "site-tours" }, "machines": ["aPlanifier[statut=en_retard].machine"] }
+      ]
+    }
+  ]
+}

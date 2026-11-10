@@ -1,0 +1,24 @@
+/* ============================================================
+   EVAN : système de design, un fichier par thème.
+   L'ordre des imports est celui de la cascade : à spécificité égale, la règle la plus basse l'emporte. Un fichier
+   nouveau prend sa place dans la liste ; adaptatif.css reste après les règles qu'il adapte.
+   Le style propre à un écran est dans sa page (pages/x/index.css), celui d'un bloc partagé à côté de lui (widgets/).
+   ============================================================ */
+
+@import './jetons.css';
+@import './base.css';
+@import './composants.css';
+@import './barres.css';
+@import './scene.css';
+@import './panneau.css';
+@import './localisation.css';
+@import './etiquettes.css';
+@import './ecrans.css';
+@import './adaptatif.css';
+@import './graphiques.css';
+@import './espaces.css';
+@import './fenetres.css';
+@import './exploitation.css';
+@import './pannes.css';
+@import './assistant.css';
+@import './hors-route.css';

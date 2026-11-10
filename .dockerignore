@@ -1,0 +1,13 @@
+# Contexte Docker = racine du dépôt : on n'envoie ni artefacts locaux, ni secrets, ni dépendances déjà installées
+# (node_modules Windows écraserait celui de l'image Linux).
+.git
+**/bin/
+**/obj/
+**/node_modules/
+**/dist/
+**/pki/
+**/audit/
+infra/mosquitto/certs/
+docs/media/
+.env
+*.log

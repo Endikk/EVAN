@@ -1,0 +1,14 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
+namespace EVAN.Core.Contracts;
+
+/// <summary>Sérialisation du contrat : camelCase, nuls omis, énumérations en texte.</summary>
+public static class Json
+{
+    public static readonly JsonSerializerOptions Options = new(JsonSerializerDefaults.Web)
+    {
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
+    };
+}

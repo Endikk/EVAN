@@ -1,0 +1,78 @@
+/* Tablette, téléphone, animations réduites : à garder après les règles qu'ils adaptent. */
+
+/* ---------- Responsive : tablette et mobile ---------- */
+@media (max-width: 1280px) {
+  :root {
+    --panel-w: 360px;
+  }
+}
+
+@media (max-width: 900px) {
+  :root {
+    --header-h: 56px;
+  }
+  .stage {
+    min-height: 52vh;
+  }
+  .panel {
+    border-left: 0;
+    border-top: 1px solid var(--border);
+  }
+  .panel-body {
+    overflow: visible;
+  }
+  /* Tablette et téléphone : un seul avis à la fois, en bas de l'écran, sur deux lignes au plus, pour laisser voir
+     la scène et la fiche d'alarme. Les précédents restent dans la liste des alarmes. */
+  .toasts,
+  .app.page .toasts,
+  .app:has(.assistant) .toasts {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    width: auto;
+  }
+  .toast:not(:first-child) {
+    display: none;
+  }
+  .toast p {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .topbar .hide-sm {
+    display: none;
+  }
+  .span-8,
+  .span-7,
+  .span-6,
+  .span-5,
+  .span-4 {
+    grid-column: span 12;
+  }
+  /* Les écrans en pleine page (historique, maintenance, énergie, organisation) gardent leur propre défilement :
+     la rangée de la scène s'étire jusqu'au bas de l'écran et .history, en position absolue, défile à l'intérieur.
+     En position relative, l'écran grandissait dans une scène de hauteur fixe qui le coupait. */
+  .history {
+    overscroll-behavior: contain;
+  }
+}
+
+/* ---------- Animations réduites ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+:root[data-motion='reduce'] *,
+:root[data-motion='reduce'] *::before,
+:root[data-motion='reduce'] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+}

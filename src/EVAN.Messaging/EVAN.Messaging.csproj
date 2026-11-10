@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Transport MQTT (MQTTnet) : connexion sortante, TLS mutuel, reconnexion, publication JSON du contrat evan/v1.
+    Partagé par l'API, le simulateur et la passerelle edge, qui n'embarque ainsi ni base ni cas d'usage.
+  -->
+  <ItemGroup>
+    <PackageReference Include="MQTTnet" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\EVAN.Core\EVAN.Core.csproj" />
+  </ItemGroup>
+</Project>

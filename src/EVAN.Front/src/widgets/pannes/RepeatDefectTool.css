@@ -1,0 +1,107 @@
+/* ============================================================
+   Défaut répétitif : le schéma du cylindre qui marque la bande à chaque tour, et une ligne (le pourquoi est dans le
+   « ? »).
+   Le schéma tourne en continu (CSS, transform seulement) ; animations réduites : il reste figé, marques visibles.
+   ============================================================ */
+
+.rd-intro {
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+.rd-comment {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text);
+}
+.rd-schema {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.rd-schema text {
+  font-size: 9.5px;
+  fill: var(--text-3);
+}
+.rd-bande-fond {
+  fill: var(--surface-3);
+}
+.rd-marque {
+  fill: var(--crit);
+}
+.rd-cote {
+  fill: none;
+  stroke: var(--text-3);
+  stroke-width: 1;
+}
+.rd-cylindre {
+  transform-box: view-box;
+  transform-origin: 190px 26px;
+  animation: rd-tour 2.4s linear infinite;
+}
+.rd-cylindre circle:first-child {
+  fill: var(--surface);
+  stroke: var(--text-2);
+  stroke-width: 1.6;
+}
+.rd-defaut {
+  fill: var(--crit);
+}
+/* La bande avance d'un écart pendant que le cylindre fait un tour : chaque marque naît sous le cylindre. */
+.rd-defile {
+  animation: rd-defile 2.4s linear infinite;
+}
+@keyframes rd-tour {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes rd-defile {
+  to {
+    transform: translateX(-64px);
+  }
+}
+
+.rd-nature {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.rd-nature-tete {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.rd-resultat {
+  margin: 0 0 4px;
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+.rd-resultat b {
+  color: var(--text);
+}
+
+@media (max-width: 520px) {
+  .rd-intro {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .rd-schema {
+    max-width: 260px;
+  }
+}
+/* Dans le panneau de la supervision, plus étroit : le schéma passe au-dessus du texte. */
+.diag-card .rd-intro {
+  grid-template-columns: minmax(0, 1fr);
+}
+.diag-card .rd-schema {
+  max-width: 250px;
+}

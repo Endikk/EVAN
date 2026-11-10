@@ -1,0 +1,3435 @@
+{
+ "description": "Résumé de référence de l’historique simulé (7 jours) et des analyses qui en dérivent, pour un instant et un fuseau fixés. Produit par src/EVAN.Front/src/sim/history.contract.test.ts, rejoué par tests/EVAN.Infrastructure.Tests/SimulatedHistoryContractTests.cs.",
+ "maintenant": 1791448200000,
+ "fuseau": "Europe/Paris",
+ "usines": [
+  {
+   "id": "site-tours",
+   "debut": 1790892000000,
+   "fin": 1791446400000,
+   "alarmes": [
+    {
+     "id": "h-m-r01-1791443880",
+     "code": "EM-01",
+     "machineId": "m-r01",
+     "organeId": "m-r01.o7",
+     "pointId": "m-r01.o7.tension_dechet",
+     "horodatage": 1791443880000,
+     "finLe": 1791444420000,
+     "acquitteeLe": 1791444027000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 4.22,
+     "seuil": 10,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-rf02-1791442854",
+     "code": "MS-03",
+     "machineId": "m-rf02",
+     "organeId": "m-rf02.o2",
+     "pointId": "m-rf02.o2.manquantes",
+     "horodatage": 1791442854000,
+     "finLe": 1791445310000,
+     "acquitteeLe": 1791443010000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 4.09,
+     "seuil": 3,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-r01-1791437760",
+     "code": "EM-01",
+     "machineId": "m-r01",
+     "organeId": "m-r01.o7",
+     "pointId": "m-r01.o7.tension_dechet",
+     "horodatage": 1791437760000,
+     "finLe": 1791438300000,
+     "acquitteeLe": 1791437819000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 2.82,
+     "seuil": 10,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-r01-1791432360",
+     "code": "EM-01",
+     "machineId": "m-r01",
+     "organeId": "m-r01.o7",
+     "pointId": "m-r01.o7.tension_dechet",
+     "horodatage": 1791432360000,
+     "finLe": 1791432900000,
+     "acquitteeLe": 1791432462000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 3.35,
+     "seuil": 10,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-fe01-1791431763",
+     "code": "CT-02",
+     "machineId": "m-fe01",
+     "organeId": "m-fe01.o2",
+     "pointId": "m-fe01.o2.longueur",
+     "horodatage": 1791431763000,
+     "finLe": 1791432308000,
+     "acquitteeLe": 1791431877000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 298.2,
+     "seuil": 297.8,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-r02-1791431250",
+     "code": "DW-08",
+     "machineId": "m-r02",
+     "organeId": "m-r02.o2",
+     "pointId": "m-r02.o2.conductivite",
+     "horodatage": 1791431250000,
+     "finLe": 1791434268000,
+     "acquitteeLe": 1791431420000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 1822.4,
+     "seuil": 1700,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-r06-1791398435",
+     "code": "RG-04",
+     "machineId": "m-r06",
+     "organeId": "m-r06.o4",
+     "pointId": "m-r06.o4.reperage",
+     "horodatage": 1791398435000,
+     "finLe": 1791399009000,
+     "acquitteeLe": 1791398501000,
+     "acquitteePar": "Équipe après-midi",
+     "valeur": 135.2,
+     "seuil": 100,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-r05-1791383862",
+     "code": "IK-05",
+     "machineId": "m-r05",
+     "organeId": "m-r05.o3",
+     "pointId": "m-r05.o3.densite",
+     "horodatage": 1791383862000,
+     "finLe": 1791384858000,
+     "acquitteeLe": 1791383991000,
+     "acquitteePar": "Équipe après-midi",
+     "valeur": 1.23,
+     "seuil": 1.3,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-rf01-1791381667",
+     "code": "TB-101",
+     "machineId": "m-rf01",
+     "organeId": "m-rf01.o1",
+     "pointId": "m-rf01.o1.tension",
+     "horodatage": 1791381667000,
+     "finLe": 1791383271000,
+     "acquitteeLe": 1791381810000,
+     "acquitteePar": "Équipe après-midi",
+     "valeur": 207.6,
+     "seuil": 200,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-r07-1791378485",
+     "code": "DC-07",
+     "machineId": "m-r07",
+     "organeId": "m-r07.o6",
+     "pointId": "m-r07.o6.pression",
+     "horodatage": 1791378485000,
+     "finLe": 1791381996000,
+     "acquitteeLe": 1791378724000,
+     "acquitteePar": "Équipe après-midi",
+     "valeur": 6.17,
+     "seuil": 5.7,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-r02-1791378024",
+     "code": "UV-06",
+     "machineId": "m-r02",
+     "organeId": "m-r02.o5",
+     "pointId": "m-r02.o5.puissance_uv",
+     "horodatage": 1791378024000,
+     "finLe": 1791382492000,
+     "acquitteeLe": 1791378263000,
+     "acquitteePar": "Équipe après-midi",
+     "valeur": 57.4,
+     "seuil": 62,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-r06-1791373458",
+     "code": "IK-05",
+     "machineId": "m-r06",
+     "organeId": "m-r06.o3",
+     "pointId": "m-r06.o3.densite",
+     "horodatage": 1791373458000,
+     "finLe": 1791374855000,
+     "acquitteeLe": 1791373511000,
+     "acquitteePar": "Équipe après-midi",
+     "valeur": 1.25,
+     "seuil": 1.3,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-r07-1791370662",
+     "code": "RG-04",
+     "machineId": "m-r07",
+     "organeId": "m-r07.o4",
+     "pointId": "m-r07.o4.reperage",
+     "horodatage": 1791370662000,
+     "finLe": 1791374805000,
+     "acquitteeLe": 1791370780000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 143.5,
+     "seuil": 100,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-r01-1791367410",
+     "code": "TB-101",
+     "machineId": "m-r01",
+     "organeId": "m-r01.o1",
+     "pointId": "m-r01.o1.tension",
+     "horodatage": 1791367410000,
+     "finLe": 1791367951000,
+     "acquitteeLe": 1791367633000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 247.8,
+     "seuil": 235,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-rf02-1791363964",
+     "code": "MS-03",
+     "machineId": "m-rf02",
+     "organeId": "m-rf02.o2",
+     "pointId": "m-rf02.o2.manquantes",
+     "horodatage": 1791363964000,
+     "finLe": 1791364264000,
+     "acquitteeLe": 1791364010000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 3.95,
+     "seuil": 3,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-rf01-1791361925",
+     "code": "MS-03",
+     "machineId": "m-rf01",
+     "organeId": "m-rf01.o2",
+     "pointId": "m-rf01.o2.manquantes",
+     "horodatage": 1791361925000,
+     "finLe": 1791362910000,
+     "acquitteeLe": 1791362109000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 4.38,
+     "seuil": 3,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-pv01-1791358311",
+     "code": "PF-04",
+     "machineId": "m-pv01",
+     "organeId": "m-pv01.o2",
+     "pointId": "m-pv01.o2.decalage",
+     "horodatage": 1791358311000,
+     "finLe": 1791359599000,
+     "acquitteeLe": 1791358520000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 1.29,
+     "seuil": 1,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-r04-1791354931",
+     "code": "RW-05",
+     "machineId": "m-r04",
+     "organeId": "m-r04.o7",
+     "pointId": "m-r04.o7.tension",
+     "horodatage": 1791354931000,
+     "finLe": 1791357597000,
+     "acquitteeLe": 1791355069000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 169.5,
+     "seuil": 160,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-rf01-1791353310",
+     "code": "RW-07",
+     "machineId": "m-rf01",
+     "organeId": "m-rf01.o4",
+     "pointId": "m-rf01.o4.ecart_comptage",
+     "horodatage": 1791353310000,
+     "finLe": 1791357651000,
+     "acquitteeLe": 1791353448000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 1.5,
+     "seuil": 1,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-r05-1791353308",
+     "code": "RW-05",
+     "machineId": "m-r05",
+     "organeId": "m-r05.o7",
+     "pointId": "m-r05.o7.tension",
+     "horodatage": 1791353308000,
+     "finLe": 1791356940000,
+     "acquitteeLe": 1791353492000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 166,
+     "seuil": 160,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-r06-1791345938",
+     "code": "RW-05",
+     "machineId": "m-r06",
+     "organeId": "m-r06.o7",
+     "pointId": "m-r06.o7.tension",
+     "horodatage": 1791345938000,
+     "finLe": 1791349320000,
+     "acquitteeLe": 1791346088000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 168.6,
+     "seuil": 160,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-r05-1791312973",
+     "code": "IK-05",
+     "machineId": "m-r05",
+     "organeId": "m-r05.o3",
+     "pointId": "m-r05.o3.densite",
+     "horodatage": 1791312973000,
+     "finLe": 1791313200000,
+     "acquitteeLe": 1791313153000,
+     "acquitteePar": "Équipe après-midi",
+     "valeur": 1.25,
+     "seuil": 1.3,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-rfid01-1791309402",
+     "code": "RF-09",
+     "machineId": "m-rfid01",
+     "organeId": "m-rfid01.o1",
+     "pointId": "m-rfid01.o1.echecs",
+     "horodatage": 1791309402000,
+     "finLe": 1791309740000,
+     "acquitteeLe": 1791309499000,
+     "acquitteePar": "Équipe après-midi",
+     "valeur": 6.38,
+     "seuil": 3,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-r07-1791296843",
+     "code": "TB-101",
+     "machineId": "m-r07",
+     "organeId": "m-r07.o1",
+     "pointId": "m-r07.o1.tension",
+     "horodatage": 1791296843000,
+     "finLe": 1791297990000,
+     "acquitteeLe": 1791297052000,
+     "acquitteePar": "Équipe après-midi",
+     "valeur": 241.8,
+     "seuil": 225,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-r04-1791269423",
+     "code": "RG-04",
+     "machineId": "m-r04",
+     "organeId": "m-r04.o4",
+     "pointId": "m-r04.o4.reperage",
+     "horodatage": 1791269423000,
+     "finLe": 1791270103000,
+     "acquitteeLe": 1791269466000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 140,
+     "seuil": 100,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-r06-1791259825",
+     "code": "IK-05",
+     "machineId": "m-r06",
+     "organeId": "m-r06.o3",
+     "pointId": "m-r06.o3.densite",
+     "horodatage": 1791259825000,
+     "finLe": 1791260330000,
+     "acquitteeLe": 1791259960000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 1.23,
+     "seuil": 1.3,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-r03-1791226636",
+     "code": "IK-05",
+     "machineId": "m-r03",
+     "organeId": "m-r03.o3",
+     "pointId": "m-r03.o3.densite",
+     "horodatage": 1791226636000,
+     "finLe": 1791226800000,
+     "acquitteeLe": 1791226782000,
+     "acquitteePar": "Équipe après-midi",
+     "valeur": 1.25,
+     "seuil": 1.3,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-pp01-1791225879",
+     "code": "DV-02",
+     "machineId": "m-pp01",
+     "organeId": "m-pp01.o3",
+     "pointId": "m-pp01.o3.temperature_bain",
+     "horodatage": 1791225879000,
+     "finLe": 1791226298000,
+     "acquitteeLe": 1791225985000,
+     "acquitteePar": "Équipe après-midi",
+     "valeur": 18.9,
+     "seuil": 20,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-r03-1791213751",
+     "code": "TB-101",
+     "machineId": "m-r03",
+     "organeId": "m-r03.o1",
+     "pointId": "m-r03.o1.tension",
+     "horodatage": 1791213751000,
+     "finLe": 1791214057000,
+     "acquitteeLe": 1791213864000,
+     "acquitteePar": "Équipe après-midi",
+     "valeur": 234.1,
+     "seuil": 225,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-r07-1791209009",
+     "code": "TB-101",
+     "machineId": "m-r07",
+     "organeId": "m-r07.o1",
+     "pointId": "m-r07.o1.tension",
+     "horodatage": 1791209009000,
+     "finLe": 1791209352000,
+     "acquitteeLe": 1791209064000,
+     "acquitteePar": "Équipe après-midi",
+     "valeur": 234.5,
+     "seuil": 225,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-r03-1791193948",
+     "code": "IK-05",
+     "machineId": "m-r03",
+     "organeId": "m-r03.o3",
+     "pointId": "m-r03.o3.densite",
+     "horodatage": 1791193948000,
+     "finLe": 1791195347000,
+     "acquitteeLe": 1791194126000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 1.24,
+     "seuil": 1.3,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-pv01-1791192199",
+     "code": "TB-101",
+     "machineId": "m-pv01",
+     "organeId": "m-pv01.o1",
+     "pointId": "m-pv01.o1.tension",
+     "horodatage": 1791192199000,
+     "finLe": 1791192574000,
+     "acquitteeLe": 1791192319000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 161,
+     "seuil": 150,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-r07-1791175329",
+     "code": "TB-101",
+     "machineId": "m-r07",
+     "organeId": "m-r07.o1",
+     "pointId": "m-r07.o1.tension",
+     "horodatage": 1791175329000,
+     "finLe": 1791178110000,
+     "acquitteeLe": 1791175456000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 242.8,
+     "seuil": 225,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-r08-1791174861",
+     "code": "FN-03",
+     "machineId": "m-r08",
+     "organeId": "m-r08.o4",
+     "pointId": "m-r08.o4.reperage",
+     "horodatage": 1791174861000,
+     "finLe": 1791175535000,
+     "acquitteeLe": 1791175005000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 196.7,
+     "seuil": 180,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-r07-1791021079",
+     "code": "RW-05",
+     "machineId": "m-r07",
+     "organeId": "m-r07.o7",
+     "pointId": "m-r07.o7.tension",
+     "horodatage": 1791021079000,
+     "finLe": 1791021840000,
+     "acquitteeLe": 1791021280000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 170.9,
+     "seuil": 160,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-r05-1791001733",
+     "code": "UV-06",
+     "machineId": "m-r05",
+     "organeId": "m-r05.o5",
+     "pointId": "m-r05.o5.puissance_uv",
+     "horodatage": 1791001733000,
+     "finLe": 1791002039000,
+     "acquitteeLe": 1791001836000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 57.9,
+     "seuil": 62,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-r02-1791001281",
+     "code": "TB-101",
+     "machineId": "m-r02",
+     "organeId": "m-r02.o1",
+     "pointId": "m-r02.o1.tension",
+     "horodatage": 1791001281000,
+     "finLe": 1791002114000,
+     "acquitteeLe": 1791001484000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 241.5,
+     "seuil": 225,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-r05-1790965967",
+     "code": "TB-101",
+     "machineId": "m-r05",
+     "organeId": "m-r05.o1",
+     "pointId": "m-r05.o1.tension",
+     "horodatage": 1790965967000,
+     "finLe": 1790967299000,
+     "acquitteeLe": 1790966164000,
+     "acquitteePar": "Équipe après-midi",
+     "valeur": 235.7,
+     "seuil": 225,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-r03-1790960065",
+     "code": "RW-05",
+     "machineId": "m-r03",
+     "organeId": "m-r03.o7",
+     "pointId": "m-r03.o7.tension",
+     "horodatage": 1790960065000,
+     "finLe": 1790960442000,
+     "acquitteeLe": 1790960266000,
+     "acquitteePar": "Équipe après-midi",
+     "valeur": 169.2,
+     "seuil": 160,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-r02-1790955487",
+     "code": "DC-07",
+     "machineId": "m-r02",
+     "organeId": "m-r02.o6",
+     "pointId": "m-r02.o6.pression",
+     "horodatage": 1790955487000,
+     "finLe": 1790955863000,
+     "acquitteeLe": 1790955711000,
+     "acquitteePar": "Équipe après-midi",
+     "valeur": 6.17,
+     "seuil": 5.7,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-r04-1790955186",
+     "code": "RW-05",
+     "machineId": "m-r04",
+     "organeId": "m-r04.o7",
+     "pointId": "m-r04.o7.tension",
+     "horodatage": 1790955186000,
+     "finLe": 1790955674000,
+     "acquitteeLe": 1790955387000,
+     "acquitteePar": "Équipe après-midi",
+     "valeur": 165.1,
+     "seuil": 160,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-r01-1790943155",
+     "code": "EM-01",
+     "machineId": "m-r01",
+     "organeId": "m-r01.o7",
+     "pointId": "m-r01.o7.tension_dechet",
+     "horodatage": 1790943155000,
+     "finLe": 1790943872000,
+     "acquitteeLe": 1790943274000,
+     "acquitteePar": "Équipe après-midi",
+     "valeur": 3.75,
+     "seuil": 10,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-r03-1790941226",
+     "code": "UV-06",
+     "machineId": "m-r03",
+     "organeId": "m-r03.o5",
+     "pointId": "m-r03.o5.puissance_uv",
+     "horodatage": 1790941226000,
+     "finLe": 1790944314000,
+     "acquitteeLe": 1790941349000,
+     "acquitteePar": "Équipe après-midi",
+     "valeur": 59.3,
+     "seuil": 62,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-r02-1790922022",
+     "code": "RW-05",
+     "machineId": "m-r02",
+     "organeId": "m-r02.o7",
+     "pointId": "m-r02.o7.tension",
+     "horodatage": 1790922022000,
+     "finLe": 1790923108000,
+     "acquitteeLe": 1790922221000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 167.9,
+     "seuil": 160,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-r08-1790914553",
+     "code": "RW-05",
+     "machineId": "m-r08",
+     "organeId": "m-r08.o5",
+     "pointId": "m-r08.o5.tension",
+     "horodatage": 1790914553000,
+     "finLe": 1790918432000,
+     "acquitteeLe": 1790914683000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 119.8,
+     "seuil": 112,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-r05-1790912546",
+     "code": "RW-05",
+     "machineId": "m-r05",
+     "organeId": "m-r05.o7",
+     "pointId": "m-r05.o7.tension",
+     "horodatage": 1790912546000,
+     "finLe": 1790913757000,
+     "acquitteeLe": 1790912714000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 164.3,
+     "seuil": 160,
+     "regle": "seuil"
+    }
+   ],
+   "periodes": {
+    "m-r01": {
+     "n": 85,
+     "marche": 243684000,
+     "calage": 30638000,
+     "panne": 2878000,
+     "arret": 277200000
+    },
+    "m-r02": {
+     "n": 92,
+     "marche": 233936000,
+     "calage": 33483000,
+     "panne": 9781000,
+     "arret": 277200000
+    },
+    "m-r03": {
+     "n": 95,
+     "marche": 234004000,
+     "calage": 37862000,
+     "panne": 5334000,
+     "arret": 277200000
+    },
+    "m-r04": {
+     "n": 84,
+     "marche": 239937000,
+     "calage": 33429000,
+     "panne": 3834000,
+     "arret": 277200000
+    },
+    "m-r05": {
+     "n": 97,
+     "marche": 232922000,
+     "calage": 36574000,
+     "panne": 7704000,
+     "arret": 277200000
+    },
+    "m-r06": {
+     "n": 85,
+     "marche": 240097000,
+     "calage": 31245000,
+     "panne": 5858000,
+     "arret": 277200000
+    },
+    "m-r07": {
+     "n": 95,
+     "marche": 225710000,
+     "calage": 38804000,
+     "panne": 12686000,
+     "arret": 277200000
+    },
+    "m-r08": {
+     "n": 83,
+     "marche": 240413000,
+     "calage": 32234000,
+     "panne": 4553000,
+     "arret": 277200000
+    },
+    "m-pp01": {
+     "n": 70,
+     "marche": 221419000,
+     "calage": 26562000,
+     "panne": 419000,
+     "arret": 306000000
+    },
+    "m-rfid01": {
+     "n": 73,
+     "marche": 217712000,
+     "calage": 30350000,
+     "panne": 338000,
+     "arret": 306000000
+    },
+    "m-rf01": {
+     "n": 83,
+     "marche": 207343000,
+     "calage": 34127000,
+     "panne": 6930000,
+     "arret": 306000000
+    },
+    "m-rf02": {
+     "n": 78,
+     "marche": 216540000,
+     "calage": 29104000,
+     "panne": 2756000,
+     "arret": 306000000
+    },
+    "m-pv01": {
+     "n": 77,
+     "marche": 214996000,
+     "calage": 31741000,
+     "panne": 1663000,
+     "arret": 306000000
+    },
+    "m-fe01": {
+     "n": 79,
+     "marche": 216965000,
+     "calage": 30890000,
+     "panne": 545000,
+     "arret": 306000000
+    }
+   },
+   "trs": {
+    "m-r01": [
+     0.7469710541984669,
+     0.7187632968727985,
+     0,
+     0.7606043387823789,
+     0.7626913022544021,
+     0.768907977736988,
+     0.739483728120249
+    ],
+    "m-r02": [
+     0.7638215367266383,
+     0.7755159612738082,
+     0,
+     0.7843592462331288,
+     0.7715209288931705,
+     0.718901471628456,
+     0.6419465183562374
+    ],
+    "m-r03": [
+     0.6652145630636445,
+     0.6849912259197337,
+     0,
+     0.7076752010434593,
+     0.734090572428884,
+     0.7243554334851915,
+     0.7161232206320476
+    ],
+    "m-r04": [
+     0.7645773305573357,
+     0.791254553744642,
+     0,
+     0.7906128354846277,
+     0.7826165016011021,
+     0.7382291908368052,
+     0.7809932872313061
+    ],
+    "m-r05": [
+     0.7456605687597653,
+     0.692176455064565,
+     0,
+     0.7525996032973816,
+     0.7800841930137785,
+     0.6871959809032837,
+     0.7312519493972869
+    ],
+    "m-r06": [
+     0.7323557181949075,
+     0.8079378179906045,
+     0,
+     0.7349631565778465,
+     0.7644197959323759,
+     0.6564936362234798,
+     0.7495143687766057
+    ],
+    "m-r07": [
+     0.7370417681177678,
+     0.7132472386399032,
+     0,
+     0.7075559427834825,
+     0.6842073030847721,
+     0.5964968944139366,
+     0.7476072365262941
+    ],
+    "m-r08": [
+     0.6928676557029704,
+     0.7648271278527538,
+     0,
+     0.7048354836763261,
+     0.7567487231796544,
+     0.7270887972605135,
+     0.7261677955789603
+    ],
+    "m-pp01": [
+     0.7955818759494769,
+     0,
+     0,
+     0.7656499775737419,
+     0.762307003494847,
+     0.8231151696341261,
+     0.796322694242631
+    ],
+    "m-rfid01": [
+     0.7424152488830024,
+     0,
+     0,
+     0.7693396141193791,
+     0.757541891858529,
+     0.7585019277400644,
+     0.7201438549921657
+    ],
+    "m-rf01": [
+     0.7109233339245059,
+     0,
+     0,
+     0.7171474642600019,
+     0.6887046269095717,
+     0.6102233127579169,
+     0.7042299854880519
+    ],
+    "m-rf02": [
+     0.7583518224615495,
+     0,
+     0,
+     0.7248887762059062,
+     0.7163113257991973,
+     0.6863363545173384,
+     0.6019836589146039
+    ],
+    "m-pv01": [
+     0.7455762832574682,
+     0,
+     0,
+     0.7616781338859699,
+     0.7528930858681212,
+     0.7423400082464147,
+     0.8279586079633696
+    ],
+    "m-fe01": [
+     0.7500662930367673,
+     0,
+     0,
+     0.7396021848897725,
+     0.725976225852689,
+     0.7551601783337581,
+     0.6652566440716621
+    ]
+   },
+   "valeurs": [
+    {
+     "point": "m-r01.o1.tension",
+     "t": 1790910000000,
+     "v": 178.7748634071301
+    },
+    {
+     "point": "m-r01.o1.tension",
+     "t": 1790996400000,
+     "v": 176.34363575075406
+    },
+    {
+     "point": "m-r01.o1.tension",
+     "t": 1791082800000,
+     "v": 0.6764196887579748
+    },
+    {
+     "point": "m-r01.o1.tension",
+     "t": 1791255600000,
+     "v": 177.33502315764068
+    },
+    {
+     "point": "m-r01.o1.diametre",
+     "t": 1790910000000,
+     "v": 185.8092592592593
+    },
+    {
+     "point": "m-r01.o1.diametre",
+     "t": 1790996400000,
+     "v": 185.8092592592593
+    },
+    {
+     "point": "m-r01.o1.diametre",
+     "t": 1791082800000,
+     "v": 185.8092592592593
+    },
+    {
+     "point": "m-r01.o1.diametre",
+     "t": 1791255600000,
+     "v": 185.8092592592593
+    },
+    {
+     "point": "m-r01.o1.position",
+     "t": 1790910000000,
+     "v": -0.149017014896704
+    },
+    {
+     "point": "m-r01.o1.position",
+     "t": 1790996400000,
+     "v": -0.2321325351034269
+    },
+    {
+     "point": "m-r01.o1.position",
+     "t": 1791082800000,
+     "v": -0.3606952760177243
+    },
+    {
+     "point": "m-r01.o1.position",
+     "t": 1791255600000,
+     "v": 0.1913814411762489
+    },
+    {
+     "point": "m-r02.o1.tension",
+     "t": 1790910000000,
+     "v": 170.6343152182425
+    },
+    {
+     "point": "m-r02.o1.tension",
+     "t": 1790996400000,
+     "v": 172.03713762018438
+    },
+    {
+     "point": "m-r02.o1.tension",
+     "t": 1791082800000,
+     "v": 0
+    },
+    {
+     "point": "m-r02.o1.tension",
+     "t": 1791255600000,
+     "v": 170.42181778154534
+    },
+    {
+     "point": "m-r02.o1.diametre",
+     "t": 1790910000000,
+     "v": 314.6757062146892
+    },
+    {
+     "point": "m-r02.o1.diametre",
+     "t": 1790996400000,
+     "v": 630.2689265536724
+    },
+    {
+     "point": "m-r02.o1.diametre",
+     "t": 1791082800000,
+     "v": 413.86214689265535
+    },
+    {
+     "point": "m-r02.o1.diametre",
+     "t": 1791255600000,
+     "v": 513.0485875706215
+    },
+    {
+     "point": "m-r02.o2.conductivite",
+     "t": 1790910000000,
+     "v": 1196.8600798020257
+    },
+    {
+     "point": "m-r02.o2.conductivite",
+     "t": 1790996400000,
+     "v": 1217.3019072722755
+    },
+    {
+     "point": "m-r02.o2.conductivite",
+     "t": 1791082800000,
+     "v": 1188.281198864841
+    },
+    {
+     "point": "m-r02.o2.conductivite",
+     "t": 1791255600000,
+     "v": 1188.683262680452
+    },
+    {
+     "point": "m-r03.o1.tension",
+     "t": 1790910000000,
+     "v": 169.61557808403958
+    },
+    {
+     "point": "m-r03.o1.tension",
+     "t": 1790996400000,
+     "v": 170.84249204662217
+    },
+    {
+     "point": "m-r03.o1.tension",
+     "t": 1791082800000,
+     "v": 0
+    },
+    {
+     "point": "m-r03.o1.tension",
+     "t": 1791255600000,
+     "v": 169.34669410456414
+    },
+    {
+     "point": "m-r03.o1.diametre",
+     "t": 1790910000000,
+     "v": 496.4261261261262
+    },
+    {
+     "point": "m-r03.o1.diametre",
+     "t": 1790996400000,
+     "v": 251.99369369369367
+    },
+    {
+     "point": "m-r03.o1.diametre",
+     "t": 1791082800000,
+     "v": 539.5612612612613
+    },
+    {
+     "point": "m-r03.o1.diametre",
+     "t": 1791255600000,
+     "v": 582.6963963963964
+    },
+    {
+     "point": "m-r03.o2.conductivite",
+     "t": 1790910000000,
+     "v": 1191.8824247997372
+    },
+    {
+     "point": "m-r03.o2.conductivite",
+     "t": 1790996400000,
+     "v": 1207.5024899056925
+    },
+    {
+     "point": "m-r03.o2.conductivite",
+     "t": 1791082800000,
+     "v": 1201.7224487785036
+    },
+    {
+     "point": "m-r03.o2.conductivite",
+     "t": 1791255600000,
+     "v": 1207.5709949412787
+    },
+    {
+     "point": "m-r04.o1.tension",
+     "t": 1790910000000,
+     "v": 174.38715384956282
+    },
+    {
+     "point": "m-r04.o1.tension",
+     "t": 1790996400000,
+     "v": 172.48401545466015
+    },
+    {
+     "point": "m-r04.o1.tension",
+     "t": 1791082800000,
+     "v": 0.08664348591119052
+    },
+    {
+     "point": "m-r04.o1.tension",
+     "t": 1791255600000,
+     "v": 175.1468558170598
+    },
+    {
+     "point": "m-r04.o1.diametre",
+     "t": 1790910000000,
+     "v": 317.8338164251208
+    },
+    {
+     "point": "m-r04.o1.diametre",
+     "t": 1790996400000,
+     "v": 387.22512077294687
+    },
+    {
+     "point": "m-r04.o1.diametre",
+     "t": 1791082800000,
+     "v": 456.61642512077293
+    },
+    {
+     "point": "m-r04.o1.diametre",
+     "t": 1791255600000,
+     "v": 595.3990338164251
+    },
+    {
+     "point": "m-r04.o2.conductivite",
+     "t": 1790910000000,
+     "v": 1193.375606111331
+    },
+    {
+     "point": "m-r04.o2.conductivite",
+     "t": 1790996400000,
+     "v": 1201.0762849053658
+    },
+    {
+     "point": "m-r04.o2.conductivite",
+     "t": 1791082800000,
+     "v": 1207.2439202789046
+    },
+    {
+     "point": "m-r04.o2.conductivite",
+     "t": 1791255600000,
+     "v": 1198.6579423998849
+    },
+    {
+     "point": "m-r05.o1.tension",
+     "t": 1790910000000,
+     "v": 171.3116204798111
+    },
+    {
+     "point": "m-r05.o1.tension",
+     "t": 1790996400000,
+     "v": 172.52989059769584
+    },
+    {
+     "point": "m-r05.o1.tension",
+     "t": 1791082800000,
+     "v": 0.22987864229781554
+    },
+    {
+     "point": "m-r05.o1.tension",
+     "t": 1791255600000,
+     "v": 175.66178740972745
+    },
+    {
+     "point": "m-r05.o1.diametre",
+     "t": 1790910000000,
+     "v": 666.75
+    },
+    {
+     "point": "m-r05.o1.diametre",
+     "t": 1790996400000,
+     "v": 666.75
+    },
+    {
+     "point": "m-r05.o1.diametre",
+     "t": 1791082800000,
+     "v": 666.75
+    },
+    {
+     "point": "m-r05.o1.diametre",
+     "t": 1791255600000,
+     "v": 666.75
+    },
+    {
+     "point": "m-r05.o2.conductivite",
+     "t": 1790910000000,
+     "v": 1210.5003976636224
+    },
+    {
+     "point": "m-r05.o2.conductivite",
+     "t": 1790996400000,
+     "v": 1212.275804807728
+    },
+    {
+     "point": "m-r05.o2.conductivite",
+     "t": 1791082800000,
+     "v": 1210.29012482355
+    },
+    {
+     "point": "m-r05.o2.conductivite",
+     "t": 1791255600000,
+     "v": 1185.167073482714
+    },
+    {
+     "point": "m-r06.o1.tension",
+     "t": 1790910000000,
+     "v": 165.59086155167222
+    },
+    {
+     "point": "m-r06.o1.tension",
+     "t": 1790996400000,
+     "v": 170.16560663727347
+    },
+    {
+     "point": "m-r06.o1.tension",
+     "t": 1791082800000,
+     "v": 0
+    },
+    {
+     "point": "m-r06.o1.tension",
+     "t": 1791255600000,
+     "v": 171.83156293749911
+    },
+    {
+     "point": "m-r06.o1.diametre",
+     "t": 1790910000000,
+     "v": 188.48075117370894
+    },
+    {
+     "point": "m-r06.o1.diametre",
+     "t": 1790996400000,
+     "v": 570.6215962441315
+    },
+    {
+     "point": "m-r06.o1.diametre",
+     "t": 1791082800000,
+     "v": 420.762441314554
+    },
+    {
+     "point": "m-r06.o1.diametre",
+     "t": 1791255600000,
+     "v": 653.0441314553991
+    },
+    {
+     "point": "m-r06.o2.conductivite",
+     "t": 1790910000000,
+     "v": 1195.3307484130985
+    },
+    {
+     "point": "m-r06.o2.conductivite",
+     "t": 1790996400000,
+     "v": 1188.8081438215436
+    },
+    {
+     "point": "m-r06.o2.conductivite",
+     "t": 1791082800000,
+     "v": 1186.4433463148405
+    },
+    {
+     "point": "m-r06.o2.conductivite",
+     "t": 1791255600000,
+     "v": 1210.4967327269826
+    },
+    {
+     "point": "m-r07.o1.tension",
+     "t": 1790910000000,
+     "v": 175.7303856028332
+    },
+    {
+     "point": "m-r07.o1.tension",
+     "t": 1790996400000,
+     "v": 170.7809136490009
+    },
+    {
+     "point": "m-r07.o1.tension",
+     "t": 1791082800000,
+     "v": 0.07384526744484901
+    },
+    {
+     "point": "m-r07.o1.tension",
+     "t": 1791255600000,
+     "v": 178.73936224592248
+    },
+    {
+     "point": "m-r07.o1.diametre",
+     "t": 1790910000000,
+     "v": 630.3537634408602
+    },
+    {
+     "point": "m-r07.o1.diametre",
+     "t": 1790996400000,
+     "v": 510.2247311827957
+    },
+    {
+     "point": "m-r07.o1.diametre",
+     "t": 1791082800000,
+     "v": 390.0956989247312
+    },
+    {
+     "point": "m-r07.o1.diametre",
+     "t": 1791255600000,
+     "v": 681.8376344086022
+    },
+    {
+     "point": "m-r07.o2.conductivite",
+     "t": 1790910000000,
+     "v": 1198.9598764518157
+    },
+    {
+     "point": "m-r07.o2.conductivite",
+     "t": 1790996400000,
+     "v": 1195.4730459078717
+    },
+    {
+     "point": "m-r07.o2.conductivite",
+     "t": 1791082800000,
+     "v": 1194.6022534782796
+    },
+    {
+     "point": "m-r07.o2.conductivite",
+     "t": 1791255600000,
+     "v": 1193.5321742085957
+    },
+    {
+     "point": "m-r08.o1.tension",
+     "t": 1790910000000,
+     "v": 95.8880592169882
+    },
+    {
+     "point": "m-r08.o1.tension",
+     "t": 1790996400000,
+     "v": 96.15120218603742
+    },
+    {
+     "point": "m-r08.o1.tension",
+     "t": 1791082800000,
+     "v": 0
+    },
+    {
+     "point": "m-r08.o1.tension",
+     "t": 1791255600000,
+     "v": 94.63913978111476
+    },
+    {
+     "point": "m-r08.o1.diametre",
+     "t": 1790910000000,
+     "v": 271.3122807017544
+    },
+    {
+     "point": "m-r08.o1.diametre",
+     "t": 1790996400000,
+     "v": 172.3649122807018
+    },
+    {
+     "point": "m-r08.o1.diametre",
+     "t": 1791082800000,
+     "v": 449.41754385964913
+    },
+    {
+     "point": "m-r08.o1.diametre",
+     "t": 1791255600000,
+     "v": 251.52280701754387
+    },
+    {
+     "point": "m-r08.o2.buses",
+     "t": 1790910000000,
+     "v": 0.8253811275299172
+    },
+    {
+     "point": "m-r08.o2.buses",
+     "t": 1790996400000,
+     "v": 0.5294399370203091
+    },
+    {
+     "point": "m-r08.o2.buses",
+     "t": 1791082800000,
+     "v": 0.3830585485248985
+    },
+    {
+     "point": "m-r08.o2.buses",
+     "t": 1791255600000,
+     "v": 1.0641664920667941
+    },
+    {
+     "point": "m-pp01.o1.stock",
+     "t": 1790910000000,
+     "v": 55.43606557377049
+    },
+    {
+     "point": "m-pp01.o1.stock",
+     "t": 1790996400000,
+     "v": 112.09180327868853
+    },
+    {
+     "point": "m-pp01.o1.stock",
+     "t": 1791082800000,
+     "v": 168.74754098360657
+    },
+    {
+     "point": "m-pp01.o1.stock",
+     "t": 1791255600000,
+     "v": 138.05901639344262
+    },
+    {
+     "point": "m-pp01.o2.puissance_diode",
+     "t": 1790910000000,
+     "v": 97.88236244342521
+    },
+    {
+     "point": "m-pp01.o2.puissance_diode",
+     "t": 1790996400000,
+     "v": 0
+    },
+    {
+     "point": "m-pp01.o2.puissance_diode",
+     "t": 1791082800000,
+     "v": 0
+    },
+    {
+     "point": "m-pp01.o2.puissance_diode",
+     "t": 1791255600000,
+     "v": 97.60183904232184
+    },
+    {
+     "point": "m-pp01.o2.temperature",
+     "t": 1790910000000,
+     "v": 24.911825749992374
+    },
+    {
+     "point": "m-pp01.o2.temperature",
+     "t": 1790996400000,
+     "v": 20.40822101640976
+    },
+    {
+     "point": "m-pp01.o2.temperature",
+     "t": 1791082800000,
+     "v": 20.379630206179712
+    },
+    {
+     "point": "m-pp01.o2.temperature",
+     "t": 1791255600000,
+     "v": 24.81316493178486
+    },
+    {
+     "point": "m-rfid01.o1.echecs",
+     "t": 1790910000000,
+     "v": 0.36014102795587816
+    },
+    {
+     "point": "m-rfid01.o1.echecs",
+     "t": 1790996400000,
+     "v": 0.2558032844463367
+    },
+    {
+     "point": "m-rfid01.o1.echecs",
+     "t": 1791082800000,
+     "v": 0.4983221703915909
+    },
+    {
+     "point": "m-rfid01.o1.echecs",
+     "t": 1791255600000,
+     "v": 0.3593647182626623
+    },
+    {
+     "point": "m-rfid01.o1.puissance_rf",
+     "t": 1790910000000,
+     "v": 23.937788773867602
+    },
+    {
+     "point": "m-rfid01.o1.puissance_rf",
+     "t": 1790996400000,
+     "v": 0
+    },
+    {
+     "point": "m-rfid01.o1.puissance_rf",
+     "t": 1791082800000,
+     "v": 0
+    },
+    {
+     "point": "m-rfid01.o1.puissance_rf",
+     "t": 1791255600000,
+     "v": 23.94518547956677
+    },
+    {
+     "point": "m-rfid01.o1.temperature_tete",
+     "t": 1790910000000,
+     "v": 37.45149014334917
+    },
+    {
+     "point": "m-rfid01.o1.temperature_tete",
+     "t": 1790996400000,
+     "v": 20.87145028329082
+    },
+    {
+     "point": "m-rfid01.o1.temperature_tete",
+     "t": 1791082800000,
+     "v": 20.569214205420202
+    },
+    {
+     "point": "m-rfid01.o1.temperature_tete",
+     "t": 1791255600000,
+     "v": 36.793170214245734
+    },
+    {
+     "point": "m-rf01.o1.tension",
+     "t": 1790910000000,
+     "v": 149.12488555072107
+    },
+    {
+     "point": "m-rf01.o1.tension",
+     "t": 1790996400000,
+     "v": 0
+    },
+    {
+     "point": "m-rf01.o1.tension",
+     "t": 1791082800000,
+     "v": 0.22275570692904295
+    },
+    {
+     "point": "m-rf01.o1.tension",
+     "t": 1791255600000,
+     "v": 153.61293806115148
+    },
+    {
+     "point": "m-rf01.o1.diametre",
+     "t": 1790910000000,
+     "v": 752.1888888888889
+    },
+    {
+     "point": "m-rf01.o1.diametre",
+     "t": 1790996400000,
+     "v": 752.1888888888889
+    },
+    {
+     "point": "m-rf01.o1.diametre",
+     "t": 1791082800000,
+     "v": 752.1888888888889
+    },
+    {
+     "point": "m-rf01.o1.diametre",
+     "t": 1791255600000,
+     "v": 752.1888888888889
+    },
+    {
+     "point": "m-rf01.o2.manquantes",
+     "t": 1790910000000,
+     "v": 0.2522028625605662
+    },
+    {
+     "point": "m-rf01.o2.manquantes",
+     "t": 1790996400000,
+     "v": 0.19102199150159982
+    },
+    {
+     "point": "m-rf01.o2.manquantes",
+     "t": 1791082800000,
+     "v": 0.26973108057132406
+    },
+    {
+     "point": "m-rf01.o2.manquantes",
+     "t": 1791255600000,
+     "v": 0.05111875380031555
+    },
+    {
+     "point": "m-rf02.o1.tension",
+     "t": 1790910000000,
+     "v": 151.956986344554
+    },
+    {
+     "point": "m-rf02.o1.tension",
+     "t": 1790996400000,
+     "v": 0
+    },
+    {
+     "point": "m-rf02.o1.tension",
+     "t": 1791082800000,
+     "v": 0
+    },
+    {
+     "point": "m-rf02.o1.tension",
+     "t": 1791255600000,
+     "v": 146.35959317611886
+    },
+    {
+     "point": "m-rf02.o1.diametre",
+     "t": 1790910000000,
+     "v": 472.54129353233833
+    },
+    {
+     "point": "m-rf02.o1.diametre",
+     "t": 1790996400000,
+     "v": 180.95920398009946
+    },
+    {
+     "point": "m-rf02.o1.diametre",
+     "t": 1791082800000,
+     "v": 481.3771144278607
+    },
+    {
+     "point": "m-rf02.o1.diametre",
+     "t": 1791255600000,
+     "v": 490.2129353233831
+    },
+    {
+     "point": "m-rf02.o2.manquantes",
+     "t": 1790910000000,
+     "v": 0.20253669918707573
+    },
+    {
+     "point": "m-rf02.o2.manquantes",
+     "t": 1790996400000,
+     "v": 0.20281135365931913
+    },
+    {
+     "point": "m-rf02.o2.manquantes",
+     "t": 1791082800000,
+     "v": 0.22427077902062184
+    },
+    {
+     "point": "m-rf02.o2.manquantes",
+     "t": 1791255600000,
+     "v": 0.165929207953416
+    },
+    {
+     "point": "m-pv01.o1.tension",
+     "t": 1790910000000,
+     "v": 109.6664921177301
+    },
+    {
+     "point": "m-pv01.o1.tension",
+     "t": 1790996400000,
+     "v": 0
+    },
+    {
+     "point": "m-pv01.o1.tension",
+     "t": 1791082800000,
+     "v": 0
+    },
+    {
+     "point": "m-pv01.o1.tension",
+     "t": 1791255600000,
+     "v": 110.54870408975442
+    },
+    {
+     "point": "m-pv01.o1.diametre",
+     "t": 1790910000000,
+     "v": 288.84193548387094
+    },
+    {
+     "point": "m-pv01.o1.diametre",
+     "t": 1790996400000,
+     "v": 188.58387096774192
+    },
+    {
+     "point": "m-pv01.o1.diametre",
+     "t": 1791082800000,
+     "v": 532.325806451613
+    },
+    {
+     "point": "m-pv01.o1.diametre",
+     "t": 1791255600000,
+     "v": 331.80967741935484
+    },
+    {
+     "point": "m-pv01.o2.decalage",
+     "t": 1790910000000,
+     "v": 0.0908887260265788
+    },
+    {
+     "point": "m-pv01.o2.decalage",
+     "t": 1790996400000,
+     "v": 0.11964991163918112
+    },
+    {
+     "point": "m-pv01.o2.decalage",
+     "t": 1791082800000,
+     "v": 0.1030398818882198
+    },
+    {
+     "point": "m-pv01.o2.decalage",
+     "t": 1791255600000,
+     "v": 0.08618034060974428
+    },
+    {
+     "point": "m-fe01.o1.tension",
+     "t": 1790910000000,
+     "v": 88.81044187144573
+    },
+    {
+     "point": "m-fe01.o1.tension",
+     "t": 1790996400000,
+     "v": 0
+    },
+    {
+     "point": "m-fe01.o1.tension",
+     "t": 1791082800000,
+     "v": 0.14967139176405964
+    },
+    {
+     "point": "m-fe01.o1.tension",
+     "t": 1791255600000,
+     "v": 87.54269395724008
+    },
+    {
+     "point": "m-fe01.o1.diametre",
+     "t": 1790910000000,
+     "v": 427.1761194029851
+    },
+    {
+     "point": "m-fe01.o1.diametre",
+     "t": 1790996400000,
+     "v": 261.68358208955226
+    },
+    {
+     "point": "m-fe01.o1.diametre",
+     "t": 1791082800000,
+     "v": 432.1910447761194
+    },
+    {
+     "point": "m-fe01.o1.diametre",
+     "t": 1791255600000,
+     "v": 437.20597014925374
+    },
+    {
+     "point": "m-fe01.o2.longueur",
+     "t": 1790910000000,
+     "v": 296.9892387534752
+    },
+    {
+     "point": "m-fe01.o2.longueur",
+     "t": 1790996400000,
+     "v": 297.07383407157874
+    },
+    {
+     "point": "m-fe01.o2.longueur",
+     "t": 1791082800000,
+     "v": 296.98592566321537
+    },
+    {
+     "point": "m-fe01.o2.longueur",
+     "t": 1791255600000,
+     "v": 297.0248304500835
+    },
+    {
+     "point": "m-r01.o7.tension_dechet",
+     "t": 1791443700000,
+     "v": 27.030705167871798
+    },
+    {
+     "point": "m-r01.o7.tension_dechet",
+     "t": 1791443879000,
+     "v": 27.066134176396474
+    },
+    {
+     "point": "m-r01.o7.tension_dechet",
+     "t": 1791443890000,
+     "v": 3
+    },
+    {
+     "point": "m-rf02.o2.manquantes",
+     "t": 1791442674000,
+     "v": 0.12352164431198251
+    },
+    {
+     "point": "m-rf02.o2.manquantes",
+     "t": 1791442853000,
+     "v": 0.11374854314977506
+    },
+    {
+     "point": "m-rf02.o2.manquantes",
+     "t": 1791442864000,
+     "v": 4.2
+    }
+   ],
+   "maintenance": {
+    "echeances": [
+     {
+      "id": "m-r01:outil",
+      "compteur": 182.056875,
+      "statut": "ok",
+      "echeance": 1794547938461.5386
+     },
+     {
+      "id": "m-r01:uv",
+      "compteur": 1622.9208229284266,
+      "statut": "en_retard",
+      "echeance": 1790441444138.9937
+     },
+     {
+      "id": "m-r01:anilox",
+      "compteur": 154.05892869383098,
+      "statut": "a_planifier",
+      "echeance": 1791496859032.8281
+     },
+     {
+      "id": "m-r01:racle",
+      "compteur": 46.882222222222225,
+      "statut": "a_planifier",
+      "echeance": 1792047055015.512
+     },
+     {
+      "id": "m-r01:groupes",
+      "compteur": 230.48652150144335,
+      "statut": "a_planifier",
+      "echeance": 1791608020837.3408
+     },
+     {
+      "id": "m-r01:frein",
+      "compteur": 548.9884135941975,
+      "statut": "en_retard",
+      "echeance": 1791046971214.4094
+     },
+     {
+      "id": "m-r01:armoire",
+      "compteur": 42.895833333333336,
+      "statut": "ok",
+      "echeance": 1795518000000
+     },
+     {
+      "id": "m-r02:blanchet",
+      "compteur": 610.1906250000001,
+      "statut": "ok",
+      "echeance": 1796073285245.9016
+     },
+     {
+      "id": "m-r02:outil",
+      "compteur": 96.03,
+      "statut": "ok",
+      "echeance": 1802486400000
+     },
+     {
+      "id": "m-r02:uv",
+      "compteur": 1006.2653485173361,
+      "statut": "ok",
+      "echeance": 1795660528871.209
+     },
+     {
+      "id": "m-r02:mouillage",
+      "compteur": 161.3254016302526,
+      "statut": "a_planifier",
+      "echeance": 1791778154818.4558
+     },
+     {
+      "id": "m-r02:encrage",
+      "compteur": 190.76130498899147,
+      "statut": "a_planifier",
+      "echeance": 1791953598728.9292
+     },
+     {
+      "id": "m-r02:frein",
+      "compteur": 330.7480535027571,
+      "statut": "ok",
+      "echeance": 1792892183845.569
+     },
+     {
+      "id": "m-r03:blanchet",
+      "compteur": 610.1906249999998,
+      "statut": "ok",
+      "echeance": 1796073285245.9016
+     },
+     {
+      "id": "m-r03:outil",
+      "compteur": 96.03,
+      "statut": "ok",
+      "echeance": 1802486400000
+     },
+     {
+      "id": "m-r03:uv",
+      "compteur": 1005.8301741827745,
+      "statut": "ok",
+      "echeance": 1795663016435.4414
+     },
+     {
+      "id": "m-r03:mouillage",
+      "compteur": 173.399380822666,
+      "statut": "a_planifier",
+      "echeance": 1791675078941.2954
+     },
+     {
+      "id": "m-r03:encrage",
+      "compteur": 169.54586828127503,
+      "statut": "ok",
+      "echeance": 1792134400125.8503
+     },
+     {
+      "id": "m-r03:frein",
+      "compteur": 267.76594447554083,
+      "statut": "ok",
+      "echeance": 1793428943993.171
+     },
+     {
+      "id": "m-r04:blanchet",
+      "compteur": 610.1906250000002,
+      "statut": "ok",
+      "echeance": 1796073285245.9016
+     },
+     {
+      "id": "m-r04:outil",
+      "compteur": 96.03000000000002,
+      "statut": "ok",
+      "echeance": 1802486400000
+     },
+     {
+      "id": "m-r04:uv",
+      "compteur": 539.0314289100934,
+      "statut": "ok",
+      "echeance": 1799441712934.3289
+     },
+     {
+      "id": "m-r04:mouillage",
+      "compteur": 45.999722222222225,
+      "statut": "ok",
+      "echeance": 1792729202573.1755
+     },
+     {
+      "id": "m-r04:encrage",
+      "compteur": 237.16393084207084,
+      "statut": "a_planifier",
+      "echeance": 1791554972778.972
+     },
+     {
+      "id": "m-r04:frein",
+      "compteur": 283.81752619869076,
+      "statut": "ok",
+      "echeance": 1793246445491.5732
+     },
+     {
+      "id": "m-r05:blanchet",
+      "compteur": 610.1906249999998,
+      "statut": "ok",
+      "echeance": 1796073285245.9016
+     },
+     {
+      "id": "m-r05:outil",
+      "compteur": 96.03,
+      "statut": "ok",
+      "echeance": 1802486400000
+     },
+     {
+      "id": "m-r05:uv",
+      "compteur": 730.1850775850471,
+      "statut": "ok",
+      "echeance": 1798044517285.4116
+     },
+     {
+      "id": "m-r05:mouillage",
+      "compteur": 114.54494743235408,
+      "statut": "ok",
+      "echeance": 1792180439170.695
+     },
+     {
+      "id": "m-r05:encrage",
+      "compteur": 44.74333333333333,
+      "statut": "ok",
+      "echeance": 1793206983908.7764
+     },
+     {
+      "id": "m-r05:frein",
+      "compteur": 480.9035335108638,
+      "statut": "a_planifier",
+      "echeance": 1791611831995.5938
+     },
+     {
+      "id": "m-r06:blanchet",
+      "compteur": 610.1906250000001,
+      "statut": "ok",
+      "echeance": 1796073285245.9016
+     },
+     {
+      "id": "m-r06:outil",
+      "compteur": 96.03000000000002,
+      "statut": "ok",
+      "echeance": 1802486400000
+     },
+     {
+      "id": "m-r06:uv",
+      "compteur": 485.0979017768986,
+      "statut": "ok",
+      "echeance": 1799884716090.2368
+     },
+     {
+      "id": "m-r06:mouillage",
+      "compteur": 215.6860967767425,
+      "statut": "en_retard",
+      "echeance": 1791317807119.6604
+     },
+     {
+      "id": "m-r06:encrage",
+      "compteur": 82.25009061163291,
+      "statut": "ok",
+      "echeance": 1792842644658.4243
+     },
+     {
+      "id": "m-r06:frein",
+      "compteur": 539.1966858925298,
+      "statut": "en_retard",
+      "echeance": 1791122372048.9146
+     },
+     {
+      "id": "m-r07:blanchet",
+      "compteur": 610.190625,
+      "statut": "ok",
+      "echeance": 1796073285245.9016
+     },
+     {
+      "id": "m-r07:outil",
+      "compteur": 96.02999999999997,
+      "statut": "ok",
+      "echeance": 1802486400000
+     },
+     {
+      "id": "m-r07:uv",
+      "compteur": 628.2802030770108,
+      "statut": "ok",
+      "echeance": 1799156379697.3584
+     },
+     {
+      "id": "m-r07:mouillage",
+      "compteur": 113.4858304024674,
+      "statut": "ok",
+      "echeance": 1792213201285.9402
+     },
+     {
+      "id": "m-r07:encrage",
+      "compteur": 163.32304025476333,
+      "statut": "ok",
+      "echeance": 1792214640757.3342
+     },
+     {
+      "id": "m-r07:frein",
+      "compteur": 305.2737749752123,
+      "statut": "ok",
+      "echeance": 1793170066062.4407
+     },
+     {
+      "id": "m-r08:tetes",
+      "compteur": 11.708333333333334,
+      "statut": "a_planifier",
+      "echeance": 1791683069329.0295
+     },
+     {
+      "id": "m-r08:filtre",
+      "compteur": 345.090153652709,
+      "statut": "ok",
+      "echeance": 1796885074327.6519
+     },
+     {
+      "id": "m-r08:cellule",
+      "compteur": 8.895833333333334,
+      "statut": "ok",
+      "echeance": 1793271600000
+     },
+     {
+      "id": "m-pp01:bain",
+      "compteur": 19.895833333333332,
+      "statut": "a_planifier",
+      "echeance": 1791543600000
+     },
+     {
+      "id": "m-pp01:ventouses",
+      "compteur": 2.8958333333333335,
+      "statut": "ok",
+      "echeance": 1792407600000
+     },
+     {
+      "id": "m-pp01:laser",
+      "compteur": 86.89583333333333,
+      "statut": "a_planifier",
+      "echeance": 1791716400000
+     },
+     {
+      "id": "m-rfid01:tete",
+      "compteur": 46.395,
+      "statut": "ok",
+      "echeance": 1792856349312.8538
+     },
+     {
+      "id": "m-rfid01:rf",
+      "compteur": 29.895833333333332,
+      "statut": "ok",
+      "echeance": 1794049200000
+     },
+     {
+      "id": "m-rf01:lame3",
+      "compteur": 46.01437500000001,
+      "statut": "ok",
+      "echeance": 1797206400000
+     },
+     {
+      "id": "m-rf01:frein",
+      "compteur": 136.34432642371394,
+      "statut": "ok",
+      "echeance": 1794948672837.5227
+     },
+     {
+      "id": "m-rf01:capteur",
+      "compteur": 19.895833333333332,
+      "statut": "ok",
+      "echeance": 1794913200000
+     },
+     {
+      "id": "m-rf02:lame3",
+      "compteur": 46.014374999999994,
+      "statut": "ok",
+      "echeance": 1797206400000
+     },
+     {
+      "id": "m-rf02:frein",
+      "compteur": 357.57577577023767,
+      "statut": "ok",
+      "echeance": 1792760918036.791
+     },
+     {
+      "id": "m-rf02:capteur",
+      "compteur": 22.895833333333332,
+      "statut": "ok",
+      "echeance": 1794654000000
+     },
+     {
+      "id": "m-pv01:perforateur",
+      "compteur": 38.01187499999999,
+      "statut": "ok",
+      "echeance": 1799631663157.8948
+     },
+     {
+      "id": "m-pv01:pliage",
+      "compteur": 52.63361111111111,
+      "statut": "ok",
+      "echeance": 1793744539157.9377
+     },
+     {
+      "id": "m-fe01:couteau",
+      "compteur": 52.01625,
+      "statut": "ok",
+      "echeance": 1795877169230.7693
+     },
+     {
+      "id": "m-fe01:ioniseur",
+      "compteur": 9.895833333333334,
+      "statut": "ok",
+      "echeance": 1793185200000
+     }
+    ],
+    "previsions": [
+     {
+      "pointId": "m-r04.o5.puissance_uv",
+      "valeur": 75.3241829015761,
+      "pente": -1.3472244908972646,
+      "niveau": "attention",
+      "franchissement": 1791661386001.7664
+     }
+    ]
+   },
+   "energie": {
+    "kwh": {
+     "marche": 31599.842777777776,
+     "calage": 2173.0525,
+     "panne": 209.37097222222224,
+     "arret": 1858.5
+    },
+    "production": 28366144.105462402,
+    "pic": {
+     "t": 1791171000000,
+     "kw": 487
+    }
+   },
+   "chronologies": [
+    {
+     "alarme": "h-m-r01-1791443880",
+     "debut": 1791443280000,
+     "fin": 1791445202000,
+     "pas": 5000,
+     "evenements": [
+      {
+       "etape": "alarme",
+       "t": 1791443880000
+      },
+      {
+       "etape": "acquittement",
+       "t": 1791444027000
+      },
+      {
+       "etape": "reparation",
+       "t": 1791444420000
+      },
+      {
+       "etape": "redemarrage",
+       "t": 1791444420000
+      },
+      {
+       "etape": "production",
+       "t": 1791445142000
+      }
+     ]
+    },
+    {
+     "alarme": "h-m-rf02-1791442854",
+     "debut": 1791442254000,
+     "fin": 1791445610000,
+     "pas": 5000,
+     "evenements": [
+      {
+       "etape": "alarme",
+       "t": 1791442854000
+      },
+      {
+       "etape": "acquittement",
+       "t": 1791443010000
+      },
+      {
+       "etape": "reparation",
+       "t": 1791445310000
+      },
+      {
+       "etape": "redemarrage",
+       "t": 1791445310000
+      },
+      {
+       "etape": "production",
+       "t": 1791445550000
+      }
+     ]
+    },
+    {
+     "alarme": "h-m-r01-1791437760",
+     "debut": 1791437160000,
+     "fin": 1791438600000,
+     "pas": 5000,
+     "evenements": [
+      {
+       "etape": "alarme",
+       "t": 1791437760000
+      },
+      {
+       "etape": "acquittement",
+       "t": 1791437819000
+      },
+      {
+       "etape": "reparation",
+       "t": 1791438300000
+      },
+      {
+       "etape": "redemarrage",
+       "t": 1791438300000
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "site-crissey",
+   "debut": 1790892000000,
+   "fin": 1791446400000,
+   "alarmes": [
+    {
+     "id": "h-m-cr-rf01-1791441715",
+     "code": "RW-07",
+     "machineId": "m-cr-rf01",
+     "organeId": "m-cr-rf01.o4",
+     "pointId": "m-cr-rf01.o4.ecart_comptage",
+     "horodatage": 1791441715000,
+     "finLe": 1791444983000,
+     "acquitteeLe": 1791441844000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 1.71,
+     "seuil": 1,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-cr-r02-1791387008",
+     "code": "UV-02",
+     "machineId": "m-cr-r02",
+     "organeId": "m-cr-r02.o3",
+     "pointId": "m-cr-r02.o3.temperature_led",
+     "horodatage": 1791387008000,
+     "finLe": 1791387387000,
+     "acquitteeLe": 1791387232000,
+     "acquitteePar": "Équipe après-midi",
+     "valeur": 66.2,
+     "seuil": 62,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-cr-r01-1791381279",
+     "code": "RW-05",
+     "machineId": "m-cr-r01",
+     "organeId": "m-cr-r01.o7",
+     "pointId": "m-cr-r01.o7.tension",
+     "horodatage": 1791381279000,
+     "finLe": 1791385363000,
+     "acquitteeLe": 1791381460000,
+     "acquitteePar": "Équipe après-midi",
+     "valeur": 165.3,
+     "seuil": 160,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-cr-pp01-1791353507",
+     "code": "PL-11",
+     "machineId": "m-cr-pp01",
+     "organeId": "m-cr-pp01.o1",
+     "pointId": "m-cr-pp01.o1.bourrage",
+     "horodatage": 1791353507000,
+     "finLe": 1791354350000,
+     "acquitteeLe": 1791353561000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 0.98,
+     "seuil": 0.5,
+     "regle": "automate"
+    },
+    {
+     "id": "h-m-cr-r02-1791303642",
+     "code": "FN-03",
+     "machineId": "m-cr-r02",
+     "organeId": "m-cr-r02.o4",
+     "pointId": "m-cr-r02.o4.reperage",
+     "horodatage": 1791303642000,
+     "finLe": 1791307054000,
+     "acquitteeLe": 1791303810000,
+     "acquitteePar": "Équipe après-midi",
+     "valeur": 203.9,
+     "seuil": 180,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-cr-r01-1791271376",
+     "code": "RG-04",
+     "machineId": "m-cr-r01",
+     "organeId": "m-cr-r01.o4",
+     "pointId": "m-cr-r01.o4.reperage",
+     "horodatage": 1791271376000,
+     "finLe": 1791272365000,
+     "acquitteeLe": 1791271470000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 141.8,
+     "seuil": 100,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-cr-fe02-1791261405",
+     "code": "TB-101",
+     "machineId": "m-cr-fe02",
+     "organeId": "m-cr-fe02.o1",
+     "pointId": "m-cr-fe02.o1.tension",
+     "horodatage": 1791261405000,
+     "finLe": 1791261897000,
+     "acquitteeLe": 1791261523000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 128.9,
+     "seuil": 125,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-cr-r02-1791261135",
+     "code": "TB-101",
+     "machineId": "m-cr-r02",
+     "organeId": "m-cr-r02.o1",
+     "pointId": "m-cr-r02.o1.tension",
+     "horodatage": 1791261135000,
+     "finLe": 1791261559000,
+     "acquitteeLe": 1791261331000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 136.5,
+     "seuil": 130,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-cr-rf01-1791260538",
+     "code": "KN-02",
+     "machineId": "m-cr-rf01",
+     "organeId": "m-cr-rf01.o3",
+     "pointId": "m-cr-rf01.o3.usure_lame3",
+     "horodatage": 1791260538000,
+     "finLe": 1791262302000,
+     "acquitteeLe": 1791260755000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 98,
+     "seuil": 92,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-cr-r01-1791260535",
+     "code": "DC-07",
+     "machineId": "m-cr-r01",
+     "organeId": "m-cr-r01.o6",
+     "pointId": "m-cr-r01.o6.pression",
+     "horodatage": 1791260535000,
+     "finLe": 1791264647000,
+     "acquitteeLe": 1791260756000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 6.15,
+     "seuil": 5.7,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-cr-r02-1791191076",
+     "code": "TB-101",
+     "machineId": "m-cr-r02",
+     "organeId": "m-cr-r02.o1",
+     "pointId": "m-cr-r02.o1.tension",
+     "horodatage": 1791191076000,
+     "finLe": 1791191677000,
+     "acquitteeLe": 1791191263000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 140.1,
+     "seuil": 130,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-cr-fe01-1791190616",
+     "code": "TB-101",
+     "machineId": "m-cr-fe01",
+     "organeId": "m-cr-fe01.o1",
+     "pointId": "m-cr-fe01.o1.tension",
+     "horodatage": 1791190616000,
+     "finLe": 1791191640000,
+     "acquitteeLe": 1791190749000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 129.2,
+     "seuil": 125,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-cr-fe01-1791180256",
+     "code": "TB-101",
+     "machineId": "m-cr-fe01",
+     "organeId": "m-cr-fe01.o1",
+     "pointId": "m-cr-fe01.o1.tension",
+     "horodatage": 1791180256000,
+     "finLe": 1791181015000,
+     "acquitteeLe": 1791180411000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 130.1,
+     "seuil": 125,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-cr-r02-1791023204",
+     "code": "RW-05",
+     "machineId": "m-cr-r02",
+     "organeId": "m-cr-r02.o5",
+     "pointId": "m-cr-r02.o5.tension",
+     "horodatage": 1791023204000,
+     "finLe": 1791023532000,
+     "acquitteeLe": 1791023365000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 120.2,
+     "seuil": 112,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-cr-r01-1791022786",
+     "code": "DC-07",
+     "machineId": "m-cr-r01",
+     "organeId": "m-cr-r01.o6",
+     "pointId": "m-cr-r01.o6.pression",
+     "horodatage": 1791022786000,
+     "finLe": 1791023140000,
+     "acquitteeLe": 1791022893000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 6.13,
+     "seuil": 5.7,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-cr-fe02-1790958841",
+     "code": "CT-02",
+     "machineId": "m-cr-fe02",
+     "organeId": "m-cr-fe02.o2",
+     "pointId": "m-cr-fe02.o2.longueur",
+     "horodatage": 1790958841000,
+     "finLe": 1790959573000,
+     "acquitteeLe": 1790959013000,
+     "acquitteePar": "Équipe après-midi",
+     "valeur": 298.2,
+     "seuil": 297.8,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-cr-fe01-1790936727",
+     "code": "TB-101",
+     "machineId": "m-cr-fe01",
+     "organeId": "m-cr-fe01.o1",
+     "pointId": "m-cr-fe01.o1.tension",
+     "horodatage": 1790936727000,
+     "finLe": 1790940533000,
+     "acquitteeLe": 1790936923000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 134.1,
+     "seuil": 125,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-cr-pp01-1790932780",
+     "code": "PL-11",
+     "machineId": "m-cr-pp01",
+     "organeId": "m-cr-pp01.o1",
+     "pointId": "m-cr-pp01.o1.bourrage",
+     "horodatage": 1790932780000,
+     "finLe": 1790934702000,
+     "acquitteeLe": 1790932855000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 1.05,
+     "seuil": 0.5,
+     "regle": "automate"
+    },
+    {
+     "id": "h-m-cr-r03-1790926372",
+     "code": "UV-02",
+     "machineId": "m-cr-r03",
+     "organeId": "m-cr-r03.o3",
+     "pointId": "m-cr-r03.o3.temperature_led",
+     "horodatage": 1790926372000,
+     "finLe": 1790929384000,
+     "acquitteeLe": 1790926446000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 67.6,
+     "seuil": 62,
+     "regle": "seuil"
+    },
+    {
+     "id": "h-m-cr-pp01-1790914958",
+     "code": "PL-11",
+     "machineId": "m-cr-pp01",
+     "organeId": "m-cr-pp01.o1",
+     "pointId": "m-cr-pp01.o1.bourrage",
+     "horodatage": 1790914958000,
+     "finLe": 1790915360000,
+     "acquitteeLe": 1790915169000,
+     "acquitteePar": "Équipe matin",
+     "valeur": 0.98,
+     "seuil": 0.5,
+     "regle": "automate"
+    }
+   ],
+   "periodes": {
+    "m-cr-pp01": {
+     "n": 79,
+     "marche": 218051000,
+     "calage": 27182000,
+     "panne": 3167000,
+     "arret": 306000000
+    },
+    "m-cr-fe01": {
+     "n": 80,
+     "marche": 211016000,
+     "calage": 31795000,
+     "panne": 5589000,
+     "arret": 306000000
+    },
+    "m-cr-rfid01": {
+     "n": 68,
+     "marche": 221322000,
+     "calage": 27078000,
+     "panne": 0,
+     "arret": 306000000
+    },
+    "m-cr-r01": {
+     "n": 90,
+     "marche": 233688000,
+     "calage": 33973000,
+     "panne": 9539000,
+     "arret": 277200000
+    },
+    "m-cr-r02": {
+     "n": 92,
+     "marche": 240066000,
+     "calage": 31990000,
+     "panne": 5144000,
+     "arret": 277200000
+    },
+    "m-cr-r03": {
+     "n": 81,
+     "marche": 240379000,
+     "calage": 33809000,
+     "panne": 3012000,
+     "arret": 277200000
+    },
+    "m-cr-rf01": {
+     "n": 71,
+     "marche": 216698000,
+     "calage": 26670000,
+     "panne": 5032000,
+     "arret": 306000000
+    },
+    "m-cr-fe02": {
+     "n": 73,
+     "marche": 217194000,
+     "calage": 29982000,
+     "panne": 1224000,
+     "arret": 306000000
+    }
+   },
+   "trs": {
+    "m-cr-pp01": [
+     0.7146651157469156,
+     0,
+     0,
+     0.7362329245997997,
+     0.7407800014874238,
+     0.6876341313921487,
+     0.7714783159283105
+    ],
+    "m-cr-fe01": [
+     0.6837829875323022,
+     0,
+     0,
+     0.6964048323630218,
+     0.7915370292911211,
+     0.7579148354905021,
+     0.6763036939663004
+    ],
+    "m-cr-rfid01": [
+     0.7748521596369883,
+     0,
+     0,
+     0.7701282801086144,
+     0.7890325939063534,
+     0.7637008342836527,
+     0.7462948174347553
+    ],
+    "m-cr-r01": [
+     0.6903773599885684,
+     0.663768036113929,
+     0,
+     0.7299622560882356,
+     0.6711415716339009,
+     0.6624635968480204,
+     0.7057154294161045
+    ],
+    "m-cr-r02": [
+     0.7631473607047048,
+     0.7455363444848745,
+     0,
+     0.7255199512254049,
+     0.7344001023327567,
+     0.7086821490900449,
+     0.7676902381568397
+    ],
+    "m-cr-r03": [
+     0.673178541260062,
+     0.6908114152019572,
+     0,
+     0.7644632453022576,
+     0.7444862905539248,
+     0.7084444706287809,
+     0.7545516454479998
+    ],
+    "m-cr-rf01": [
+     0.7414190686481128,
+     0,
+     0,
+     0.7861445075384961,
+     0.7663083360945597,
+     0.8036914747864585,
+     0.6030449981565215
+    ],
+    "m-cr-fe02": [
+     0.7098655690600989,
+     0,
+     0,
+     0.745022938556369,
+     0.7300588801798721,
+     0.7443573133635019,
+     0.6970395225594186
+    ]
+   },
+   "valeurs": [
+    {
+     "point": "m-cr-pp01.o1.stock",
+     "t": 1790910000000,
+     "v": 151.74084507042252
+    },
+    {
+     "point": "m-cr-pp01.o1.stock",
+     "t": 1790996400000,
+     "v": 111.1774647887324
+    },
+    {
+     "point": "m-cr-pp01.o1.stock",
+     "t": 1791082800000,
+     "v": 70.61408450704226
+    },
+    {
+     "point": "m-cr-pp01.o1.stock",
+     "t": 1791255600000,
+     "v": 133.48732394366198
+    },
+    {
+     "point": "m-cr-pp01.o2.puissance_diode",
+     "t": 1790910000000,
+     "v": 98.03188139128595
+    },
+    {
+     "point": "m-cr-pp01.o2.puissance_diode",
+     "t": 1790996400000,
+     "v": 0
+    },
+    {
+     "point": "m-cr-pp01.o2.puissance_diode",
+     "t": 1791082800000,
+     "v": 0.02510348002530634
+    },
+    {
+     "point": "m-cr-pp01.o2.puissance_diode",
+     "t": 1791255600000,
+     "v": 98.24246855543949
+    },
+    {
+     "point": "m-cr-pp01.o2.temperature",
+     "t": 1790910000000,
+     "v": 25.213291288117244
+    },
+    {
+     "point": "m-cr-pp01.o2.temperature",
+     "t": 1790996400000,
+     "v": 20.38485344680003
+    },
+    {
+     "point": "m-cr-pp01.o2.temperature",
+     "t": 1791082800000,
+     "v": 20.580987347406662
+    },
+    {
+     "point": "m-cr-pp01.o2.temperature",
+     "t": 1791255600000,
+     "v": 25.195412087298216
+    },
+    {
+     "point": "m-cr-fe01.o1.tension",
+     "t": 1790910000000,
+     "v": 91.4265532305303
+    },
+    {
+     "point": "m-cr-fe01.o1.tension",
+     "t": 1790996400000,
+     "v": 0
+    },
+    {
+     "point": "m-cr-fe01.o1.tension",
+     "t": 1791082800000,
+     "v": 0.26278712903425094
+    },
+    {
+     "point": "m-cr-fe01.o1.tension",
+     "t": 1791255600000,
+     "v": 91.922521921306
+    },
+    {
+     "point": "m-cr-fe01.o1.diametre",
+     "t": 1790910000000,
+     "v": 464.8109589041096
+    },
+    {
+     "point": "m-cr-fe01.o1.diametre",
+     "t": 1790996400000,
+     "v": 220.86575342465756
+    },
+    {
+     "point": "m-cr-fe01.o1.diametre",
+     "t": 1791082800000,
+     "v": 312.9205479452055
+    },
+    {
+     "point": "m-cr-fe01.o1.diametre",
+     "t": 1791255600000,
+     "v": 161.03013698630133
+    },
+    {
+     "point": "m-cr-fe01.o2.longueur",
+     "t": 1790910000000,
+     "v": 297.0317685908553
+    },
+    {
+     "point": "m-cr-fe01.o2.longueur",
+     "t": 1790996400000,
+     "v": 297.1205107243422
+    },
+    {
+     "point": "m-cr-fe01.o2.longueur",
+     "t": 1791082800000,
+     "v": 297.1005693520941
+    },
+    {
+     "point": "m-cr-fe01.o2.longueur",
+     "t": 1791255600000,
+     "v": 297.1084133107532
+    },
+    {
+     "point": "m-cr-rfid01.o1.echecs",
+     "t": 1790910000000,
+     "v": 0.3909035216033083
+    },
+    {
+     "point": "m-cr-rfid01.o1.echecs",
+     "t": 1790996400000,
+     "v": 0.43868963365262453
+    },
+    {
+     "point": "m-cr-rfid01.o1.echecs",
+     "t": 1791082800000,
+     "v": 0.3244703661157157
+    },
+    {
+     "point": "m-cr-rfid01.o1.echecs",
+     "t": 1791255600000,
+     "v": 0.2794556101413107
+    },
+    {
+     "point": "m-cr-rfid01.o1.puissance_rf",
+     "t": 1790910000000,
+     "v": 23.762134996020432
+    },
+    {
+     "point": "m-cr-rfid01.o1.puissance_rf",
+     "t": 1790996400000,
+     "v": 0.01588663144597784
+    },
+    {
+     "point": "m-cr-rfid01.o1.puissance_rf",
+     "t": 1791082800000,
+     "v": 0.016106336435768753
+    },
+    {
+     "point": "m-cr-rfid01.o1.puissance_rf",
+     "t": 1791255600000,
+     "v": 23.890690811960397
+    },
+    {
+     "point": "m-cr-rfid01.o1.temperature_tete",
+     "t": 1790910000000,
+     "v": 38.125580366105844
+    },
+    {
+     "point": "m-cr-rfid01.o1.temperature_tete",
+     "t": 1790996400000,
+     "v": 20.68154654723769
+    },
+    {
+     "point": "m-cr-rfid01.o1.temperature_tete",
+     "t": 1791082800000,
+     "v": 20.174557425874845
+    },
+    {
+     "point": "m-cr-rfid01.o1.temperature_tete",
+     "t": 1791255600000,
+     "v": 38.23145459177878
+    },
+    {
+     "point": "m-cr-r01.o1.tension",
+     "t": 1790910000000,
+     "v": 173.13835256681145
+    },
+    {
+     "point": "m-cr-r01.o1.tension",
+     "t": 1790996400000,
+     "v": 172.49611986473525
+    },
+    {
+     "point": "m-cr-r01.o1.tension",
+     "t": 1791082800000,
+     "v": 0.8808667890373617
+    },
+    {
+     "point": "m-cr-r01.o1.tension",
+     "t": 1791255600000,
+     "v": 175.50650965462071
+    },
+    {
+     "point": "m-cr-r01.o1.diametre",
+     "t": 1790910000000,
+     "v": 644.5068965517241
+    },
+    {
+     "point": "m-cr-r01.o1.diametre",
+     "t": 1790996400000,
+     "v": 204.23103448275867
+    },
+    {
+     "point": "m-cr-r01.o1.diametre",
+     "t": 1791082800000,
+     "v": 295.9551724137931
+    },
+    {
+     "point": "m-cr-r01.o1.diametre",
+     "t": 1791255600000,
+     "v": 479.40344827586205
+    },
+    {
+     "point": "m-cr-r01.o2.conductivite",
+     "t": 1790910000000,
+     "v": 1185.8039523406908
+    },
+    {
+     "point": "m-cr-r01.o2.conductivite",
+     "t": 1790996400000,
+     "v": 1204.4534923246379
+    },
+    {
+     "point": "m-cr-r01.o2.conductivite",
+     "t": 1791082800000,
+     "v": 1169.3501545593333
+    },
+    {
+     "point": "m-cr-r01.o2.conductivite",
+     "t": 1791255600000,
+     "v": 1187.0217592659192
+    },
+    {
+     "point": "m-cr-r02.o1.tension",
+     "t": 1790910000000,
+     "v": 98.18194789492111
+    },
+    {
+     "point": "m-cr-r02.o1.tension",
+     "t": 1790996400000,
+     "v": 99.32347523281581
+    },
+    {
+     "point": "m-cr-r02.o1.tension",
+     "t": 1791082800000,
+     "v": 0.2084930440595001
+    },
+    {
+     "point": "m-cr-r02.o1.tension",
+     "t": 1791255600000,
+     "v": 97.42513407963729
+    },
+    {
+     "point": "m-cr-r02.o1.diametre",
+     "t": 1790910000000,
+     "v": 317.5780821917808
+    },
+    {
+     "point": "m-cr-r02.o1.diametre",
+     "t": 1790996400000,
+     "v": 420.5917808219178
+    },
+    {
+     "point": "m-cr-r02.o1.diametre",
+     "t": 1791082800000,
+     "v": 147.6054794520548
+    },
+    {
+     "point": "m-cr-r02.o1.diametre",
+     "t": 1791255600000,
+     "v": 353.63287671232877
+    },
+    {
+     "point": "m-cr-r02.o2.buses",
+     "t": 1790910000000,
+     "v": 0.1558764404935419
+    },
+    {
+     "point": "m-cr-r02.o2.buses",
+     "t": 1790996400000,
+     "v": -0.07261164947397014
+    },
+    {
+     "point": "m-cr-r02.o2.buses",
+     "t": 1791082800000,
+     "v": -0.1834254076496617
+    },
+    {
+     "point": "m-cr-r02.o2.buses",
+     "t": 1791255600000,
+     "v": -0.3766583496541496
+    },
+    {
+     "point": "m-cr-r03.o1.tension",
+     "t": 1790910000000,
+     "v": 93.12509596921815
+    },
+    {
+     "point": "m-cr-r03.o1.tension",
+     "t": 1790996400000,
+     "v": 98.83956754792712
+    },
+    {
+     "point": "m-cr-r03.o1.tension",
+     "t": 1791082800000,
+     "v": 0.12777626222401858
+    },
+    {
+     "point": "m-cr-r03.o1.tension",
+     "t": 1791255600000,
+     "v": 92.13921690434786
+    },
+    {
+     "point": "m-cr-r03.o1.diametre",
+     "t": 1790910000000,
+     "v": 255.6685185185185
+    },
+    {
+     "point": "m-cr-r03.o1.diametre",
+     "t": 1790996400000,
+     "v": 255.6685185185185
+    },
+    {
+     "point": "m-cr-r03.o1.diametre",
+     "t": 1791082800000,
+     "v": 255.6685185185185
+    },
+    {
+     "point": "m-cr-r03.o1.diametre",
+     "t": 1791255600000,
+     "v": 255.6685185185185
+    },
+    {
+     "point": "m-cr-r03.o2.buses",
+     "t": 1790910000000,
+     "v": 1.005410879593375
+    },
+    {
+     "point": "m-cr-r03.o2.buses",
+     "t": 1790996400000,
+     "v": 0.6437777107678945
+    },
+    {
+     "point": "m-cr-r03.o2.buses",
+     "t": 1791082800000,
+     "v": 0.5096755930033615
+    },
+    {
+     "point": "m-cr-r03.o2.buses",
+     "t": 1791255600000,
+     "v": -0.07874346653542597
+    },
+    {
+     "point": "m-cr-rf01.o1.tension",
+     "t": 1790910000000,
+     "v": 149.94396368144592
+    },
+    {
+     "point": "m-cr-rf01.o1.tension",
+     "t": 1790996400000,
+     "v": 0
+    },
+    {
+     "point": "m-cr-rf01.o1.tension",
+     "t": 1791082800000,
+     "v": 0.04997770599424839
+    },
+    {
+     "point": "m-cr-rf01.o1.tension",
+     "t": 1791255600000,
+     "v": 149.63010686724616
+    },
+    {
+     "point": "m-cr-rf01.o1.diametre",
+     "t": 1790910000000,
+     "v": 177.16190476190468
+    },
+    {
+     "point": "m-cr-rf01.o1.diametre",
+     "t": 1790996400000,
+     "v": 430.87619047619046
+    },
+    {
+     "point": "m-cr-rf01.o1.diametre",
+     "t": 1791082800000,
+     "v": 684.5904761904762
+    },
+    {
+     "point": "m-cr-rf01.o1.diametre",
+     "t": 1791255600000,
+     "v": 600.0190476190476
+    },
+    {
+     "point": "m-cr-rf01.o2.manquantes",
+     "t": 1790910000000,
+     "v": 0.18852847103812143
+    },
+    {
+     "point": "m-cr-rf01.o2.manquantes",
+     "t": 1790996400000,
+     "v": 0.23381471837407006
+    },
+    {
+     "point": "m-cr-rf01.o2.manquantes",
+     "t": 1791082800000,
+     "v": 0.17380319108199743
+    },
+    {
+     "point": "m-cr-rf01.o2.manquantes",
+     "t": 1791255600000,
+     "v": 0.10699301444450182
+    },
+    {
+     "point": "m-cr-fe02.o1.tension",
+     "t": 1790910000000,
+     "v": 89.0270115394528
+    },
+    {
+     "point": "m-cr-fe02.o1.tension",
+     "t": 1790996400000,
+     "v": 0.287640616139397
+    },
+    {
+     "point": "m-cr-fe02.o1.tension",
+     "t": 1791082800000,
+     "v": 0.22545064376570287
+    },
+    {
+     "point": "m-cr-fe02.o1.tension",
+     "t": 1791255600000,
+     "v": 92.41384748945654
+    },
+    {
+     "point": "m-cr-fe02.o1.diametre",
+     "t": 1790910000000,
+     "v": 468.1241379310345
+    },
+    {
+     "point": "m-cr-fe02.o1.diametre",
+     "t": 1790996400000,
+     "v": 190.05517241379312
+    },
+    {
+     "point": "m-cr-fe02.o1.diametre",
+     "t": 1791082800000,
+     "v": 247.98620689655172
+    },
+    {
+     "point": "m-cr-fe02.o1.diametre",
+     "t": 1791255600000,
+     "v": 363.84827586206893
+    },
+    {
+     "point": "m-cr-fe02.o2.longueur",
+     "t": 1790910000000,
+     "v": 297.0340846463813
+    },
+    {
+     "point": "m-cr-fe02.o2.longueur",
+     "t": 1790996400000,
+     "v": 296.92456846294976
+    },
+    {
+     "point": "m-cr-fe02.o2.longueur",
+     "t": 1791082800000,
+     "v": 297.0556597551784
+    },
+    {
+     "point": "m-cr-fe02.o2.longueur",
+     "t": 1791255600000,
+     "v": 297.1078083799936
+    },
+    {
+     "point": "m-cr-rf01.o4.ecart_comptage",
+     "t": 1791441535000,
+     "v": 0.36698002344984115
+    },
+    {
+     "point": "m-cr-rf01.o4.ecart_comptage",
+     "t": 1791441714000,
+     "v": 0.9957622259107114
+    },
+    {
+     "point": "m-cr-rf01.o4.ecart_comptage",
+     "t": 1791441725000,
+     "v": 1.1333333333333333
+    },
+    {
+     "point": "m-cr-r02.o3.temperature_led",
+     "t": 1791386828000,
+     "v": 49.042296289659106
+    },
+    {
+     "point": "m-cr-r02.o3.temperature_led",
+     "t": 1791387007000,
+     "v": 61.915072621247404
+    },
+    {
+     "point": "m-cr-r02.o3.temperature_led",
+     "t": 1791387018000,
+     "v": 63.111111111111114
+    }
+   ],
+   "maintenance": {
+    "echeances": [
+     {
+      "id": "m-cr-pp01:bain",
+      "compteur": 16.895833333333332,
+      "statut": "a_planifier",
+      "echeance": 1791802800000
+     },
+     {
+      "id": "m-cr-pp01:ventouses",
+      "compteur": 1.8958333333333333,
+      "statut": "ok",
+      "echeance": 1792494000000
+     },
+     {
+      "id": "m-cr-pp01:laser",
+      "compteur": 95.89583333333333,
+      "statut": "en_retard",
+      "echeance": 1790938800000
+     },
+     {
+      "id": "m-cr-fe01:couteau",
+      "compteur": 52.01624999999999,
+      "statut": "ok",
+      "echeance": 1795877169230.7693
+     },
+     {
+      "id": "m-cr-fe01:ioniseur",
+      "compteur": 21.895833333333332,
+      "statut": "ok",
+      "echeance": 1792148400000
+     },
+     {
+      "id": "m-cr-rfid01:tete",
+      "compteur": 78.35827607149257,
+      "statut": "ok",
+      "echeance": 1792545142094.7102
+     },
+     {
+      "id": "m-cr-rfid01:rf",
+      "compteur": 48.895833333333336,
+      "statut": "ok",
+      "echeance": 1792407600000
+     },
+     {
+      "id": "m-cr-r01:blanchet",
+      "compteur": 610.1906250000001,
+      "statut": "ok",
+      "echeance": 1796073285245.9016
+     },
+     {
+      "id": "m-cr-r01:outil",
+      "compteur": 96.03,
+      "statut": "ok",
+      "echeance": 1802486400000
+     },
+     {
+      "id": "m-cr-r01:uv",
+      "compteur": 857.4907726049423,
+      "statut": "ok",
+      "echeance": 1796935626039.8657
+     },
+     {
+      "id": "m-cr-r01:mouillage",
+      "compteur": 207.94288148824123,
+      "statut": "en_retard",
+      "echeance": 1791380362881.3225
+     },
+     {
+      "id": "m-cr-r01:encrage",
+      "compteur": 44.339166666666664,
+      "statut": "ok",
+      "echeance": 1793204670668.5837
+     },
+     {
+      "id": "m-cr-r01:frein",
+      "compteur": 265.61677928548306,
+      "statut": "ok",
+      "echeance": 1793449977614.7292
+     },
+     {
+      "id": "m-cr-r02:tetes",
+      "compteur": 11.31638888888889,
+      "statut": "a_planifier",
+      "echeance": 1791686667331.484
+     },
+     {
+      "id": "m-cr-r02:filtre",
+      "compteur": 528.6370437033474,
+      "statut": "ok",
+      "echeance": 1795366976680.9756
+     },
+     {
+      "id": "m-cr-r02:cellule",
+      "compteur": 5.895833333333333,
+      "statut": "ok",
+      "echeance": 1793530800000
+     },
+     {
+      "id": "m-cr-r03:tetes",
+      "compteur": 25.327222222222222,
+      "statut": "a_planifier",
+      "echeance": 1791570026435.7534
+     },
+     {
+      "id": "m-cr-r03:filtre",
+      "compteur": 1037.4167144717649,
+      "statut": "en_retard",
+      "echeance": 1791137533197.1123
+     },
+     {
+      "id": "m-cr-r03:cellule",
+      "compteur": 13.895833333333334,
+      "statut": "ok",
+      "echeance": 1792839600000
+     },
+     {
+      "id": "m-cr-rf01:lame3",
+      "compteur": 46.014375,
+      "statut": "ok",
+      "echeance": 1797206400000
+     },
+     {
+      "id": "m-cr-rf01:frein",
+      "compteur": 326.3636353623588,
+      "statut": "ok",
+      "echeance": 1793047432120.2705
+     },
+     {
+      "id": "m-cr-rf01:capteur",
+      "compteur": 33.895833333333336,
+      "statut": "ok",
+      "echeance": 1793703600000
+     },
+     {
+      "id": "m-cr-fe02:couteau",
+      "compteur": 52.01624999999999,
+      "statut": "ok",
+      "echeance": 1795877169230.7693
+     },
+     {
+      "id": "m-cr-fe02:ioniseur",
+      "compteur": 7.895833333333333,
+      "statut": "ok",
+      "echeance": 1793358000000
+     }
+    ],
+    "previsions": []
+   },
+   "energie": {
+    "kwh": {
+     "marche": 9328.073055555556,
+     "calage": 619.5219444444444,
+     "panne": 66.96513888888889,
+     "arret": 712.5
+    },
+    "production": 6524278.812177861,
+    "pic": {
+     "t": 1790911800000,
+     "kw": 146
+    }
+   },
+   "chronologies": [
+    {
+     "alarme": "h-m-cr-rf01-1791441715",
+     "debut": 1791441113000,
+     "fin": 1791445530000,
+     "pas": 7000,
+     "evenements": [
+      {
+       "etape": "derive",
+       "t": 1791441355000
+      },
+      {
+       "etape": "attention",
+       "t": 1791441580000
+      },
+      {
+       "etape": "alarme",
+       "t": 1791441715000
+      },
+      {
+       "etape": "acquittement",
+       "t": 1791441844000
+      },
+      {
+       "etape": "reparation",
+       "t": 1791444983000
+      },
+      {
+       "etape": "redemarrage",
+       "t": 1791444983000
+      },
+      {
+       "etape": "production",
+       "t": 1791445470000
+      }
+     ]
+    },
+    {
+     "alarme": "h-m-cr-r02-1791387008",
+     "debut": 1791386408000,
+     "fin": 1791387687000,
+     "pas": 5000,
+     "evenements": [
+      {
+       "etape": "derive",
+       "t": 1791386648000
+      },
+      {
+       "etape": "attention",
+       "t": 1791386920000
+      },
+      {
+       "etape": "alarme",
+       "t": 1791387008000
+      },
+      {
+       "etape": "acquittement",
+       "t": 1791387232000
+      },
+      {
+       "etape": "reparation",
+       "t": 1791387387000
+      },
+      {
+       "etape": "redemarrage",
+       "t": 1791387387000
+      },
+      {
+       "etape": "production",
+       "t": 1791387627000
+      }
+     ]
+    },
+    {
+     "alarme": "h-m-cr-r01-1791381279",
+     "debut": 1791380677000,
+     "fin": 1791385663000,
+     "pas": 7000,
+     "evenements": [
+      {
+       "etape": "derive",
+       "t": 1791380919000
+      },
+      {
+       "etape": "attention",
+       "t": 1791381174000
+      },
+      {
+       "etape": "alarme",
+       "t": 1791381279000
+      },
+      {
+       "etape": "acquittement",
+       "t": 1791381460000
+      },
+      {
+       "etape": "reparation",
+       "t": 1791385363000
+      },
+      {
+       "etape": "redemarrage",
+       "t": 1791385363000
+      },
+      {
+       "etape": "production",
+       "t": 1791385603000
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

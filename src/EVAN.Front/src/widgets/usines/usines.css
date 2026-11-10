@@ -1,0 +1,227 @@
+/* ============================================================
+   Sélecteur d'usine (barre du haut) et nom de l'organisation.
+   Complète les règles de app.css (.usine-switch, .usine-panel, .usine-item…) sans les modifier.
+   ============================================================ */
+
+/* Bouton : un peu plus large que dans app.css pour que le nom de l'usine tienne à côté de son état. */
+.usine-menu .usine-switch {
+  max-width: 360px;
+}
+/* L'icône porte la forme de l'état de l'usine ouverte, même quand le texte est masqué (écran étroit). */
+.usine-switch-icone {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+}
+.usine-switch-icone > svg {
+  width: var(--icon-lg);
+  height: var(--icon-lg);
+  color: var(--text-2);
+}
+.usine-switch-badge {
+  position: absolute;
+  right: -5px;
+  bottom: -4px;
+  display: grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--surface);
+}
+.usine-switch-badge .ton-glyph,
+.usine-switch-badge .ton-glyph svg {
+  width: 11px;
+  height: 11px;
+}
+.usine-switch-etat {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 640;
+  color: var(--text-2);
+  background: var(--surface-2);
+}
+.usine-switch-etat.ton-ok {
+  color: var(--ok);
+  background: var(--ok-soft);
+}
+.usine-switch-etat.ton-warn {
+  color: var(--warn);
+  background: var(--warn-soft);
+}
+.usine-switch-etat.ton-crit {
+  color: var(--crit);
+  background: var(--crit-soft);
+}
+.usine-switch .usine-chevron {
+  transition: transform 220ms var(--ease-out);
+}
+.usine-switch[aria-expanded='true'] .usine-chevron {
+  transform: rotate(180deg);
+}
+
+/* Ouverture : le menu se déplie depuis le bouton, puis ses lignes arrivent l'une après l'autre. */
+.usine-menu .usine-panel {
+  transform-origin: top left;
+  animation: usine-ouvre 200ms var(--ease-out) both;
+}
+@keyframes usine-ouvre {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+}
+.usine-entree {
+  animation: usine-ligne 260ms var(--ease-out) backwards;
+  animation-delay: calc(50ms + var(--i, 0) * 35ms);
+}
+@keyframes usine-ligne {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+.usine-item-glyphe {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 20px;
+}
+.usine-item-glyphe .ton-glyph,
+.usine-item-glyphe .ton-glyph svg {
+  width: 13px;
+  height: 13px;
+}
+.usine-item-txt .usine-item-etat {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--text-3);
+}
+.usine-item-txt .usine-item-etat.ton-ok {
+  color: var(--ok);
+}
+.usine-item-txt .usine-item-etat.ton-warn {
+  color: var(--warn);
+}
+.usine-item-txt .usine-item-etat.ton-crit {
+  color: var(--crit);
+}
+
+/* Nom de l'organisation */
+.org-dialog-fond.modal-backdrop {
+  /* Pas de flou plein écran au-dessus de la carte ou de la scène 3D animées : un voile suffit. */
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: var(--scrim);
+}
+.org-dialog .field input[aria-invalid='true'] {
+  border-color: var(--crit);
+}
+.org-dialog-aide {
+  display: block;
+  margin-top: 8px;
+  font-size: 12.5px;
+  color: var(--text-3);
+}
+.org-dialog-erreur {
+  display: block;
+  margin-top: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--crit);
+  animation: usine-ligne 220ms var(--ease-out);
+}
+/* Aperçu : le nom tel qu'il apparaîtra en haut de l'écran. */
+.org-apercu {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 8px 12px;
+  border-radius: var(--r-md);
+  border: 1px dashed var(--border-strong);
+  background: var(--surface-2);
+}
+.org-apercu > svg {
+  flex: none;
+  width: var(--icon-lg);
+  height: var(--icon-lg);
+  color: var(--text-2);
+}
+.org-apercu-txt {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+}
+.org-apercu-txt small {
+  font-size: 11px;
+  color: var(--text-3);
+}
+.org-apercu-txt b {
+  font-size: 13.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.org-apercu-txt b.vide {
+  color: var(--text-3);
+  font-weight: 500;
+}
+.org-apercu-legende {
+  margin-left: auto;
+  flex: none;
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+.org-dialog .modal-steps {
+  counter-reset: etape;
+  padding: 0;
+  list-style: none;
+}
+.org-dialog .modal-steps li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: var(--r-sm);
+  font-size: 12.5px;
+  background: var(--surface-2);
+  color: var(--text-2);
+}
+.org-dialog .modal-steps li.on {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-weight: 650;
+}
+.org-dialog .modal-steps li::before {
+  counter-increment: etape;
+  content: counter(etape);
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--r-sm);
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--surface-3);
+}
+.org-dialog .modal-steps li.on::before {
+  color: var(--accent-contrast);
+  background: var(--accent);
+}
+@media (max-width: 600px) {
+  .org-apercu-legende {
+    display: none;
+  }
+}

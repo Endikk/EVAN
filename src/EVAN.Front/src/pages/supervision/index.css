@@ -1,0 +1,1029 @@
+/* ============================================================
+   Supervision : bandeau (phrase du moment et trois repères), panneau (alarmes, machines, journal, machine choisie),
+   explication de la détection. Le bandeau reste bas : la 3D de l'atelier est juste dessous.
+   Formes des tons : celles des états de machine du plan (rond, triangle, carré), jamais la couleur seule.
+   ============================================================ */
+
+/* ---------- Bandeau ---------- */
+.sv-bandeau {
+  grid-area: kpis;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.8fr);
+  gap: 24px;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+/* Panne : un aplat cramoisi très léger sur tout le bandeau, la phrase porte le reste. */
+.sv-bandeau.ton-crit {
+  background: color-mix(in srgb, var(--crit) 6%, var(--bg));
+}
+.sv-bandeau > .pixel-field {
+  left: auto;
+  width: 34%;
+  opacity: 0.45;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 70%);
+  mask-image: linear-gradient(90deg, transparent 0%, #000 70%);
+}
+.sv-verdict,
+.sv-reperes {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+
+.sv-verdict {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sv-phrase {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  font-size: clamp(16px, 0.75rem + 0.55vw, 19px);
+  line-height: 1.28;
+  font-weight: 640;
+  letter-spacing: -0.012em;
+  color: var(--text);
+  text-wrap: balance;
+  animation: sv-change 520ms var(--ease-out);
+}
+/* La phrase change de ton (tout va bien, panne…) : elle se repose une fois, pour que le changement se voie. */
+@keyframes sv-change {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+.sv-glyphe {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  transform: translateY(1px);
+}
+/* Sous la phrase : la ligne « qui s'en occupe » (jamais coupée) et les boutons, qui passent dessous s'il le faut. */
+.sv-verdict-bas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+.sv-suite {
+  margin: 0 0 0 24px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+.sv-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.sv-reperes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-self: stretch;
+}
+/* Un repère du bandeau : le nom et son « ? », la valeur avec son mot à côté, puis un seul trait visuel (la bande des
+   machines ou la jauge). Rien d'écrit sous la valeur : le bandeau reste bas au-dessus de la 3D. */
+.repere.sv-rep {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-content: center;
+  align-items: baseline;
+  gap: 4px 8px;
+}
+/* Le mot passe sous la valeur quand la carte est trop étroite pour les deux. */
+.sv-rep .rp-titre,
+.sv-rep .rp-jauge,
+.sv-rep .rp-note {
+  flex-basis: 100%;
+}
+.sv-bandeau .repere.sv-rep {
+  padding: 4px 16px;
+  border: 0;
+  border-left: 1px solid var(--border);
+  border-radius: 0;
+  background: none;
+}
+.sv-bandeau .repere.sv-rep.cliquable {
+  border-radius: 0 var(--r-md) var(--r-md) 0;
+}
+.sv-bandeau .repere.sv-rep.cliquable:hover {
+  background: color-mix(in srgb, var(--surface-2) 70%, transparent);
+}
+.sv-rep .rp-titre {
+  font-size: 12.5px;
+}
+.sv-rep .rp-valeur b {
+  font-size: 24px;
+}
+.sv-rep .rp-valeur small {
+  font-size: 13px;
+}
+.sv-rep .rp-mot {
+  font-size: 12.5px;
+}
+.sv-rep .rp-jauge,
+.sv-rep .rp-note {
+  margin: 4px 0 0;
+}
+
+/* Une marque par machine : la bande se lit d'un coup d'œil, la forme dit l'état. */
+.sv-bande {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.sv-bande > span {
+  display: inline-grid;
+  place-items: center;
+  width: 13px;
+  height: 13px;
+}
+.sv-bande > span.hors-ligne {
+  opacity: 0.5;
+}
+
+@media (max-width: 1180px) {
+  .sv-bandeau {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+  .sv-bandeau .repere.sv-rep:first-child {
+    border-left: 0;
+    padding-left: 0;
+  }
+  .sv-bandeau > .pixel-field {
+    width: 50%;
+  }
+}
+@media (max-width: 600px) {
+  .sv-bandeau {
+    padding: 12px 16px;
+  }
+  .sv-suite {
+    margin-left: 0;
+    white-space: normal;
+  }
+  .sv-actions {
+    flex-wrap: wrap;
+    margin-left: 0;
+  }
+  .sv-reperes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 8px;
+  }
+  .sv-bandeau .repere.sv-rep {
+    padding: 0 0 0 12px;
+  }
+  .sv-bandeau .repere.sv-rep:first-child {
+    grid-column: 1 / -1;
+  }
+  .sv-bandeau .repere.sv-rep:nth-child(2) {
+    border-left: 0;
+    padding-left: 0;
+  }
+}
+
+/* ---------- Volet « Plus de chiffres » ---------- */
+/* Le volet est étroit : la rangée de chiffres passe sur deux colonnes alignées, au lieu de retours à la ligne en biais. */
+.sv-volet-chiffres {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 0;
+  margin-top: 4px;
+}
+.sv-volet-chiffres .cs-item,
+.sv-volet-chiffres .cs-item:first-child {
+  padding: 4px;
+  border-left: 0;
+}
+.sv-volet-simule {
+  display: flex;
+  justify-content: flex-end;
+  margin: 8px 0 0;
+}
+.sv-volet-simule .chip {
+  height: 22px;
+  font-size: 11.5px;
+}
+.sv-volet-section {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.sv-volet-section .titre-carte {
+  margin-bottom: 8px;
+}
+.sv-tendance {
+  height: 140px;
+}
+.sv-legende {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 16px;
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--text-2);
+}
+.sv-legende > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+.sv-legende i {
+  display: inline-block;
+  width: 16px;
+}
+.sv-legende-courbe {
+  height: 2px;
+  background: var(--series-1);
+}
+.sv-legende-moyenne {
+  border-top: 1.5px dashed var(--text-3);
+}
+.sv-volet-etats {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+}
+.sv-volet-etats li {
+  display: grid;
+  grid-template-columns: 16px auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: baseline;
+}
+
+/* ---------- Schémas du guide ---------- */
+.sv-schema-etats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+}
+.sv-schema-etats p {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 18px auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  animation: entree 420ms var(--ease-out) backwards;
+  animation-delay: calc(200ms + var(--i, 0) * 80ms);
+}
+.sv-schema-etats p .faint {
+  font-size: 12px;
+}
+.sv-trs-legende {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+.sv-trs-legende p {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sv-trs-legende i {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border-radius: var(--r-xs);
+}
+/* Le temps prévu se découpe : ce qui reste, à gauche, c'est l'efficacité. */
+.sv-trs-barre {
+  display: flex;
+  height: 16px;
+  border-radius: var(--r-xs);
+  overflow: hidden;
+  background: var(--surface-3);
+}
+.sv-trs-barre i {
+  height: 100%;
+  transform-origin: left center;
+  animation: sv-decoupe 700ms var(--ease-out) backwards;
+}
+.sv-trs-barre .bon {
+  flex: 6;
+  animation-delay: 200ms;
+}
+.sv-trs-barre .arret {
+  flex: 1.6;
+  animation-delay: 550ms;
+}
+.sv-trs-barre .lent {
+  flex: 1.2;
+  animation-delay: 800ms;
+}
+.sv-trs-barre .jete {
+  flex: 0.7;
+  animation-delay: 1050ms;
+}
+.sv-schema-trs .bon {
+  background: var(--ok);
+}
+.sv-schema-trs .arret {
+  background: var(--crit);
+}
+.sv-schema-trs .lent {
+  background: var(--warn);
+}
+.sv-schema-trs .jete {
+  background: var(--idle);
+}
+@keyframes sv-decoupe {
+  from {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+}
+
+/* ---------- Panneau ---------- */
+.sv-panneau-tete h2 {
+  margin: 0;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+}
+.sv-retour {
+  margin: -4px 0 8px -8px;
+}
+.sv-onglets {
+  display: flex;
+  width: 100%;
+  margin-top: 8px;
+}
+.sv-onglets button {
+  flex: 1;
+  justify-content: center;
+}
+/* Compteur de l'onglet : un chiffre gris à côté du nom, sans pastille. Une panne en cours le passe en rouge. */
+.sv-compte {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-3);
+}
+.sv-compte.crit {
+  color: var(--crit);
+}
+/* Le contenu du panneau change (onglet, machine choisie) : il glisse depuis la droite. */
+.sv-glisse {
+  animation: sv-glisse 320ms var(--ease-out) both;
+}
+@keyframes sv-glisse {
+  from {
+    opacity: 0;
+    transform: translateX(14px);
+  }
+}
+.sv-vide {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Alarmes : une ligne compacte chacune. La forme dit la gravité, le quoi est en gras, le où et le code dessous,
+   depuis quand à droite, et ce qu'il faut faire en une ligne. */
+.sv-alarmes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sv-alarme {
+  position: relative;
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr) auto;
+  grid-template-areas:
+    'forme quoi depuis'
+    '. ou ou'
+    '. faire faire';
+  align-items: baseline;
+  gap: 4px 8px;
+  width: 100%;
+  padding: 8px 32px 8px 12px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition:
+    background var(--dur) var(--ease),
+    border-color var(--dur) var(--ease);
+}
+.sv-alarme:hover {
+  background: var(--surface-2);
+}
+.sv-alarme.crit {
+  border-color: color-mix(in srgb, var(--crit) 50%, var(--border));
+  background: color-mix(in srgb, var(--crit-soft) 60%, var(--surface));
+}
+.sv-alarme.warn {
+  border-color: color-mix(in srgb, var(--warn) 40%, var(--border));
+}
+.sv-alarme-forme {
+  grid-area: forme;
+  display: inline-grid;
+  place-items: center;
+  align-self: center;
+}
+.sv-alarme-quoi {
+  grid-area: quoi;
+  min-width: 0;
+  font-size: 13.5px;
+  line-height: 1.3;
+  font-weight: 650;
+}
+.sv-alarme-depuis {
+  grid-area: depuis;
+  font-size: 12px;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+.sv-alarme-ou {
+  grid-area: ou;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--text-2);
+}
+.sv-alarme-ou b {
+  color: var(--text);
+  font-weight: 650;
+}
+.sv-alarme-code {
+  flex: none;
+  margin-left: auto;
+  color: var(--text-3);
+  font-size: 11.5px;
+}
+.sv-alarme-faire {
+  grid-area: faire;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  margin-top: 4px;
+  font-size: 12.5px;
+  font-weight: 560;
+  color: var(--text);
+}
+.sv-alarme-faire svg {
+  flex: none;
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+  color: var(--text-3);
+}
+.sv-alarme.prise .sv-alarme-faire svg {
+  color: var(--accent-text);
+}
+.sv-alarme-voir {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  width: var(--icon);
+  height: var(--icon);
+  margin-top: calc(var(--icon) / -2);
+  color: var(--text-3);
+}
+
+/* Sans alarme : une forme, un titre et son « ? », une ligne. */
+.sv-calme {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px 16px 16px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-md);
+  text-align: center;
+}
+.sv-calme-titre {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 15px;
+}
+.sv-calme p {
+  margin: 0;
+  max-width: 34ch;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+/* Rien à signaler, c'est le normal : il reste calme, en gris (ISA-101). */
+.sv-calme-coche circle {
+  fill: var(--idle-soft);
+  stroke: var(--idle);
+  stroke-width: 1.6;
+}
+.sv-calme-coche path {
+  fill: none;
+  stroke: var(--idle);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 26;
+  stroke-dashoffset: 26;
+  animation: trace 520ms var(--ease-out) 250ms forwards;
+}
+/* Une mesure se dérègle, l'alarme n'est pas encore levée : le pouls de la mesure suivie. */
+.sv-calme-suivi {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--surface-3);
+  color: var(--text-2);
+}
+.sv-calme-suivi svg {
+  width: var(--icon-lg);
+  height: var(--icon-lg);
+  animation: sv-attente 1.2s var(--ease) infinite;
+}
+
+/* Machines, groupées par état. */
+.sv-machines {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.sv-groupe {
+  margin: 0 0 8px;
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--text-2);
+}
+.sv-machines ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.sv-machine {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr) auto 14px;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 8px 8px 12px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition:
+    background var(--dur) var(--ease),
+    border-color var(--dur) var(--ease);
+}
+.sv-machine:hover {
+  background: var(--surface-2);
+}
+.sv-machine.crit {
+  border-color: color-mix(in srgb, var(--crit) 50%, var(--border));
+  background: color-mix(in srgb, var(--crit-soft) 60%, var(--surface));
+}
+.sv-machine > .st {
+  display: inline-grid;
+  place-items: center;
+}
+.sv-machine-nom {
+  min-width: 0;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sv-machine-nom b {
+  font-weight: 700;
+}
+.sv-machine-etat {
+  display: block;
+  font-size: 12px;
+  color: var(--text-2);
+}
+.sv-vitesse {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  width: 92px;
+  font-size: 12px;
+  color: var(--text-2);
+}
+.sv-vitesse i {
+  display: block;
+  width: 100%;
+  height: 4px;
+  border-radius: var(--r-xs);
+  background: var(--surface-3);
+  overflow: hidden;
+}
+.sv-vitesse i b {
+  display: block;
+  height: 100%;
+  border-radius: var(--r-xs);
+  background: var(--c);
+  transform-origin: left center;
+  transition: transform 600ms var(--ease);
+}
+.sv-machine-voir {
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+  color: var(--text-3);
+}
+
+/* Journal, au passé. */
+.sv-journal {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.sv-ev {
+  display: grid;
+  grid-template-columns: 40px 18px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.sv-ev time {
+  font-size: 12px;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+  padding-top: 1px;
+}
+.sv-ev-icone {
+  color: var(--text-3);
+  padding-top: 1px;
+}
+.sv-ev-icone svg {
+  width: var(--icon);
+  height: var(--icon);
+}
+.sv-ev.alarme .sv-ev-icone {
+  color: var(--crit);
+}
+.sv-ev.action .sv-ev-icone {
+  color: var(--accent-text);
+}
+.sv-ev p {
+  margin: 0;
+  line-height: 1.45;
+  color: var(--text-2);
+}
+.sv-ev p b {
+  color: var(--text);
+  font-weight: 650;
+}
+
+/* Ce qui se passe dans la machine. */
+.sv-detail-tete {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.sv-detail-tete h3 {
+  margin: 0;
+  font-size: 16px;
+}
+.sv-detail-type {
+  margin: 0 0 4px;
+  font-size: 12px;
+  color: var(--text-3);
+}
+.sv-detail-phrase {
+  margin: 0;
+  padding-left: 8px;
+  border-left: 2px solid var(--border-strong);
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text);
+}
+.sv-detail-phrase.ton-crit {
+  border-left-color: var(--crit);
+}
+.sv-detail-phrase.ton-warn {
+  border-left-color: var(--warn);
+}
+.sv-detail-reperes {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.sv-detail-reperes .repere {
+  padding: 12px;
+}
+.sv-detail-reperes .rp-valeur b {
+  font-size: 24px;
+}
+.sv-detail-organes .titre-carte {
+  margin-bottom: 8px;
+}
+.sv-detail-organes .tc-titre {
+  font-size: 13.5px;
+}
+.sv-detail-alarme {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 16px;
+}
+.sv-detail-alarme.crit {
+  border-color: color-mix(in srgb, var(--crit) 55%, var(--border));
+}
+.sv-detail-alarme.warn {
+  border-color: color-mix(in srgb, var(--warn) 45%, var(--border));
+}
+.sv-organes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sv-organe {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition: background var(--dur) var(--ease);
+}
+.sv-organe:hover {
+  background: var(--surface-2);
+}
+.sv-organe.crit {
+  border-color: color-mix(in srgb, var(--crit) 50%, var(--border));
+}
+.sv-organe-tete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.sv-organe-nom {
+  font-size: 13px;
+  font-weight: 620;
+}
+.sv-organe-etat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  font-size: 12px;
+  font-weight: 650;
+}
+.sv-point {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 78px minmax(64px, auto);
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+  color: var(--text-2);
+}
+.sv-point-nom {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sv-point-valeur {
+  text-align: right;
+  font-weight: 650;
+  white-space: nowrap;
+}
+/* Dernière alarme, dérive, prochain entretien : une rangée de chiffres, le détail dans les « ? ». */
+.sv-suivi .chiffres-sec {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 8px 0;
+  padding-block: 8px;
+}
+.sv-suivi .cs-item,
+.sv-suivi .cs-item:first-child {
+  padding: 4px 8px 4px 4px;
+  border-left: 0;
+}
+.sv-suivi .cs-item dt {
+  white-space: normal;
+}
+
+/* ---------- Comment EVAN a repéré la panne ---------- */
+.sv-detection {
+  padding: 16px 16px 8px;
+  border-color: color-mix(in srgb, var(--crit) 35%, var(--border));
+  animation: sv-glisse 360ms var(--ease-out) both;
+}
+.sv-detection .titre-carte {
+  margin-bottom: 0;
+}
+.sv-detection .tc-ligne {
+  flex-wrap: nowrap;
+  align-items: flex-start;
+}
+.sv-detection .tc-titre {
+  font-size: 14.5px;
+  line-height: 1.3;
+}
+.sv-detection .tc-actions {
+  margin: -4px -8px 0 0;
+}
+.sv-detection .tc-lecon {
+  margin-top: 4px;
+  font-size: 12.5px;
+}
+.sv-etapes {
+  list-style: none;
+  margin: 16px 0 8px;
+  padding: 0;
+}
+.sv-etape {
+  position: relative;
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  gap: 12px;
+  padding-bottom: 8px;
+}
+.sv-etape:last-child {
+  padding-bottom: 4px;
+}
+.sv-etape-point {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--surface-3);
+  color: var(--text-3);
+}
+.sv-etape-point svg {
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+}
+.sv-etape.allume .sv-etape-point {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  animation: sv-allume 520ms var(--ease-out);
+}
+.sv-etape.allume.alarme .sv-etape-point,
+.sv-etape.allume.ecran .sv-etape-point {
+  background: var(--crit-soft);
+  color: var(--crit);
+}
+.sv-etape.en-cours .sv-etape-point {
+  animation: sv-attente 1.2s var(--ease) infinite;
+}
+@keyframes sv-allume {
+  0% {
+    transform: scale(0.6);
+  }
+  60% {
+    transform: scale(1.15);
+  }
+}
+@keyframes sv-attente {
+  50% {
+    opacity: 0.45;
+    transform: scale(0.9);
+  }
+}
+/* Le trait entre deux temps se remplit quand le temps suivant s'allume. */
+.sv-etape-trait {
+  position: absolute;
+  left: 12px;
+  top: 28px;
+  bottom: 2px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--border);
+  overflow: hidden;
+}
+.sv-etape-trait::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--accent-text);
+  transform: scaleY(0);
+  transform-origin: top center;
+  transition: transform 480ms var(--ease-out);
+}
+.sv-etape:has(+ .sv-etape.allume) .sv-etape-trait::after {
+  transform: scaleY(1);
+}
+.sv-etape:last-child .sv-etape-trait {
+  display: none;
+}
+.sv-etape-texte {
+  min-width: 0;
+  padding-top: 4px;
+  opacity: 0.55;
+  transition: opacity 400ms var(--ease);
+}
+.sv-etape.allume .sv-etape-texte,
+.sv-etape.en-cours .sv-etape-texte {
+  opacity: 1;
+}
+.sv-etape-texte b {
+  font-size: 13.5px;
+  font-weight: 650;
+}
+.sv-etape-texte p {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+}
+.sv-maillons-note {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: var(--text-3);
+}
+.sv-detection .details {
+  margin-top: 4px;
+}
+.sv-maillons {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sv-maillons li {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: start;
+  font-size: 12.5px;
+}
+.sv-maillon-point {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--surface-3);
+  color: var(--text-2);
+}
+.sv-maillon-point svg {
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+}
+.sv-maillons p {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--text-2);
+  word-break: break-word;
+}
+.sv-maillons time {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-3);
+  white-space: nowrap;
+}

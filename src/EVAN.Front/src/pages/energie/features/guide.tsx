@@ -1,0 +1,182 @@
+/**
+ * « Comment lire cet écran » pour l'énergie : un bloc par zone, dans l'ordre de l'écran, écrit pour quelqu'un qui
+ * découvre. Deux petits schémas animés : puissance × temps = énergie, et 100 kWh répartis en carrés.
+ */
+import type { CSSProperties } from 'react';
+import type { EtatEnergie } from '@/analytics/energy';
+import { MACHINE_TYPES, profilEnergie } from '@/domain/catalog';
+import type { Machine } from '@/domain/types';
+import type { GuideEcran } from '@/ui/explain';
+import { fmtNombre } from '@/ui/format';
+import { pourcent } from '../lib/format';
+import { ETATS, LIBELLE, SEUIL_ATTENTION, SEUIL_PROBLEME } from '../lib/lecture';
+
+/** Puissance × temps = énergie : l'aire sous la puissance se remplit pendant une heure et devient des kWh. */
+function SchemaPuissanceTemps({ kw, nom }: { kw: number; nom: string }) {
+  const k = fmtNombre(kw);
+  return (
+    <figure className="en-schema-pt" role="img" aria-label={`${nom} : ${k} kW pendant une heure font ${k} kWh.`}>
+      <svg viewBox="0 0 280 124" aria-hidden>
+        <rect className="en-pt-aire" x="48" y="30" width="200" height="70" />
+        <line className="en-pt-niveau" x1="48" y1="30" x2="248" y2="30" />
+        <line className="en-pt-axe" x1="48" y1="100" x2="258" y2="100" />
+        <line className="en-pt-axe" x1="48" y1="14" x2="48" y2="100" />
+        <text x="42" y="34" textAnchor="end">
+          {k} kW
+        </text>
+        <text x="48" y="116" textAnchor="middle">
+          0
+        </text>
+        <text x="248" y="116" textAnchor="middle">
+          1 h
+        </text>
+        <text className="en-pt-resultat" x="148" y="71" textAnchor="middle">
+          {k} kWh
+        </text>
+      </svg>
+      <figcaption>
+        Puissance × temps = énergie. {nom} en production tire {k} kW : en une heure, elle consomme {k} kWh.
+      </figcaption>
+    </figure>
+  );
+}
+
+/** Sur 100 kWh : un carré par kWh, coloré selon ce à quoi il a servi. Les carrés se posent un par un. */
+function SchemaCent({ cent }: { cent: Record<EtatEnergie, number> }) {
+  const carres = ETATS.flatMap((e) => Array.from({ length: cent[e] }, () => e));
+  const resume = ETATS.filter((e) => cent[e] > 0)
+    .map((e) => `${cent[e]} ${LIBELLE[e].toLowerCase()}`)
+    .join(', ');
+  return (
+    <figure className="en-schema-cent" role="img" aria-label={`Sur 100 kWh : ${resume}.`}>
+      <div className="en-cent-grille" aria-hidden>
+        {carres.map((e, i) => (
+          <i key={i} className={`st st-${e}`} style={{ ['--i' as string]: i } as CSSProperties} />
+        ))}
+      </div>
+      <figcaption>
+        {ETATS.filter((e) => cent[e] > 0).map((e) => (
+          <span key={e} className={`st st-${e}`}>
+            <i aria-hidden /> {cent[e]} {LIBELLE[e].toLowerCase()}
+          </span>
+        ))}
+      </figcaption>
+    </figure>
+  );
+}
+
+/** La machine d'exemple du schéma : une presse flexo s'il y en a une, sinon la première machine de l'usine. */
+function machineExemple(machines: Machine[]): { kw: number; nom: string } {
+  const type = machines.find((m) => m.type === 'flexo')?.type ?? machines[0]?.type ?? 'flexo';
+  return { kw: profilEnergie(type).marche, nom: `Une ${(MACHINE_TYPES[type]?.libelle ?? 'machine').toLowerCase()}` };
+}
+
+export function guideEnergie(machines: Machine[], cent: Record<EtatEnergie, number>): GuideEcran {
+  const exemple = machineExemple(machines);
+  return {
+    id: 'energie',
+    titre: 'Énergie',
+    resume:
+      'Cet écran dit combien d’électricité l’usine consomme, à quel moment, et ce qui se dépense sans rien produire. Il finit par les actions qui rapporteraient le plus.',
+    blocs: [
+      {
+        titre: 'La phrase du haut',
+        cible: 'verdict',
+        texte: (
+          <p>
+            Elle résume la période choisie (24 heures ou 7 jours) : ce que l’usine a consommé, ce que ça coûte, et la part dépensée sans rien produire. Où
+            cette part est partie se lit sur les barres de « Où part l’énergie ». Au-delà de {pourcent(SEUIL_ATTENTION)} de l’énergie partie ainsi, le repère passe en orange ;
+            au-delà de {pourcent(SEUIL_PROBLEME)}, en rouge.
+          </p>
+        ),
+      },
+      {
+        titre: 'Les trois repères',
+        cible: 'reperes',
+        schema: <SchemaPuissanceTemps kw={exemple.kw} nom={exemple.nom} />,
+        texte: (
+          <>
+            <p>
+              La consommation se compte en kWh, comme sur une facture. La puissance, en kW, c’est ce que l’usine tire à l’instant : elle change dès qu’une
+              presse démarre ou s’arrête.
+            </p>
+            <p>La part dépensée sans produire regroupe les réglages, la veille et les pannes pendant lesquelles la machine reste sous tension.</p>
+            <p>Le détail de chaque repère (son coût, le nombre de machines en production) est dans son « ? ».</p>
+          </>
+        ),
+      },
+      {
+        titre: 'Émissions et réglages du calcul',
+        cible: 'details-haut',
+        texte: (
+          <p>
+            Sous les repères, une rangée : les émissions de CO₂ et l’électricité pour 1 000 étiquettes. Juste dessous, repliés, le prix du kWh et le facteur
+            d’émission. Changez le prix de votre contrat : tous les euros de l’écran suivent.
+          </p>
+        ),
+      },
+      {
+        titre: 'La courbe de charge',
+        cible: 'courbe-charge',
+        texte: (
+          <>
+            <p>
+              Elle suit la puissance tirée, tranche par tranche. Les bandes grisées sont les moments où rien ne produit ni ne se règle : la nuit, le
+              week-end. Ce qui reste au-dessus de zéro dans ces bandes, c’est la veille : sécheurs UV, armoires, entraînements restés sous tension.
+            </p>
+            <p>
+              Le pic (pointillés, sa valeur dans la légende) est la puissance la plus forte de la période : c’est lui que l’abonnement électrique doit
+              couvrir.
+            </p>
+          </>
+        ),
+      },
+      {
+        titre: 'Où part l’énergie',
+        cible: 'repartition',
+        schema: <SchemaCent cent={cent} />,
+        texte: (
+          <p>
+            Chaque kWh est rangé selon ce que faisait la machine : produire, se régler (changement de clichés, d’encres, de bobine), attendre en veille, ou
+            rester en panne sous tension. Les couleurs et les formes sont celles des machines sur la supervision.
+          </p>
+        ),
+      },
+      {
+        titre: 'Où économiser',
+        cible: 'economies',
+        texte: (
+          <p>
+            Les actions sont rangées de la plus rentable à la moins rentable. Chaque somme est ramenée à un an, au prix du kWh réglé plus haut. Une action
+            ouvre un volet : pourquoi elle rapporte, le calcul pas à pas, et comment s’y prendre dans l’atelier.
+          </p>
+        ),
+      },
+      {
+        titre: 'Énergie par jour',
+        cible: 'par-jour',
+        texte: <p>Une colonne par jour, de minuit à minuit, découpée comme plus haut. Un jour sans production montre ce que coûte la seule veille.</p>,
+      },
+      {
+        titre: 'Machine par machine',
+        cible: 'par-machine',
+        texte: (
+          <p>
+            Repliée en bas : l’énergie de chaque machine. Au survol, son électricité pour 1 000 étiquettes, comparée aux machines du même type. Une presse qui
+            consomme plus que ses semblables mérite un contrôle du séchage UV.
+          </p>
+        ),
+      },
+      {
+        titre: 'D’où viennent ces chiffres',
+        texte: (
+          <p>
+            Ici, la puissance de chaque état est estimée par type de machine, à partir du catalogue d’EVAN, et appliquée à l’historique simulé de la semaine.
+            Dans une usine équipée, elle vient de compteurs d’énergie lus par la passerelle (Modbus TCP), par la même chaîne que les autres mesures.
+          </p>
+        ),
+      },
+    ],
+    termes: ['kwh', 'puissance', 'courbeCharge', 'veille', 'calage', 'co2'],
+  };
+}

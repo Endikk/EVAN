@@ -1,0 +1,42 @@
+# Droits par identité (CN du certificat). Principe : chacun n'écrit que ce qui le concerne.
+
+# Back : lit tout le contrat v1, publie les commandes de démonstration et les tests de liaison des passerelles.
+# Jamais d'ordre d'écriture (cmd/write) : aucune fonction du back n'en envoie, et une API compromise ne doit pas pouvoir
+# écrire sur un automate.
+user api
+topic read evan/v1/#
+topic write evan/v1/+/sim/cmd/#
+topic write evan/v1/+/gateway/+/cmd/test
+
+# Simulateur : joue les machines des usines d'exemple et leurs passerelles de démonstration.
+user simulator
+topic write evan/v1/site-tours/+/telemetry
+topic write evan/v1/site-tours/+/state
+topic write evan/v1/site-tours/+/alarm
+topic read evan/v1/site-tours/sim/cmd/#
+# Passerelle de démonstration : tests de liaison seulement, jamais les ordres d'écriture destinés à la vraie passerelle.
+topic read evan/v1/site-tours/gateway/tours-01/cmd/test
+topic write evan/v1/site-tours/gateway/tours-01/reply/#
+topic write evan/v1/site-crissey/+/telemetry
+topic write evan/v1/site-crissey/+/state
+topic write evan/v1/site-crissey/+/alarm
+topic read evan/v1/site-crissey/sim/cmd/#
+topic read evan/v1/site-crissey/gateway/crissey-01/cmd/test
+topic write evan/v1/site-crissey/gateway/crissey-01/reply/#
+
+# Une passerelle par usine : elle publie ses machines, reçoit ses commandes, rien d'autre (pas même l'autre usine).
+user tours-01
+topic write evan/v1/site-tours/+/telemetry
+topic write evan/v1/site-tours/+/state
+topic write evan/v1/site-tours/+/alarm
+topic write evan/v1/site-tours/gateway/tours-01/status
+topic read evan/v1/site-tours/gateway/tours-01/cmd/#
+topic write evan/v1/site-tours/gateway/tours-01/reply/#
+
+user crissey-01
+topic write evan/v1/site-crissey/+/telemetry
+topic write evan/v1/site-crissey/+/state
+topic write evan/v1/site-crissey/+/alarm
+topic write evan/v1/site-crissey/gateway/crissey-01/status
+topic read evan/v1/site-crissey/gateway/crissey-01/cmd/#
+topic write evan/v1/site-crissey/gateway/crissey-01/reply/#

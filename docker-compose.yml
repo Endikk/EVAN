@@ -1,0 +1,186 @@
+# EVAN en local : docker compose up --build   puis http://localhost:8088
+# Profil « edge » (passerelle réelle + serveur OPC UA de test) : docker compose --profile edge up --build
+name: evan
+
+# Journaux Docker tournants : sans plafond, des semaines de logs remplissent le disque de l'hôte.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  # Autorité de certification et certificats de démonstration (générés une seule fois).
+  certs:
+    image: alpine:3.22
+    logging: *logging
+    command: ["sh", "/scripts/gen-certs.sh", "/certs"]
+    volumes:
+      - ./infra/mosquitto/gen-certs.sh:/scripts/gen-certs.sh:ro
+      - ./infra/mosquitto/certs:/certs
+
+  # Broker MQTT : TLS 8883 uniquement, certificat client obligatoire, ACL par identité.
+  mqtt:
+    image: eclipse-mosquitto:2.1-alpine
+    logging: *logging
+    depends_on:
+      certs:
+        condition: service_completed_successfully
+    ports:
+      - "8883:8883"
+    volumes:
+      - ./infra/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ./infra/mosquitto/acl:/mosquitto/config/acl:ro
+      # Chaque service ne monte que son dossier (AC publique + sa paire), jamais la clé de l'AC.
+      - ./infra/mosquitto/certs/mqtt:/mosquitto/certs:ro
+      - mqtt-data:/mosquitto/data
+    restart: unless-stopped
+
+  # PostgreSQL + TimescaleDB (schéma créé par l'API au démarrage).
+  db:
+    image: timescale/timescaledb:2.30.2-pg17
+    logging: *logging
+    environment:
+      POSTGRES_USER: evan
+      POSTGRES_PASSWORD: ${EVAN_DB_PASSWORD:-evan-dev}
+      POSTGRES_DB: evan
+    ports:
+      # Ce poste seulement : le compte evan est superutilisateur (lecture de toute la base, commandes sur le conteneur).
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U evan -d evan"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  # Back : ingestion MQTT, règles d'alarme, séries temporelles, REST + SignalR.
+  api:
+    build:
+      context: .
+      dockerfile: infra/docker/dotnet.Dockerfile
+      args:
+        PROJECT: EVAN.Api
+    logging: *logging
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Evan: Host=db;Database=evan;Username=evan;Password=${EVAN_DB_PASSWORD:-evan-dev}
+      Evan__Mqtt__Host: mqtt
+      Evan__Mqtt__Port: "8883"
+      Evan__Mqtt__CaFile: /certs/ca.crt
+      Evan__Mqtt__CertFile: /certs/api.crt
+      Evan__Mqtt__KeyFile: /certs/api.key
+      Evan__CorsOrigins__0: http://localhost:8088
+      Evan__CorsOrigins__1: http://localhost:5173
+      # Assistant « Demander à EVAN » : clé Claude côté serveur (vide = assistant indisponible, MCP disponible).
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      # Derrière nginx, tout client est « réseau » : sans code d'accès, l'assistant et le MCP lui sont refusés.
+      Evan__Assistant__CodeAcces: ${EVAN_CODE_ACCES:-}
+      # Effort demandé au modèle (low, medium, high, xhigh, max) ; vide : celui du modèle.
+      Evan__Assistant__Effort: ${EVAN_ASSISTANT_EFFORT:-}
+      # Installation, une seule fois : l'organisation de l'entreprise et son administrateur (POST /api/installation).
+      # Vide, la route est fermée.
+      Evan__CodeInstallation: ${EVAN_CODE_INSTALLATION:-}
+      # Clés du cookie de session, gardées d'un conteneur à l'autre : une mise à jour ne déconnecte personne.
+      Evan__DossierCles: /data/cles
+      # Broker tel que les passerelles des usines le joignent : il entre dans leur fichier de configuration.
+      Evan__Passerelles__Broker: ${EVAN_BROKER_PASSERELLES:-}
+    volumes:
+      - ./infra/mosquitto/certs/api:/certs:ro
+      - api-data:/data
+    ports:
+      # API directe (clients MCP) sur ce poste seulement ; le réseau passe par nginx (8088), limité par client.
+      - "127.0.0.1:8080:8080"
+    # Sain = API qui répond (l'image n'a ni curl ni wget : requête HTTP en bash). Sert à `docker compose up --wait`.
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /api/health HTTP/1.0\\r\\n\\r\\n' >&3 && head -1 <&3 | grep -q ' 200 '"]
+      interval: 10s
+      timeout: 3s
+      start_period: 30s
+      retries: 3
+    depends_on:
+      db:
+        condition: service_healthy
+      mqtt:
+        condition: service_started
+    restart: unless-stopped
+
+  # Simulateur : joue les machines de l'usine d'exemple (et une passerelle de démonstration).
+  simulator:
+    build:
+      context: .
+      dockerfile: infra/docker/dotnet.Dockerfile
+      args:
+        PROJECT: EVAN.Simulator
+    logging: *logging
+    environment:
+      Evan__Mqtt__Host: mqtt
+      Evan__Mqtt__Port: "8883"
+      Evan__Mqtt__CaFile: /certs/ca.crt
+      Evan__Mqtt__CertFile: /certs/simulator.crt
+      Evan__Mqtt__KeyFile: /certs/simulator.key
+      # La ligne paravent est réservée à la vraie passerelle du profil « edge ».
+      Simulator__Exclude__0: m-pv01
+    volumes:
+      - ./infra/mosquitto/certs/simulator:/certs:ro
+    depends_on:
+      mqtt:
+        condition: service_started
+    restart: unless-stopped
+
+  # Front : React + Three.js + MapLibre servis par nginx, qui relaie /api et /hubs vers le back.
+  web:
+    build:
+      context: .
+      dockerfile: infra/docker/front.Dockerfile
+    logging: *logging
+    ports:
+      - "8088:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  # ---- Profil edge : chaîne réelle OPC UA → passerelle .NET → MQTT TLS ----
+
+  # Serveur OPC UA de test de Microsoft (variables simulées : DipData, StepUp, PositiveTrendData…).
+  opcplc:
+    profiles: ["edge"]
+    image: mcr.microsoft.com/iotedge/opc-plc:2.15.10
+    logging: *logging
+    command: ["--pn=50000", "--autoaccept", "--ph=opcplc"]
+    restart: unless-stopped
+
+  gateway:
+    profiles: ["edge"]
+    build:
+      context: .
+      dockerfile: infra/docker/dotnet.Dockerfile
+      args:
+        PROJECT: EVAN.Gateway
+    logging: *logging
+    environment:
+      Evan__Mqtt__Host: mqtt
+      Evan__Mqtt__Port: "8883"
+      Evan__Mqtt__CaFile: /certs/ca.crt
+      Evan__Mqtt__CertFile: /certs/gateway.crt
+      Evan__Mqtt__KeyFile: /certs/gateway.key
+      Gateway__PkiDirectory: /data/pki
+      Gateway__AuditFile: /data/audit/ecritures.jsonl
+      # Banc de test uniquement : en usine, le certificat du serveur OPC UA est approuvé à la main.
+      Gateway__AutoAcceptServerCertificates: "true"
+      Gateway__Connections__0__Parameters__endpoint: opc.tcp://opcplc:50000
+    volumes:
+      - ./infra/mosquitto/certs/gateway:/certs:ro
+      - gateway-data:/data
+    depends_on:
+      - mqtt
+      - opcplc
+    restart: unless-stopped
+
+volumes:
+  mqtt-data:
+  db-data:
+  api-data:
+  gateway-data:

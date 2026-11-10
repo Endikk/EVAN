@@ -1,0 +1,23 @@
+# Dépendances et builds
+node_modules/
+**/dist/
+**/bin/
+**/obj/
+*.user
+.vs/
+.vscode/*
+!.vscode/extensions.json
+
+# Secrets et données locales
+.env
+infra/mosquitto/certs/
+**/pki/
+**/audit/
+
+# Divers
+*.log
+.DS_Store
+Thumbs.db
+
+# Copies de travail des agents Claude Code
+.claude/worktrees/

@@ -1,0 +1,311 @@
+/* ============================================================
+   Fenêtre « Consigner une intervention » : quatre étapes numérotées dont le numéro devient une coche une fois
+   remplie, une aide sous un champ quand elle sert à le remplir, l'erreur à sa place, l'envoi qui se voit, la
+   confirmation.
+   ============================================================ */
+
+/* Ouvert depuis « Revoir la panne » (même niveau, monté avant elle), le bon passe au-dessus du rejeu. */
+.modal-backdrop:has(> .iv) {
+  z-index: 120;
+}
+.modal.wide.iv {
+  width: min(680px, 100%);
+}
+.iv .form-grid {
+  margin-top: 0;
+}
+
+/* ---------- Étapes ---------- */
+.iv-etape {
+  min-width: 0;
+  margin: 16px 0 0;
+  padding: 16px 0 0;
+  border: 0;
+  border-top: 1px solid var(--border);
+}
+.iv-etape legend {
+  float: left;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 0;
+  font-size: 14.5px;
+  font-weight: 650;
+  color: var(--text);
+}
+.iv-etape-corps {
+  clear: both;
+}
+.iv-num {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-size: 12.5px;
+  font-weight: 700;
+  transition: background 300ms var(--ease);
+}
+.iv-num-chiffre {
+  transition: opacity 200ms var(--ease);
+}
+.iv-num .coche {
+  position: absolute;
+  inset: 2px;
+  opacity: 0;
+  transition: opacity 200ms var(--ease);
+}
+.iv-etape.faite .iv-num {
+  background: transparent;
+}
+.iv-etape.faite .iv-num-chiffre {
+  opacity: 0;
+}
+.iv-etape.faite .iv-num .coche {
+  opacity: 1;
+}
+
+/* ---------- Type d'intervention : trois choix qui s'expliquent ---------- */
+.iv-types {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.iv-type {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 12px 12px 38px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  cursor: pointer;
+  transition:
+    border-color var(--dur) var(--ease),
+    background var(--dur) var(--ease);
+}
+.iv-type:hover {
+  border-color: var(--border-strong);
+}
+.iv-type:has(input:focus-visible) {
+  box-shadow: var(--ring);
+}
+.iv-type.choisi {
+  border-color: color-mix(in srgb, var(--accent-text) 55%, var(--border));
+  background: var(--accent-soft);
+}
+.iv-type input {
+  position: absolute;
+  left: 12px;
+  top: 13px;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+.iv-type input:focus-visible {
+  box-shadow: none;
+}
+/* Le titre et son « ? » sur la même ligne. */
+.modal h2.iv-titre {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+.iv-type-titre {
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--text);
+}
+.iv-type-aide {
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--text-2);
+}
+
+/* ---------- Champs : aide dessous, erreur à sa place ---------- */
+.iv-champ > label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.iv-champ > label em {
+  font-style: normal;
+  font-weight: 450;
+  color: var(--text-3);
+}
+/* app.css met en petit tout span enfant d'un .field : le champ à unité garde la taille du texte saisi. */
+.iv-champ > .input-unit {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--text);
+}
+.iv .iv-aide {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-3);
+}
+.iv .iv-erreur {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 560;
+  line-height: 1.4;
+  color: var(--crit);
+  animation: entree 260ms var(--ease-out);
+}
+.iv-erreur svg,
+.iv-resume svg {
+  flex: none;
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+  margin-top: 2px;
+}
+.iv-champ.en-erreur .input {
+  border-color: var(--crit);
+}
+.iv-resume {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 8px 12px;
+  border-radius: var(--r-sm);
+  background: var(--crit-soft);
+  font-size: 13px;
+  color: var(--text);
+  animation: entree 260ms var(--ease-out);
+}
+.iv-resume svg {
+  color: var(--crit);
+}
+.iv-lien {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--crit);
+  font: inherit;
+  font-weight: 620;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.iv-pied {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 24px;
+}
+.iv-tourne {
+  animation: iv-tourne 900ms linear infinite;
+}
+@keyframes iv-tourne {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.iv-grille-3 {
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.8fr) minmax(0, 1fr);
+}
+
+/* ---------- Confirmation ---------- */
+.iv-ok-icone {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--r-md);
+  background: var(--ok-soft);
+}
+.iv-ok-icone .coche {
+  width: 28px;
+  height: 28px;
+}
+.iv-ok .coche-rond {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: iv-pop 360ms var(--ease-out) backwards;
+}
+.iv-ok .coche-trait {
+  animation: iv-trace 480ms var(--ease-out) 220ms backwards;
+}
+@keyframes iv-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+}
+@keyframes iv-trace {
+  from {
+    stroke-dashoffset: 14;
+  }
+}
+.iv-recap {
+  margin: 16px 0 0;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+.iv-recap > div {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
+  gap: 12px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--border);
+  animation: entree 360ms var(--ease-out) backwards;
+}
+.iv-recap > div:first-child {
+  border-top: 0;
+}
+.iv-recap > div:nth-child(2) {
+  animation-delay: 50ms;
+}
+.iv-recap > div:nth-child(3) {
+  animation-delay: 100ms;
+}
+.iv-recap > div:nth-child(4) {
+  animation-delay: 150ms;
+}
+.iv-recap > div:nth-child(n + 5) {
+  animation-delay: 200ms;
+}
+.iv-recap dt {
+  font-size: 12.5px;
+  color: var(--text-3);
+}
+.iv-recap dd {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--text);
+}
+.modal .iv-ok-note {
+  margin-top: 12px;
+  padding: 8px 12px;
+  border-radius: var(--r-sm);
+  background: var(--ok-soft);
+  font-size: 13px;
+  color: var(--text);
+}
+
+@media (max-width: 600px) {
+  .iv-types,
+  .iv .iv-grille-3 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .iv-recap > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+  }
+}

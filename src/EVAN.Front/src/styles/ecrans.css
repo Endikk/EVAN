@@ -1,0 +1,227 @@
+/* Blocs des écrans : bibliothèque, connexion, trace, tableaux, écrans en pleine page, aide (i). */
+
+/* Bibliothèque machines */
+.lib {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+/* Assistant de connexion */
+.proto {
+  padding: 12px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  text-align: left;
+  cursor: pointer;
+}
+.proto[aria-pressed='true'] {
+  border-color: var(--accent-text);
+  background: var(--accent-soft);
+}
+.proto b {
+  display: block;
+  font-size: 13.5px;
+}
+.proto small {
+  font-size: 11.5px;
+  color: var(--text-2);
+}
+.log {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  border-radius: var(--r-md);
+  padding: 12px;
+  line-height: 1.6;
+  max-height: 210px;
+  overflow: auto;
+}
+.log .ok {
+  color: var(--ok);
+}
+.log .wait {
+  color: var(--text-3);
+}
+
+/* Trace de détection */
+.trace {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+}
+/* Vue compacte : maillons resserrés, le détail technique reste replié. */
+@keyframes rise2 {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+/* Tableaux */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+.table th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--text-3);
+  padding: 8px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  z-index: 1;
+}
+.table td {
+  padding: 8px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.table tr:hover td {
+  background: var(--surface-2);
+}
+.table .r {
+  text-align: right;
+}
+
+/* Écrans d'exploitation en pleine page : historique, maintenance, énergie, vue d'ensemble */
+.history {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  background: var(--bg);
+  color: var(--text);
+  /* Même gouttière pour tous les écrans en pleine page : 24 px autour, 32 px en bas de défilement. */
+  padding: 24px 24px 32px;
+}
+@media (max-width: 760px) {
+  .history {
+    padding: 16px 16px 32px;
+  }
+}
+.history-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 16px;
+}
+.history .card {
+  padding: 16px;
+  min-width: 0;
+}
+.span-12 {
+  grid-column: span 12;
+}
+.span-8 {
+  grid-column: span 8;
+}
+.span-7 {
+  grid-column: span 7;
+}
+.span-6 {
+  grid-column: span 6;
+}
+.span-5 {
+  grid-column: span 5;
+}
+.span-4 {
+  grid-column: span 4;
+}
+.card h3 {
+  margin: 0 0 4px;
+  font-size: 15px;
+}
+.card .sub {
+  margin: 0 0 12px;
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+/* Titre de carte sans sous-titre : l'explication est dans l'aide (i). */
+.card h3:has(+ :not(.sub)) {
+  margin-bottom: 8px;
+}
+
+/* Aide contextuelle (i) : discrète, l'explication s'ouvre au survol, au focus ou au toucher. */
+.infotip {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  margin: -4px 0 -4px 4px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-3);
+  opacity: 0.85;
+  cursor: help;
+  vertical-align: middle;
+  transition:
+    opacity var(--dur) var(--ease),
+    color var(--dur) var(--ease),
+    background var(--dur) var(--ease);
+}
+.infotip svg {
+  width: var(--icon);
+  height: var(--icon);
+}
+.infotip:hover,
+.infotip[aria-expanded='true'] {
+  opacity: 1;
+  color: var(--accent-text);
+  background: var(--accent-soft);
+}
+.infotip:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+.infotip-pop {
+  position: fixed;
+  z-index: 200;
+  padding: 8px 12px;
+  border-radius: var(--r-md);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-2);
+  color: var(--text-2);
+  font-size: 12.5px;
+  font-weight: 450;
+  line-height: 1.45;
+  letter-spacing: 0;
+  text-transform: none;
+  text-align: left;
+  animation: rise3 140ms var(--ease);
+}
+.infotip-pop b {
+  color: var(--text);
+}
+.infotip-pop p {
+  margin: 0;
+}
+.infotip-pop p + p {
+  margin-top: 8px;
+}
+.infotip-pop .terme-mot {
+  display: block;
+  margin-bottom: 4px;
+}
+.chart-tip {
+  position: absolute;
+  pointer-events: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-2);
+  padding: 8px;
+  border-radius: var(--r-sm);
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 5;
+}

@@ -1,0 +1,874 @@
+{
+  "schema": "evan-demo/2",
+  "description": "Organisation d'exemple préchargée pour /demo : Valtiq, entreprise fictive, et deux de ses usines. Chaque usine porte son site, ses bâtiments, ses zones et ses machines ; les identifiants sont uniques dans toute l'organisation. Les bâtiments sont des emprises réelles de la BD TOPO (IGN), retenues pour leur forme ; l'entreprise, ses zones, ses machines et ses mesures sont illustratives.",
+  "organisation": {
+    "id": "org-valtiq",
+    "nom": "Valtiq (exemple)"
+  },
+  "usines": [
+    {
+      "description": "Siège et usine principale, ZI du Menneton à Tours. Emprises réelles de la BD TOPO (IGN) : bâtiment principal et annexe de prépresse de l'autre côté de la cour. Surface annoncée : 7 000 m².",
+      "site": {
+        "id": "site-tours",
+        "organisationId": "org-valtiq",
+        "nom": "Tours · ZI du Menneton",
+        "adresse": "ZI du Menneton, avenue Thérèse Voisin, 37000 Tours",
+        "coordonnees": [
+          0.672815,
+          47.375835
+        ],
+        "passerelle": "tours-01",
+        "surfaceAnnoncee": 7000,
+        "repere": {
+          "origin": [
+            0.6728152765,
+            47.3758353397
+          ],
+          "angleDeg": 78.6697
+        }
+      },
+      "batiments": [
+        {
+          "id": "bat-a",
+          "siteId": "site-tours",
+          "nom": "Bâtiment A · production",
+          "contour": [
+            [
+              0.67256686,
+              47.37634589
+            ],
+            [
+              0.67254708,
+              47.37628245
+            ],
+            [
+              0.67243588,
+              47.37591188
+            ],
+            [
+              0.67230066,
+              47.37545347
+            ],
+            [
+              0.67310891,
+              47.37534267
+            ],
+            [
+              0.67325091,
+              47.37582824
+            ],
+            [
+              0.67314946,
+              47.37584422
+            ],
+            [
+              0.67321322,
+              47.37605533
+            ],
+            [
+              0.67329987,
+              47.37604446
+            ],
+            [
+              0.67332289,
+              47.37612507
+            ],
+            [
+              0.67323756,
+              47.37613597
+            ],
+            [
+              0.67326981,
+              47.37624829
+            ],
+            [
+              0.67301512,
+              47.37628192
+            ],
+            [
+              0.67302088,
+              47.37630185
+            ],
+            [
+              0.67295554,
+              47.37631045
+            ],
+            [
+              0.67294838,
+              47.37629229
+            ]
+          ],
+          "sigmas": [
+            2.121,
+            2.121,
+            2.121,
+            2.121,
+            2.121,
+            2.121,
+            2.121,
+            2.121,
+            2.121,
+            2.121,
+            2.121,
+            2.121,
+            2.121,
+            2.121,
+            2.121,
+            2.121
+          ],
+          "hauteur": 9.2,
+          "niveaux": 1,
+          "source": "bdtopo",
+          "sourceRef": "BATIMENT0000000322913675",
+          "rnb": "H977255VFJNY",
+          "usage": "Industriel · Commercial et services",
+          "precisionSource": 3
+        },
+        {
+          "id": "bat-b",
+          "siteId": "site-tours",
+          "nom": "Bâtiment B · prépresse",
+          "contour": [
+            [
+              0.672632,
+              47.37524216
+            ],
+            [
+              0.67264926,
+              47.37530284
+            ],
+            [
+              0.67251188,
+              47.37532171
+            ],
+            [
+              0.67242519,
+              47.37533348
+            ],
+            [
+              0.6722545,
+              47.37535618
+            ],
+            [
+              0.6721726,
+              47.37507445
+            ],
+            [
+              0.67256735,
+              47.37502112
+            ]
+          ],
+          "sigmas": [
+            2.121,
+            2.121,
+            2.121,
+            2.121,
+            2.121,
+            2.121,
+            2.121
+          ],
+          "hauteur": 9.4,
+          "niveaux": 1,
+          "source": "bdtopo",
+          "sourceRef": "BATIMENT0000000322913671",
+          "rnb": "NRP1K9GEWYR8",
+          "usage": "Industriel · Commercial et services",
+          "precisionSource": 3
+        }
+      ],
+      "zones": [
+        {
+          "id": "z-impr",
+          "batimentId": "bat-a",
+          "nom": "Atelier impression",
+          "type": "atelier",
+          "polygone": [
+            [
+              -47,
+              -27
+            ],
+            [
+              15,
+              -27
+            ],
+            [
+              15,
+              6
+            ],
+            [
+              -47,
+              6
+            ]
+          ]
+        },
+        {
+          "id": "z-fac",
+          "batimentId": "bat-a",
+          "nom": "Façonnage",
+          "type": "faconnage",
+          "polygone": [
+            [
+              19,
+              -27
+            ],
+            [
+              50,
+              -27
+            ],
+            [
+              50,
+              22
+            ],
+            [
+              19,
+              22
+            ]
+          ]
+        },
+        {
+          "id": "z-stock",
+          "batimentId": "bat-a",
+          "nom": "Stock papiers et bobines",
+          "type": "stock",
+          "polygone": [
+            [
+              -47,
+              9
+            ],
+            [
+              15,
+              9
+            ],
+            [
+              15,
+              22
+            ],
+            [
+              -47,
+              22
+            ]
+          ]
+        },
+        {
+          "id": "z-exp",
+          "batimentId": "bat-a",
+          "nom": "Expédition",
+          "type": "expedition",
+          "polygone": [
+            [
+              -47,
+              26
+            ],
+            [
+              3,
+              26
+            ],
+            [
+              3,
+              31
+            ],
+            [
+              -47,
+              31
+            ]
+          ]
+        },
+        {
+          "id": "z-pp",
+          "batimentId": "bat-b",
+          "nom": "Prépresse",
+          "type": "prepresse",
+          "polygone": [
+            [
+              -91,
+              -29.5
+            ],
+            [
+              -62,
+              -29.5
+            ],
+            [
+              -62,
+              -17
+            ],
+            [
+              -91,
+              -17
+            ]
+          ]
+        },
+        {
+          "id": "z-rfid",
+          "batimentId": "bat-b",
+          "nom": "Atelier imprimantes et RFID",
+          "type": "atelier",
+          "polygone": [
+            [
+              -91,
+              -14.5
+            ],
+            [
+              -62,
+              -14.5
+            ],
+            [
+              -62,
+              -2
+            ],
+            [
+              -91,
+              -2
+            ]
+          ]
+        }
+      ],
+      "machines": [
+        {
+          "id": "m-r01",
+          "batimentId": "bat-a",
+          "zoneId": "z-impr",
+          "type": "flexo",
+          "nom": "Gallus Labelmaster 440",
+          "numero": "R01",
+          "position": [
+            -37,
+            -18
+          ],
+          "rotationDeg": 0,
+          "modele": {
+            "url": "/kit/modeles/flexo.glb"
+          }
+        },
+        {
+          "id": "m-r02",
+          "batimentId": "bat-a",
+          "zoneId": "z-impr",
+          "type": "offset",
+          "nom": "Rotative offset",
+          "numero": "R02",
+          "position": [
+            -23,
+            -18
+          ],
+          "rotationDeg": 0,
+          "modele": {
+            "url": "/kit/modeles/offset.glb"
+          }
+        },
+        {
+          "id": "m-r03",
+          "batimentId": "bat-a",
+          "zoneId": "z-impr",
+          "type": "offset",
+          "nom": "Rotative offset",
+          "numero": "R03",
+          "position": [
+            -9,
+            -18
+          ],
+          "rotationDeg": 0,
+          "modele": {
+            "url": "/kit/modeles/offset.glb"
+          }
+        },
+        {
+          "id": "m-r04",
+          "batimentId": "bat-a",
+          "zoneId": "z-impr",
+          "type": "offset",
+          "nom": "Rotative offset",
+          "numero": "R04",
+          "position": [
+            5,
+            -18
+          ],
+          "rotationDeg": 0,
+          "modele": {
+            "url": "/kit/modeles/offset.glb"
+          }
+        },
+        {
+          "id": "m-r05",
+          "batimentId": "bat-a",
+          "zoneId": "z-impr",
+          "type": "offset",
+          "nom": "Rotative offset",
+          "numero": "R05",
+          "position": [
+            -37,
+            -4
+          ],
+          "rotationDeg": 0,
+          "modele": {
+            "url": "/kit/modeles/offset.glb"
+          }
+        },
+        {
+          "id": "m-r06",
+          "batimentId": "bat-a",
+          "zoneId": "z-impr",
+          "type": "offset",
+          "nom": "Rotative offset",
+          "numero": "R06",
+          "position": [
+            -23,
+            -4
+          ],
+          "rotationDeg": 0,
+          "modele": {
+            "url": "/kit/modeles/offset.glb"
+          }
+        },
+        {
+          "id": "m-r07",
+          "batimentId": "bat-a",
+          "zoneId": "z-impr",
+          "type": "offset",
+          "nom": "Rotative offset",
+          "numero": "R07",
+          "position": [
+            -9,
+            -4
+          ],
+          "rotationDeg": 0,
+          "modele": {
+            "url": "/kit/modeles/offset.glb"
+          }
+        },
+        {
+          "id": "m-r08",
+          "batimentId": "bat-a",
+          "zoneId": "z-impr",
+          "type": "digital",
+          "nom": "Presse numérique",
+          "numero": "R08",
+          "position": [
+            5,
+            -4
+          ],
+          "rotationDeg": 0,
+          "modele": {
+            "url": "/kit/modeles/digital.glb"
+          }
+        },
+        {
+          "id": "m-pp01",
+          "batimentId": "bat-b",
+          "zoneId": "z-pp",
+          "type": "ctp",
+          "nom": "Graveur de plaques CTP",
+          "numero": "PP01",
+          "position": [
+            -76.5,
+            -23.5
+          ],
+          "rotationDeg": 0,
+          "modele": {
+            "url": "/kit/modeles/ctp.glb"
+          }
+        },
+        {
+          "id": "m-rfid01",
+          "batimentId": "bat-b",
+          "zoneId": "z-rfid",
+          "type": "rfid",
+          "nom": "Atelier RFID",
+          "numero": "RFID01",
+          "position": [
+            -76.5,
+            -8.5
+          ],
+          "rotationDeg": 0,
+          "modele": {
+            "url": "/kit/modeles/rfid.glb"
+          }
+        },
+        {
+          "id": "m-rf01",
+          "batimentId": "bat-a",
+          "zoneId": "z-fac",
+          "type": "slitter",
+          "nom": "Refendeuse",
+          "numero": "RF01",
+          "position": [
+            27,
+            -15
+          ],
+          "rotationDeg": 0,
+          "modele": {
+            "url": "/kit/modeles/slitter.glb"
+          }
+        },
+        {
+          "id": "m-rf02",
+          "batimentId": "bat-a",
+          "zoneId": "z-fac",
+          "type": "slitter",
+          "nom": "Refendeuse",
+          "numero": "RF02",
+          "position": [
+            42,
+            -15
+          ],
+          "rotationDeg": 0,
+          "modele": {
+            "url": "/kit/modeles/slitter.glb"
+          }
+        },
+        {
+          "id": "m-pv01",
+          "batimentId": "bat-a",
+          "zoneId": "z-fac",
+          "type": "paravent",
+          "nom": "Ligne paravent",
+          "numero": "PV01",
+          "position": [
+            27,
+            9
+          ],
+          "rotationDeg": 0,
+          "modele": {
+            "url": "/kit/modeles/paravent.glb"
+          }
+        },
+        {
+          "id": "m-fe01",
+          "batimentId": "bat-a",
+          "zoneId": "z-fac",
+          "type": "sheeter",
+          "nom": "Feuilleteuse A4",
+          "numero": "FE01",
+          "position": [
+            42,
+            9
+          ],
+          "rotationDeg": 0,
+          "modele": {
+            "url": "/kit/modeles/sheeter.glb"
+          }
+        }
+      ]
+    },
+    {
+      "description": "Ateliers Brennac, 48 rue Paul Sabatier à Crissey (71), près de Chalon-sur-Saône : gravure et signalétique industrielles, étiquettes techniques. Emprise réelle de la BD TOPO (IGN), reliée à l'adresse par le RNB. Le kit ne contient ni graveuse laser ni fraiseuse : les machines sont celles du kit, nommées selon l'activité, et restent illustratives.",
+      "site": {
+        "id": "site-crissey",
+        "organisationId": "org-valtiq",
+        "nom": "Crissey · Ateliers Brennac",
+        "adresse": "48 rue Paul Sabatier, 71530 Crissey",
+        "coordonnees": [
+          4.871019,
+          46.830543
+        ],
+        "passerelle": "crissey-01",
+        "repere": {
+          "origin": [
+            4.8710208723,
+            46.8305438884
+          ],
+          "angleDeg": -30.9425
+        }
+      },
+      "batiments": [
+        {
+          "id": "bat-cr-a",
+          "siteId": "site-crissey",
+          "nom": "Bâtiment A · gravure et signalétique",
+          "contour": [
+            [
+              4.87167161,
+              46.83059113
+            ],
+            [
+              4.87126448,
+              46.83012582
+            ],
+            [
+              4.87036652,
+              46.83049528
+            ],
+            [
+              4.8707723,
+              46.83095971
+            ],
+            [
+              4.87143758,
+              46.83069221
+            ],
+            [
+              4.87167573,
+              46.83059647
+            ]
+          ],
+          "sigmas": [
+            2.121,
+            2.121,
+            2.121,
+            2.121,
+            2.121,
+            2.121
+          ],
+          "hauteur": 9.2,
+          "niveaux": 1,
+          "source": "bdtopo",
+          "sourceRef": "BATIMENT0000000348750006",
+          "rnb": "WRHTT88Z39RH",
+          "usage": "Industriel · Commercial et services",
+          "precisionSource": 3
+        }
+      ],
+      "zones": [
+        {
+          "id": "z-cr-grav",
+          "batimentId": "bat-cr-a",
+          "nom": "Gravure et signalétique",
+          "type": "atelier",
+          "polygone": [
+            [
+              -38,
+              -28
+            ],
+            [
+              -2,
+              -28
+            ],
+            [
+              -2,
+              -1.5
+            ],
+            [
+              -38,
+              -1.5
+            ]
+          ]
+        },
+        {
+          "id": "z-cr-impr",
+          "batimentId": "bat-cr-a",
+          "nom": "Impression étiquettes techniques",
+          "type": "atelier",
+          "polygone": [
+            [
+              -38,
+              1.5
+            ],
+            [
+              -2,
+              1.5
+            ],
+            [
+              -2,
+              28
+            ],
+            [
+              -38,
+              28
+            ]
+          ]
+        },
+        {
+          "id": "z-cr-fac",
+          "batimentId": "bat-cr-a",
+          "nom": "Façonnage et découpe",
+          "type": "faconnage",
+          "polygone": [
+            [
+              1,
+              -28
+            ],
+            [
+              24,
+              -28
+            ],
+            [
+              24,
+              28
+            ],
+            [
+              1,
+              28
+            ]
+          ]
+        },
+        {
+          "id": "z-cr-exp",
+          "batimentId": "bat-cr-a",
+          "nom": "Stock et expédition",
+          "type": "expedition",
+          "polygone": [
+            [
+              27,
+              -28
+            ],
+            [
+              38,
+              -28
+            ],
+            [
+              38,
+              13
+            ],
+            [
+              27,
+              13
+            ]
+          ]
+        },
+        {
+          "id": "z-cr-bur",
+          "batimentId": "bat-cr-a",
+          "nom": "Accueil et bureaux",
+          "type": "bureaux",
+          "polygone": [
+            [
+              27,
+              16
+            ],
+            [
+              38,
+              16
+            ],
+            [
+              38,
+              28
+            ],
+            [
+              27,
+              28
+            ]
+          ]
+        }
+      ],
+      "machines": [
+        {
+          "id": "m-cr-pp01",
+          "batimentId": "bat-cr-a",
+          "zoneId": "z-cr-grav",
+          "type": "ctp",
+          "nom": "Graveur laser de plaques",
+          "numero": "PP01",
+          "position": [
+            -31,
+            -15
+          ],
+          "rotationDeg": 0,
+          "modele": {
+            "url": "/kit/modeles/ctp.glb"
+          }
+        },
+        {
+          "id": "m-cr-fe01",
+          "batimentId": "bat-cr-a",
+          "zoneId": "z-cr-grav",
+          "type": "sheeter",
+          "nom": "Coupe de plaques signalétiques",
+          "numero": "FE01",
+          "position": [
+            -19,
+            -15
+          ],
+          "rotationDeg": 0,
+          "modele": {
+            "url": "/kit/modeles/sheeter.glb"
+          }
+        },
+        {
+          "id": "m-cr-rfid01",
+          "batimentId": "bat-cr-a",
+          "zoneId": "z-cr-grav",
+          "type": "rfid",
+          "nom": "Marquage RFID des plaques",
+          "numero": "RFID01",
+          "position": [
+            -8,
+            -15
+          ],
+          "rotationDeg": 0,
+          "modele": {
+            "url": "/kit/modeles/rfid.glb"
+          }
+        },
+        {
+          "id": "m-cr-r01",
+          "batimentId": "bat-cr-a",
+          "zoneId": "z-cr-impr",
+          "type": "offset",
+          "nom": "Rotative offset",
+          "numero": "R01",
+          "position": [
+            -30,
+            14
+          ],
+          "rotationDeg": 0,
+          "modele": {
+            "url": "/kit/modeles/offset.glb"
+          }
+        },
+        {
+          "id": "m-cr-r02",
+          "batimentId": "bat-cr-a",
+          "zoneId": "z-cr-impr",
+          "type": "digital",
+          "nom": "Presse numérique",
+          "numero": "R02",
+          "position": [
+            -19,
+            14
+          ],
+          "rotationDeg": 0,
+          "modele": {
+            "url": "/kit/modeles/digital.glb"
+          }
+        },
+        {
+          "id": "m-cr-r03",
+          "batimentId": "bat-cr-a",
+          "zoneId": "z-cr-impr",
+          "type": "digital",
+          "nom": "Presse numérique",
+          "numero": "R03",
+          "position": [
+            -8,
+            14
+          ],
+          "rotationDeg": 0,
+          "modele": {
+            "url": "/kit/modeles/digital.glb"
+          }
+        },
+        {
+          "id": "m-cr-rf01",
+          "batimentId": "bat-cr-a",
+          "zoneId": "z-cr-fac",
+          "type": "slitter",
+          "nom": "Refendeuse",
+          "numero": "RF01",
+          "position": [
+            12,
+            -10
+          ],
+          "rotationDeg": 0,
+          "modele": {
+            "url": "/kit/modeles/slitter.glb"
+          }
+        },
+        {
+          "id": "m-cr-fe02",
+          "batimentId": "bat-cr-a",
+          "zoneId": "z-cr-fac",
+          "type": "sheeter",
+          "nom": "Feuilleteuse",
+          "numero": "FE02",
+          "position": [
+            12,
+            12
+          ],
+          "rotationDeg": 0,
+          "modele": {
+            "url": "/kit/modeles/sheeter.glb"
+          }
+        }
+      ]
+    }
+  ]
+}

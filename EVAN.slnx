@@ -1,0 +1,42 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="docker-compose.yml" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/docs/">
+    <File Path="docs/ARCHITECTURE.md" />
+    <File Path="docs/COMMUNICATION.md" />
+    <File Path="docs/DEMO.md" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/EVAN.Core/EVAN.Core.csproj" />
+    <Project Path="src/EVAN.Application/EVAN.Application.csproj" />
+    <Project Path="src/EVAN.Infrastructure/EVAN.Infrastructure.csproj" />
+    <Project Path="src/EVAN.Messaging/EVAN.Messaging.csproj" />
+    <Project Path="src/EVAN.Api/EVAN.Api.csproj" />
+    <Project Path="src/EVAN.Mcp/EVAN.Mcp.csproj" />
+    <Project Path="src/EVAN.Simulator/EVAN.Simulator.csproj" />
+    <Project Path="src/EVAN.Gateway/EVAN.Gateway.csproj" />
+  </Folder>
+  <Folder Name="/src/EVAN.Front/">
+    <File Path="src/EVAN.Front/package.json" />
+    <File Path="src/EVAN.Front/vite.config.ts" />
+    <File Path="src/EVAN.Front/tsconfig.json" />
+  </Folder>
+  <Folder Name="/tests/">
+    <File Path="tests/Directory.Build.props" />
+    <Project Path="tests/EVAN.Core.Tests/EVAN.Core.Tests.csproj" />
+    <Project Path="tests/EVAN.Application.Tests/EVAN.Application.Tests.csproj" />
+    <Project Path="tests/EVAN.Infrastructure.Tests/EVAN.Infrastructure.Tests.csproj" />
+    <Project Path="tests/EVAN.Architecture.Tests/EVAN.Architecture.Tests.csproj" />
+    <Project Path="tests/EVAN.Mcp.Tests/EVAN.Mcp.Tests.csproj" />
+    <Project Path="tests/EVAN.Api.Tests/EVAN.Api.Tests.csproj" />
+    <Project Path="tests/EVAN.Gateway.Tests/EVAN.Gateway.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/EVAN.DevBroker/EVAN.DevBroker.csproj" />
+  </Folder>
+</Solution>

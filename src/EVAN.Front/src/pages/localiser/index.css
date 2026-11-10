@@ -1,0 +1,815 @@
+/* ============================================================
+   Étape 1 · Localiser : recherche, conseil posé sur la carte, panneau de la surface.
+   Préfixe loc- partout : ces règles ne touchent aucun autre écran.
+   ============================================================ */
+
+/* ---------- Recherche ---------- */
+.loc-hud-recherche {
+  right: 60px;
+}
+/* L'icône de recherche passe devant le champ (son flou crée un plan au-dessus d'elle). */
+.loc-recherche > svg {
+  z-index: 1;
+}
+.searchbox > .loc-recherche-roue {
+  left: auto;
+  right: 14px;
+  color: var(--accent-text);
+}
+.loc-recherche-etat {
+  padding: 12px 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-2);
+  animation: entree 220ms var(--ease-out) both;
+}
+.loc-recherche-etat p {
+  margin: 0;
+}
+.loc-recherche-etat p + p {
+  margin-top: 8px;
+}
+.loc-recherche-etat .row {
+  gap: 8px;
+  color: var(--text);
+}
+.loc-recherche-etat svg {
+  width: var(--icon);
+  height: var(--icon);
+  flex: none;
+}
+.loc-recherche-etat.erreur svg {
+  color: var(--warn);
+}
+
+/* ---------- Conseil posé sur la carte ---------- */
+.loc-accueil {
+  position: absolute;
+  z-index: 4;
+  top: 76px;
+  left: 16px;
+  width: min(392px, calc(100% - 32px));
+  padding: 16px;
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow-2);
+  animation: entree 420ms var(--ease-out) both;
+}
+.loc-accueil h2 {
+  margin: 0 32px 4px 0;
+  font-size: 16px;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+.loc-accueil p {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+.loc-accueil .row {
+  margin-top: 8px;
+}
+.loc-accueil .loc-accueil-rangee h2 {
+  margin-bottom: 0;
+}
+.loc-accueil .loc-accueil-compte {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+.loc-accueil-fermer {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+.loc-accueil-gestes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 12px 0 4px;
+}
+.loc-accueil-gestes figure {
+  margin: 0;
+}
+.loc-accueil-gestes figcaption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text);
+}
+.loc-accueil-gestes figcaption b {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: 11px;
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+.loc-accueil .loc-accueil-ligne {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--text);
+  padding-right: 32px;
+}
+.loc-accueil-ligne svg {
+  width: var(--icon-lg);
+  height: var(--icon-lg);
+  flex: none;
+  margin-top: 1px;
+  color: var(--accent-text);
+}
+.loc-accueil-ligne.erreur svg {
+  color: var(--warn);
+}
+.loc-accueil-cherche,
+.loc-accueil-releve {
+  padding-right: 16px;
+}
+.loc-accueil-rangee {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 12px;
+  align-items: center;
+}
+
+/* ---------- Commandes de la carte (au-dessus du zoom) ---------- */
+.loc-commandes {
+  position: absolute;
+  z-index: 4;
+  right: 16px;
+  bottom: 150px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+.loc-commandes .btn {
+  background: var(--surface);
+  box-shadow: var(--shadow-2);
+}
+.loc-commandes .btn.active {
+  background: var(--accent-soft);
+}
+
+/* ---------- Scènes animées du geste ---------- */
+.loc-geste {
+  --loc-g-cycle: 5.2s;
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.loc-geste.petit {
+  width: 96px;
+}
+.loc-geste * {
+  transform-box: view-box;
+  transform-origin: 0 0;
+  animation-duration: var(--loc-g-cycle);
+  animation-delay: var(--loc-g-decalage, 0ms);
+  animation-iteration-count: 4;
+  animation-fill-mode: both;
+  animation-timing-function: var(--ease-out);
+}
+.loc-g-sol {
+  fill: color-mix(in srgb, var(--ok) 14%, var(--surface-3));
+}
+.loc-g-toit {
+  fill: color-mix(in srgb, var(--text-3) 62%, var(--surface-3));
+}
+.loc-g-route {
+  fill: var(--surface);
+  opacity: 0.8;
+}
+.loc-g-champ {
+  fill: var(--surface);
+  stroke: var(--border-strong);
+  stroke-width: 0.8;
+}
+.loc-g-loupe {
+  fill: none;
+  stroke: var(--text-3);
+  stroke-width: 1.2;
+  stroke-linecap: round;
+}
+.loc-g-texte {
+  font: 560 8px var(--font);
+  fill: var(--text);
+}
+.loc-g-cache {
+  fill: var(--surface);
+  animation-name: loc-g-tape;
+}
+.loc-g-caret {
+  fill: var(--accent-2);
+  animation-name: loc-g-caret;
+}
+@keyframes loc-g-tape {
+  0%,
+  10% {
+    transform: translateX(0);
+    animation-timing-function: steps(16, end);
+  }
+  40%,
+  100% {
+    transform: translateX(72px);
+  }
+}
+@keyframes loc-g-caret {
+  0%,
+  10% {
+    transform: translateX(0);
+    opacity: 1;
+    animation-timing-function: steps(16, end);
+  }
+  40% {
+    transform: translateX(72px);
+    opacity: 1;
+  }
+  46%,
+  100% {
+    transform: translateX(72px);
+    opacity: 0;
+  }
+}
+.loc-g-resultat {
+  animation-name: loc-g-resultat;
+}
+@keyframes loc-g-resultat {
+  0%,
+  42% {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  50%,
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.loc-g-choisi {
+  fill: var(--accent-soft);
+  stroke: var(--accent-2);
+  stroke-width: 0.8;
+  animation-name: loc-g-choisi;
+}
+@keyframes loc-g-choisi {
+  0%,
+  68% {
+    opacity: 0;
+  }
+  74%,
+  100% {
+    opacity: 1;
+  }
+}
+.loc-g-epingle {
+  fill: var(--accent-2);
+}
+.loc-g-ligne {
+  fill: var(--text-3);
+}
+.loc-g-souris {
+  fill: var(--text);
+  stroke: var(--bg);
+  stroke-width: 0.9;
+  stroke-linejoin: round;
+}
+.loc-g-souris-adresse {
+  animation-name: loc-g-souris-adresse;
+}
+@keyframes loc-g-souris-adresse {
+  0%,
+  46% {
+    transform: translate(102px, 60px);
+  }
+  64% {
+    transform: translate(70px, 35px);
+  }
+  68% {
+    transform: translate(70px, 35px) scale(0.8);
+  }
+  72%,
+  100% {
+    transform: translate(70px, 35px);
+  }
+}
+.loc-g-contour {
+  fill: none;
+  stroke: var(--map-line);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-dasharray: 100;
+  animation-name: loc-g-trace;
+}
+@keyframes loc-g-trace {
+  0%,
+  50% {
+    stroke-dashoffset: 100;
+  }
+  76%,
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+.loc-g-rempli {
+  fill: var(--map-line);
+  animation-name: loc-g-rempli;
+}
+@keyframes loc-g-rempli {
+  0%,
+  74% {
+    opacity: 0;
+  }
+  84%,
+  100% {
+    opacity: 0.22;
+  }
+}
+.loc-g-onde {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 1.4;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation-name: loc-g-onde;
+}
+@keyframes loc-g-onde {
+  0%,
+  45% {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+  47% {
+    opacity: 0.9;
+    transform: scale(0.3);
+  }
+  62%,
+  100% {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+}
+.loc-g-etiquette {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation-name: loc-g-etiquette;
+}
+.loc-g-etiquette rect {
+  fill: var(--map-line);
+}
+.loc-g-etiquette text {
+  font: 700 7px var(--font);
+  fill: var(--accent-deep);
+}
+@keyframes loc-g-etiquette {
+  0%,
+  80% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  88%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.loc-g-souris-toit {
+  animation-name: loc-g-souris-toit;
+}
+@keyframes loc-g-souris-toit {
+  0%,
+  14% {
+    transform: translate(104px, 66px);
+  }
+  40% {
+    transform: translate(62px, 27px);
+  }
+  45% {
+    transform: translate(62px, 27px) scale(0.8);
+  }
+  50%,
+  70% {
+    transform: translate(62px, 27px);
+  }
+  86%,
+  100% {
+    transform: translate(94px, 52px);
+  }
+}
+.loc-g-faux,
+.loc-g-juste {
+  fill: color-mix(in srgb, var(--map-line) 14%, transparent);
+  stroke: var(--map-line);
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+}
+.loc-g-faux {
+  animation-name: loc-g-faux;
+}
+.loc-g-juste {
+  animation-name: loc-g-juste;
+}
+@keyframes loc-g-faux {
+  0%,
+  34% {
+    opacity: 1;
+  }
+  64%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes loc-g-juste {
+  0%,
+  34% {
+    opacity: 0;
+  }
+  64%,
+  100% {
+    opacity: 1;
+  }
+}
+.loc-g-sommet {
+  fill: var(--accent-contrast);
+  stroke: var(--map-line);
+  stroke-width: 1.4;
+}
+.loc-g-sommet-tire {
+  animation-name: loc-g-sommet;
+}
+@keyframes loc-g-sommet {
+  0%,
+  34% {
+    transform: translate(0, 0);
+  }
+  64%,
+  100% {
+    transform: translate(-12px, -8px);
+  }
+}
+.loc-g-souris-coin {
+  animation-name: loc-g-souris-coin;
+}
+@keyframes loc-g-souris-coin {
+  0%,
+  8% {
+    transform: translate(114px, 70px);
+  }
+  28% {
+    transform: translate(102px, 66px);
+  }
+  34% {
+    transform: translate(102px, 66px) scale(0.82);
+  }
+  64% {
+    transform: translate(90px, 58px) scale(0.82);
+  }
+  70% {
+    transform: translate(90px, 58px);
+  }
+  88%,
+  100% {
+    transform: translate(106px, 40px);
+  }
+}
+
+/* ---------- Panneau ---------- */
+.loc-tache-detail {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--text-3);
+  overflow-wrap: anywhere;
+}
+
+.loc-surface {
+  padding: 16px 16px 4px;
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border));
+}
+.loc-surface .titre-carte {
+  margin-bottom: 0;
+}
+.loc-surface .tc-ligne {
+  flex-wrap: nowrap;
+}
+.loc-surface .tc-titre {
+  flex: none;
+}
+.loc-surface .tc-actions {
+  min-width: 0;
+}
+.loc-surface .tc-actions .chip {
+  min-width: 0;
+}
+.loc-surface-valeur {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-top: 8px;
+  line-height: 1;
+}
+.loc-surface-valeur b {
+  font-size: 44px;
+  font-weight: 740;
+  letter-spacing: -0.03em;
+}
+.loc-surface-valeur small {
+  font-size: 18px;
+  font-weight: 650;
+  color: var(--text-2);
+}
+.loc-precision {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 12px;
+}
+.loc-precision-mot {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 620;
+}
+/* Précision suffisante : mot gris et petit rond vert ; seule une précision faible prend la couleur. */
+.loc-precision-mot.ton-ok {
+  color: var(--text-2);
+}
+.loc-precision-mot.ton-warn {
+  color: var(--warn);
+}
+.loc-precision-mot .ton-glyph {
+  width: 14px;
+  height: 14px;
+}
+.loc-precision-mot .ton-glyph svg {
+  width: 12px;
+  height: 12px;
+}
+.loc-jauge {
+  position: relative;
+  height: 6px;
+  margin-top: 8px;
+  border-radius: var(--r-sm);
+  background: var(--surface-3);
+  overflow: hidden;
+}
+.loc-jauge i {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  transform-origin: left center;
+  transition: transform 700ms var(--ease-out);
+  animation: loc-jauge 1000ms var(--ease-out) 200ms backwards;
+}
+.loc-jauge.ton-ok i {
+  background: var(--text-3);
+}
+.loc-jauge.ton-warn i {
+  background: var(--warn);
+}
+@keyframes loc-jauge {
+  from {
+    transform: scaleX(0);
+  }
+}
+/* Les autres mesures : une rangée de chiffres, deux ou trois par ligne dans le panneau. */
+.loc-surface .loc-mesures {
+  margin: 16px -4px 12px;
+  padding: 8px 0 0;
+  border-bottom: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px 0;
+}
+.loc-surface .loc-mesures .cs-item,
+.loc-surface .loc-mesures .cs-item:first-child {
+  padding: 4px 4px 4px 12px;
+  border-left: 1px solid var(--border);
+}
+.loc-surface .loc-mesures .cs-item:nth-child(3n + 1) {
+  padding-left: 4px;
+  border-left: 0;
+}
+.loc-mesures .cs-item dd {
+  font-size: 15px;
+  white-space: nowrap;
+}
+.loc-source-lien {
+  color: var(--accent-text);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.loc-aide {
+  margin: 0 0 8px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+.loc-aide.row {
+  align-items: flex-start;
+  gap: 8px;
+}
+.loc-aide svg {
+  width: var(--icon);
+  height: var(--icon);
+  flex: none;
+  margin-top: 2px;
+  color: var(--accent-text);
+}
+.loc-geste-texte {
+  margin-top: 8px;
+}
+/* Pendant l'édition : la scène du coin replacé, et la consigne en une ligne. */
+.loc-geste-edition {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 12px;
+  align-items: center;
+  margin-top: 8px;
+}
+.loc-geste-edition .loc-aide {
+  margin: 0;
+}
+.loc-outils {
+  margin-top: 8px;
+  gap: 4px;
+}
+/* Contour vérifié : l'état normal, dit calmement (mot gris, coche verte). */
+.loc-verifie {
+  height: 32px;
+  color: var(--text-2);
+  background: var(--surface-2);
+  border-color: transparent;
+  animation: loc-verifie 420ms var(--ease-out);
+}
+.loc-verifie svg {
+  color: var(--ok);
+}
+@keyframes loc-verifie {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+
+.loc-bat-liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.loc-bat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.loc-bat .item {
+  flex: 1;
+  min-width: 0;
+}
+.loc-bat .item[aria-pressed='true'] {
+  border-color: var(--accent-text);
+  background: var(--accent-soft);
+}
+.loc-bat-texte {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+/* La surface du bâtiment comparée à la plus grande : on voit d'un coup d'œil lequel compte. */
+.loc-bat-barre {
+  position: relative;
+  height: 4px;
+  border-radius: var(--r-xs);
+  background: var(--surface-3);
+  overflow: hidden;
+}
+.loc-bat-barre i {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--text-3);
+  transform-origin: left center;
+  transition: transform 500ms var(--ease-out);
+}
+.loc-bat .item[aria-pressed='true'] .loc-bat-barre i {
+  background: var(--accent-text);
+}
+.loc-bat-valeurs {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex: none;
+  line-height: 1.25;
+}
+.loc-bat-valeurs b {
+  font-size: 13.5px;
+  font-weight: 650;
+}
+.loc-bat-valeurs small {
+  font-size: 12px;
+  color: var(--text-3);
+}
+.loc-bat-suppr {
+  --h: 40px;
+  width: 40px;
+}
+/* Total au sol et surface annoncée, côte à côte sous la liste. */
+.loc-totaux {
+  margin-top: 12px;
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+.loc-totaux .cs-item dd {
+  font-size: 16px;
+}
+.loc-annonce {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--text-2);
+}
+.loc-annonce .ton-glyph {
+  margin-top: 1px;
+}
+
+.loc-trouver .titre-carte {
+  margin-bottom: 8px;
+}
+.loc-encours {
+  padding: 12px 16px;
+  gap: 8px;
+  font-size: 13px;
+}
+.loc-erreur {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  border-color: color-mix(in srgb, var(--warn) 50%, var(--border));
+}
+.loc-erreur > svg {
+  width: var(--icon-lg);
+  height: var(--icon-lg);
+  flex: none;
+  margin-top: 2px;
+  color: var(--warn);
+}
+.loc-erreur p {
+  margin: 0 0 8px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+/* Résumé replié des propositions : le texte se coupe, les boutons restent dans la carte. */
+.loc-cand-resume {
+  flex: 1;
+  min-width: 0;
+}
+.loc-cand-resume > .truncate {
+  min-width: 0;
+}
+
+/* Bordures des propositions : app.css les appuie sur --line, qui n'existe pas (à nettoyer là-bas). */
+.loc-panneau .cand-card {
+  border-color: color-mix(in srgb, var(--warn) 45%, var(--border));
+}
+.loc-panneau .cand-card.compact {
+  border-color: color-mix(in srgb, var(--map-line) 40%, var(--border));
+}
+
+/* Téléphone : la carte est courte. Les commandes passent sous la recherche, le conseil se resserre. */
+@media (max-width: 600px) {
+  .loc-hud-recherche {
+    right: 16px;
+  }
+  .loc-hud-recherche .searchbox {
+    width: 100%;
+  }
+  .loc-commandes {
+    top: 72px;
+    bottom: auto;
+    flex-direction: row;
+  }
+  .loc-accueil {
+    top: 72px;
+    padding: 12px 16px;
+  }
+  .loc-accueil-gestes {
+    margin: 8px 0 0;
+  }
+}

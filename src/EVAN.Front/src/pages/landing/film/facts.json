@@ -1,0 +1,157 @@
+{
+  "description": "Seule source des mots et des faits montrés par le film d'ouverture de l'accueil. Chaque texte affiché pendant le film figure ici, avec l'extrait exact qui le fonde et le fichier du dépôt qui le porte. timeline.test.ts vérifie que chaque extrait est bien dans son fichier, et que les textes propres au film y sont tous.",
+  "textes": [
+    {
+      "texte": "Toute votre usine.",
+      "nature": "affirmation",
+      "source": "EVAN, supervision d'usine : localisez votre usine, dessinez son plan, placez et connectez vos machines, voyez en temps réel quel organe est en défaut.",
+      "url": "src/EVAN.Front/index.html"
+    },
+    {
+      "texte": "Jusqu’au dernier rouleau",
+      "nature": "affirmation",
+      "source": "\"nom\": \"Rembobineur\"",
+      "url": "data/kit/machines.json",
+      "note": "Le point final est le point d'état vert du logo, dessiné à part."
+    },
+    {
+      "texte": "Supervision d’usine",
+      "nature": "libellé",
+      "source": "EVAN, supervision d'usine",
+      "url": "src/EVAN.Front/index.html"
+    },
+    {
+      "texte": "EVAN suit vos machines en direct. Quand l’une s’arrête, il montre la pièce en cause et ce qu’il faut vérifier.",
+      "nature": "affirmation",
+      "source": "voyez en temps réel quel organe est en défaut.",
+      "url": "src/EVAN.Front/index.html"
+    },
+    {
+      "texte": "150",
+      "nature": "fait",
+      "source": "\"vitesse\": { \"nominale\": 150, \"max\": 200, \"unite\": \"m/min\" }",
+      "url": "data/catalog.json"
+    },
+    {
+      "texte": "m/min",
+      "nature": "unité",
+      "source": "\"vitesse\": { \"nominale\": 150, \"max\": 200, \"unite\": \"m/min\" }",
+      "url": "data/catalog.json"
+    },
+    {
+      "texte": "CF-02",
+      "nature": "fait",
+      "source": "\"code\": \"CF-02\"",
+      "url": "data/kit/machines.json"
+    },
+    {
+      "texte": "Dorure à froid",
+      "nature": "fait",
+      "source": "\"nom\": \"Dorure à froid\"",
+      "url": "data/kit/machines.json"
+    },
+    {
+      "texte": "Voir la démo",
+      "nature": "action",
+      "source": "Voir la démo",
+      "url": "src/EVAN.Front/src/pages/landing/features/Actions.tsx"
+    },
+    {
+      "texte": "Commencer avec mon usine",
+      "nature": "action",
+      "source": "{saved ? 'Reprendre mon usine' : 'Commencer avec mon usine'}",
+      "url": "src/EVAN.Front/src/pages/landing/features/Actions.tsx"
+    },
+    {
+      "texte": "0",
+      "nature": "fait",
+      "source": "panne: { etat: 'panne', facteur: 0",
+      "url": "src/EVAN.Front/src/pages/landing/features/LandingStage.tsx"
+    },
+    {
+      "texte": "IMPRESSION FLEXO",
+      "nature": "libellé",
+      "source": "\"Procédé\": \"Flexographie, 8 groupes\"",
+      "url": "data/kit/machines.json",
+      "note": "Bandeau de l'écran du pupitre, repris de l'image d'origine du modèle flexo.glb."
+    },
+    {
+      "texte": "DÉCOUPE",
+      "nature": "libellé",
+      "source": "\"nom\": \"Postes de découpe\"",
+      "url": "data/kit/machines.json",
+      "note": "Bandeau de l'écran de découpe, repris de l'image d'origine du modèle flexo.glb."
+    },
+    {
+      "texte": "Contrôler le passage du film",
+      "nature": "consigne",
+      "source": "Contrôler le passage du film et la pression de la station",
+      "url": "data/catalog.json"
+    },
+    {
+      "texte": "Comment ça marche",
+      "nature": "libellé",
+      "source": "Comment ça marche",
+      "url": "src/EVAN.Front/src/pages/landing/index.tsx"
+    },
+    {
+      "texte": "simulation",
+      "nature": "mention",
+      "source": "ctx.fillText('simulation', L - 44, 187);",
+      "url": "src/EVAN.Front/src/pages/landing/features/EcransPresse.tsx",
+      "note": "Les écrans de la presse disent qu'ils montrent la presse simulée de la page."
+    },
+    {
+      "texte": "Voir sur la presse",
+      "nature": "libellé",
+      "source": "aria-label=\"Voir sur la presse\"",
+      "url": "src/EVAN.Front/src/pages/landing/features/Vues.tsx"
+    },
+    {
+      "texte": "Vue d’ensemble",
+      "nature": "libellé",
+      "source": "label: 'Vue d’ensemble'",
+      "url": "src/EVAN.Front/src/pages/landing/lib/sections.ts"
+    },
+    {
+      "texte": "Provoquer une panne",
+      "nature": "libellé",
+      "source": "label: 'Provoquer une panne'",
+      "url": "src/EVAN.Front/src/pages/landing/lib/sections.ts"
+    },
+    {
+      "texte": "Les 9 pièces",
+      "nature": "fait",
+      "source": "label: `Les ${PRESSE.organes.length} pièces`",
+      "url": "src/EVAN.Front/src/pages/landing/lib/sections.ts",
+      "note": "Neuf organes surveillés dans le catalogue pour la presse flexo."
+    }
+  ],
+  "images": [
+    {
+      "montre": "Le dernier rouleau de la presse est celui du rembobineur, au bout de la bande.",
+      "source": "\"nom\": \"Rembobineur\"",
+      "url": "data/kit/machines.json"
+    },
+    {
+      "montre": "La dorure à froid casse son film : la tension tombe d'un coup à zéro et la presse s'arrête.",
+      "source": "\"panne\": { \"mesure\": \"tension_film\", \"forme\": \"saut\", \"cible\": 0, \"duree\": 1, \"cause\": \"Casse du film de dorure : la tension tombe brutalement à zéro.",
+      "url": "data/catalog.json"
+    },
+    {
+      "montre": "En panne, la presse ralentit puis s'arrête : ses écrans descendent avec elle jusqu'à 0 m/min.",
+      "source": "panne: { etat: 'panne', facteur: 0",
+      "url": "src/EVAN.Front/src/pages/landing/features/LandingStage.tsx"
+    },
+    {
+      "montre": "Les barres des écrans de la presse sont l'historique de la vitesse affichée, une barre toutes les 8 images ; avant le démarrage, elles sont à zéro.",
+      "source": "const PAS_BARRE = 8;",
+      "url": "src/EVAN.Front/src/pages/landing/features/EcransPresse.tsx"
+    },
+    {
+      "montre": "La jauge des écrans vaut la vitesse affichée rapportée au maximum de la presse, 200 m/min.",
+      "source": "\"vitesse\": { \"nominale\": 150, \"max\": 200, \"unite\": \"m/min\" }",
+      "url": "data/catalog.json"
+    }
+  ]
+}

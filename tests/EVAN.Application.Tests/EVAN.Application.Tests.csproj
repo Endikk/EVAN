@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Cas d'usage : chaîne de détection de bout en bout (bus et diffusion simulés, stockage mémoire, données réelles). -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\EVAN.Application\EVAN.Application.csproj" />
+    <ProjectReference Include="..\..\src\EVAN.Infrastructure\EVAN.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

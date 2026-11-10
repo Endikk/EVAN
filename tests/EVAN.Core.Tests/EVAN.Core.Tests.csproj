@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Domaine : moteur de règles d'alarme (seuils, escalade, hystérésis, dérive, répétitif), défauts répétitifs, énergie. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\EVAN.Core\EVAN.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Catalogue et kit machines : les pièces tournantes et les puissances viennent des mêmes données que le front. -->
+    <None Include="$(EvanDataDir)catalog.json" Link="data\catalog.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="$(EvanDataDir)kit\machines.json" Link="data\machines.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

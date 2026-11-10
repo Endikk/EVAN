@@ -1,0 +1,322 @@
+/* Étape 1 : recherche, nature d'un résultat, bâtiments candidats, marqueurs de la carte. */
+
+/* Recherche */
+.searchbox {
+  position: relative;
+  width: min(460px, calc(100% - 32px));
+}
+.searchbox .input {
+  height: 48px;
+  padding-left: 44px;
+  font-size: 15px;
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-2);
+}
+.searchbox > svg {
+  position: absolute;
+  left: 14px;
+  top: 14px;
+  width: var(--icon-lg);
+  height: var(--icon-lg);
+  color: var(--text-3);
+  pointer-events: none;
+}
+.suggest {
+  position: absolute;
+  top: 56px;
+  left: 0;
+  right: 0;
+  border-radius: var(--r-md);
+  padding: 8px;
+  box-shadow: var(--shadow-3);
+  max-height: 360px;
+  overflow-y: auto;
+}
+.suggest button {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  padding: 8px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.suggest button[aria-selected='true'],
+.suggest button:hover {
+  background: var(--accent-soft);
+}
+.suggest .ic {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-sm);
+  display: grid;
+  place-items: center;
+  background: var(--surface-2);
+  color: var(--text-2);
+}
+.suggest .ic svg {
+  width: var(--icon);
+  height: var(--icon);
+}
+.suggest b {
+  display: block;
+  font-size: 13.5px;
+}
+.suggest small {
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+/* Ce que désigne un résultat de recherche */
+.prec-badge {
+  font: 650 10.5px/1 var(--font);
+  padding: 4px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+/* Même dessin que les puces : couleur sur le texte et le filet, sans aplat. */
+.prec-badge.ok {
+  color: var(--ok);
+  border-color: color-mix(in srgb, var(--ok) 35%, var(--border));
+}
+.prec-badge.mid {
+  color: var(--warn);
+  border-color: color-mix(in srgb, var(--warn) 35%, var(--border));
+}
+.prec-badge.low {
+  color: var(--text-3);
+  border-color: var(--border);
+}
+
+/* Bâtiments candidats */
+.cand-card {
+  padding: 16px;
+  display: grid;
+  gap: 8px;
+  border-color: color-mix(in srgb, var(--warn) 45%, var(--border));
+}
+.cand-list {
+  display: grid;
+  gap: 4px;
+}
+.cand-item {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  padding: 8px;
+  border-radius: var(--r-sm);
+  border: 1px solid transparent;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  transition: background 0.15s, border-color 0.15s;
+}
+.cand-item:hover,
+.cand-item[data-hover] {
+  background: var(--warn-soft);
+  border-color: color-mix(in srgb, var(--warn) 40%, transparent);
+}
+.cand-item[aria-pressed='true'] {
+  background: color-mix(in srgb, var(--map-line) 14%, transparent);
+  border-color: color-mix(in srgb, var(--map-line) 50%, transparent);
+}
+.cand-item .t {
+  display: block;
+  font-weight: 700;
+  font-size: 13.5px;
+}
+.cand-item .s {
+  display: block;
+  font-size: 12px;
+  color: var(--text-2);
+}
+.cand-letter {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font: 800 14px/1 var(--font);
+  color: var(--map-ink);
+  background: var(--map-candidate);
+}
+.cand-card.compact {
+  padding: 8px 8px 8px 12px;
+  border-color: color-mix(in srgb, var(--map-line) 40%, var(--border));
+}
+.cand-letter.sm {
+  width: 24px;
+  height: 24px;
+  flex: none;
+}
+.cand-letter.ok {
+  background: var(--map-line);
+  color: var(--map-ink);
+}
+.cand-letter svg {
+  width: var(--icon);
+  height: var(--icon);
+}
+.cand-item[aria-pressed='true'] .cand-letter {
+  background: var(--map-line);
+  color: var(--map-ink);
+}
+.cand-action {
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--text-2);
+}
+.cand-item[aria-pressed='true'] .cand-action {
+  color: var(--text);
+}
+.cand-pin {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px 4px 4px;
+  border-radius: 999px;
+  border: 0;
+  background: var(--scene-tag-bg);
+  color: var(--scene-tag-text);
+  font: 650 11.5px/1 var(--font);
+  font-variant-numeric: tabular-nums;
+  box-shadow: var(--scene-tag-shadow);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.15s;
+}
+.cand-pin b {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--map-candidate);
+  color: var(--map-ink);
+  font-size: 12.5px;
+}
+.cand-pin.hover,
+.cand-pin:hover {
+  transform: scale(1.12);
+}
+.addr-pin {
+  display: grid;
+  justify-items: center;
+  pointer-events: none;
+}
+.addr-pin i {
+  width: 14px;
+  height: 14px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  background: var(--accent);
+  border: 2px solid var(--map-handle);
+  box-shadow: var(--scene-tag-shadow);
+  order: 2;
+}
+.addr-pin span {
+  font: 650 10.5px/1 var(--font);
+  color: var(--scene-tag-text);
+  background: var(--scene-tag-bg);
+  padding: 4px 8px;
+  border-radius: var(--r-sm);
+  margin-bottom: 4px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cand-pin {
+    transition: none;
+  }
+}
+
+/* Marqueurs carte */
+.vx {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--map-handle);
+  border: 3px solid var(--map-line);
+  box-shadow: var(--scene-tag-shadow);
+  cursor: grab;
+  touch-action: none;
+}
+.vx:active {
+  cursor: grabbing;
+  transform: scale(1.25);
+}
+.vx.sel {
+  background: var(--map-line);
+}
+.vx.mid {
+  width: 13px;
+  height: 13px;
+  border-width: 2px;
+  background: color-mix(in srgb, var(--map-handle) 55%, transparent);
+  opacity: 0.85;
+}
+@media (pointer: coarse) {
+  .vx {
+    width: 24px;
+    height: 24px;
+  }
+  .vx.mid {
+    width: 20px;
+    height: 20px;
+  }
+}
+.edge-label {
+  font: 600 11.5px/1 var(--font);
+  font-variant-numeric: tabular-nums;
+  color: var(--scene-tag-text);
+  background: var(--scene-tag-bg);
+  padding: 4px 8px;
+  border-radius: var(--r-sm);
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: var(--scene-tag-shadow);
+}
+.area-label {
+  font: 760 15px/1.1 var(--font);
+  font-variant-numeric: tabular-nums;
+  color: var(--map-ink);
+  background: var(--map-line);
+  padding: 8px;
+  border-radius: var(--r-sm);
+  box-shadow: var(--scene-tag-shadow);
+  white-space: nowrap;
+  pointer-events: none;
+  text-align: center;
+}
+.area-label small {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 650;
+  opacity: 0.75;
+}
+.map-tip {
+  font-size: 12px;
+  line-height: 1.35;
+}
+.map-tip b {
+  font-size: 13px;
+}
+.maplibregl-popup-content {
+  background: var(--surface) !important;
+  color: var(--text);
+  border-radius: var(--r-md) !important;
+  box-shadow: var(--shadow-2) !important;
+  padding: 8px 12px !important;
+}
+.maplibregl-popup-tip {
+  border-top-color: var(--surface) !important;
+  border-bottom-color: var(--surface) !important;
+}
+.maplibregl-ctrl-attrib {
+  font-size: 10px;
+}

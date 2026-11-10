@@ -1,0 +1,16 @@
+# Contexte des images .NET (remplace .dockerignore pour dotnet.Dockerfile) : mêmes exclusions, plus le front,
+# pour qu'une modification du front ne relance pas la compilation du back.
+.git
+**/bin/
+**/obj/
+**/node_modules/
+**/dist/
+**/pki/
+**/audit/
+infra/mosquitto/certs/
+.env
+*.log
+src/EVAN.Front/
+tests/
+docs/
+tools/

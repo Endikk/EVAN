@@ -1,0 +1,54 @@
+# Mises à jour hebdomadaires vers dev. Par écosystème, les versions mineures et correctives arrivent ensemble dans une
+# PR (groupe « …-mineures ») ; chaque version majeure, hors de tout groupe, arrive dans sa propre PR. Un majeur qui
+# casse le build ne bloque plus les mises à jour sûres.
+version: 2
+updates:
+  - package-ecosystem: nuget
+    directory: /
+    target-branch: dev
+    schedule:
+      interval: weekly
+    groups:
+      nuget-mineures:
+        patterns: ["*"]
+        update-types: [minor, patch]
+    ignore:
+      # La 2.x du client OPC UA change l'API dont se sert la passerelle (DateTimeUtc, ArrayOf<string>,
+      # WriteValueCollection dans src/EVAN.Gateway/Sources/OpcUaSource.cs). Migration à faire à part, dans sa branche.
+      - dependency-name: OPCFoundation.NetStandard.Opc.Ua.Client
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: npm
+    directory: /src/EVAN.Front
+    target-branch: dev
+    schedule:
+      interval: weekly
+    groups:
+      npm-mineures:
+        patterns: ["*"]
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: dev
+    schedule:
+      interval: weekly
+    groups:
+      actions-mineures:
+        patterns: ["*"]
+        update-types: [minor, patch]
+
+  - package-ecosystem: docker
+    directory: /infra/docker
+    target-branch: dev
+    schedule:
+      interval: weekly
+    groups:
+      docker-mineures:
+        patterns: ["*"]
+        update-types: [minor, patch]
+    ignore:
+      # Node : on suit à la main les versions LTS, paires ; une impaire comme la 25 n'a pas de support long. La montée
+      # se fait avec node-version du job front de .github/workflows/ci.yml.
+      - dependency-name: node
+        update-types: ["version-update:semver-major"]

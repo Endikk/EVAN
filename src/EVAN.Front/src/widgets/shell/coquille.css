@@ -1,0 +1,591 @@
+/* ============================================================
+   Coquille de l'espace de travail : barre latérale à gauche (logo, usines, écrans ou étapes, réglages), barre du haut
+   (où l'on est, actions de l'écran), puis l'écran lui-même.
+   Grand écran : barre latérale dépliée ou repliée au choix. Tablette : repliée. Téléphone : menu qui glisse.
+   ============================================================ */
+
+.app {
+  height: 100%;
+  display: grid;
+  grid-template-columns: var(--side-w) minmax(0, 1fr) var(--panel-w);
+  grid-template-rows: var(--header-h) minmax(0, 1fr);
+  grid-template-areas:
+    'side head head'
+    'side stage panel';
+  overflow: hidden;
+}
+.app.exploitation {
+  grid-template-rows: var(--header-h) auto minmax(0, 1fr);
+  grid-template-areas:
+    'side head head'
+    'side kpis kpis'
+    'side stage panel';
+}
+.app.exploitation.page {
+  grid-template-columns: var(--side-w) minmax(0, 1fr);
+  grid-template-rows: var(--header-h) minmax(0, 1fr);
+  grid-template-areas:
+    'side head'
+    'side stage';
+}
+.app.replie {
+  --side-w: 76px;
+}
+
+/* ---------- Barre latérale ---------- */
+.side {
+  grid-area: side;
+  position: relative;
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-right: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 55%, var(--bg));
+  overflow: hidden;
+}
+.side-tete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  height: var(--header-h);
+  padding: 0 8px 0 16px;
+  flex: none;
+}
+.side-fermer {
+  display: none;
+}
+.side-corps {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  padding: 8px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  scrollbar-width: thin;
+}
+.side-usines-compact {
+  display: none;
+}
+.side-section-tete {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 28px;
+  padding: 0 8px 4px;
+}
+.side-section-tete h2 {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-3);
+  letter-spacing: 0;
+}
+.side-compte {
+  font-size: 12px;
+  color: var(--text-3);
+}
+.side-liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.side-sep {
+  height: 1px;
+  margin: 8px;
+  background: var(--border);
+}
+
+/* Une entrée : une icône, un nom, et en petit ce qu'on y trouve. L'entrée ouverte : fond rouge léger et un trait
+   rouge à gauche qui se déploie. */
+.side-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  min-height: 46px;
+  padding: 8px;
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--text-2);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition:
+    background var(--dur) var(--ease),
+    color var(--dur) var(--ease);
+}
+.side-item::before {
+  content: '';
+  position: absolute;
+  left: -12px;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 0 var(--r-xs) var(--r-xs) 0;
+  background: var(--accent);
+  transform: scaleY(0);
+  transition: transform 320ms var(--ease-out);
+}
+.side-item:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+.side-item[aria-current='page'] {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+.side-item[aria-current='page']::before {
+  transform: scaleY(1);
+}
+.side-icone {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-3);
+  transition:
+    color var(--dur) var(--ease),
+    background var(--dur) var(--ease),
+    border-color var(--dur) var(--ease);
+}
+.side-icone svg {
+  width: var(--icon);
+  height: var(--icon);
+}
+.side-item[aria-current='page'] .side-icone {
+  background: var(--accent);
+  border-color: transparent;
+  color: var(--accent-contrast);
+}
+.side-txt {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.3;
+}
+.side-txt b {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+.side-txt small {
+  font-size: 12px;
+  color: var(--text-3);
+}
+/* Sur le fond teinté de l'écran ouvert, --text-3 passe sous le contraste AA le jour (4,1:1). */
+.side-item[aria-current='page'] .side-txt small:not([class]) {
+  color: var(--text-2);
+}
+.side-txt small.ton-ok {
+  color: var(--ok);
+}
+.side-txt small.ton-warn {
+  color: var(--warn);
+}
+.side-txt small.ton-crit {
+  color: var(--crit);
+}
+/* L'état d'une usine se lit sur son icône : la forme de l'état machine, à sa couleur. */
+.side-etat .ton-glyph {
+  width: 16px;
+  height: 16px;
+}
+.side-etat.ton-neutre .ton-glyph {
+  color: var(--text-3);
+}
+/* L'usine ouverte : un fond discret, son état garde sa couleur. Le rouge plein reste réservé à l'écran ouvert. */
+.side-usine[aria-current='page'] {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+}
+.side-usine[aria-current='page']::before {
+  background: var(--text-3);
+}
+.side-usine[aria-current='page'] .side-icone {
+  background: var(--surface-3);
+  border-color: var(--border-strong);
+  color: var(--text-3);
+}
+.side-ajout .side-icone {
+  border-style: dashed;
+}
+.side-retour {
+  margin-top: 4px;
+}
+
+/* Étapes de configuration dans la barre : même fil que l'ancien rail. */
+.side-etapes .rail-steps {
+  --fil: 25px;
+}
+.side-etapes .rail-step {
+  min-height: 50px;
+  padding: 8px;
+  grid-template-columns: 34px 1fr;
+  gap: 12px;
+}
+.side-etapes .rail-step .n {
+  width: 34px;
+  height: 34px;
+}
+
+/* Pied : réglages, et le nuage de pixels sous eux. */
+.side-pied {
+  position: relative;
+  flex: none;
+  padding: 8px 12px 16px;
+  border-top: 1px solid var(--border);
+  overflow: hidden;
+}
+.side-pied > .pixel-field {
+  top: auto;
+  bottom: 0;
+  height: 120px;
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 70%);
+  mask-image: linear-gradient(180deg, transparent, #000 70%);
+  opacity: 0.55;
+}
+.side-pied-actions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.side-pied .side-item {
+  min-height: 40px;
+}
+.side-pied .side-icone {
+  width: 30px;
+  height: 30px;
+  background: transparent;
+}
+.side-reglages {
+  display: flex;
+  gap: 4px;
+  padding: 8px 4px 0;
+}
+
+/* ---------- Barre du haut ---------- */
+.topbar {
+  gap: 8px;
+  padding: 0 16px 0 24px;
+}
+.topbar > .ou-on-est {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.topbar-menu {
+  display: none;
+}
+/* Logo dans la barre du haut quand la barre latérale n'affiche que des icônes, juste devant « où l'on est ». */
+.topbar > .topbar-logo {
+  display: flex;
+  align-items: center;
+  margin-right: 16px;
+}
+.logo-voyageur {
+  display: inline-flex;
+}
+.ou-on-est {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  line-height: 1.2;
+}
+.fil ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--text-3);
+}
+.fil li {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+.fil li svg {
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+  margin: 0 4px;
+  flex: none;
+  opacity: 0.7;
+}
+.ecran-titre {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  animation: entree 380ms var(--ease-out) backwards;
+}
+.topbar .config-chip {
+  margin-left: 0;
+}
+@media (max-width: 1280px) {
+  .topbar .hide-md {
+    display: none;
+  }
+}
+@media (max-width: 1200px) {
+  .topbar .hide-ml {
+    display: none;
+  }
+}
+@media (max-width: 900px) {
+  .topbar .hide-sm {
+    display: none;
+  }
+}
+@media (max-width: 600px) {
+  .topbar .hide-xs {
+    display: none;
+  }
+}
+
+/* ---------- Barre repliée : icônes seules ---------- */
+.app.replie .side-tete {
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  height: auto;
+  min-height: var(--header-h);
+  padding: 8px 0;
+}
+.app.replie .side-corps {
+  padding: 8px 8px 12px;
+  align-items: stretch;
+}
+.app.replie .side-txt,
+.app.replie .side-section-tete,
+.app.replie .side-usines,
+.app.replie .side-sep {
+  display: none;
+}
+.app.replie .side-reglages {
+  flex-direction: column;
+  align-items: center;
+  padding: 4px 0 0;
+}
+.app.replie .side-usines-compact {
+  display: block;
+}
+.app.replie .side-item,
+.app.replie .side-etapes .rail-step {
+  grid-template-columns: 1fr;
+  justify-items: center;
+  padding: 8px 0;
+}
+.app.replie .side-etapes .rail-step .txt {
+  display: none;
+}
+.app.replie .side-etapes .rail-steps {
+  --fil: 27px;
+}
+.app.replie .side-item::before {
+  left: -10px;
+}
+.app.replie .side-pied {
+  padding: 8px 8px 12px;
+}
+/* Sélecteur d'usine compact : l'icône et son état, le menu s'ouvre à droite de la barre. */
+.side .usine-menu {
+  display: flex;
+  justify-content: center;
+}
+.side .usine-switch {
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+}
+.side .usine-switch-txt,
+.side .usine-switch-etat,
+.side .usine-chevron {
+  display: none;
+}
+/* La barre coupe ce qui déborde : le menu des usines s'ouvre donc en position fixe, juste à sa droite. */
+.side .usine-panel {
+  position: fixed;
+  left: calc(var(--side-w) + 8px);
+  top: calc(var(--header-h) + 8px);
+  right: auto;
+  width: min(380px, calc(100vw - var(--side-w) - 24px));
+}
+
+/* Tablette : toujours repliée, sans bouton pour la déplier. */
+@media (max-width: 1280px) and (min-width: 901px) {
+  .app {
+    --side-w: 76px;
+  }
+  .side-replier {
+    display: none;
+  }
+  .side-tete {
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    height: auto;
+    min-height: var(--header-h);
+    padding: 8px 0;
+  }
+  .side-corps {
+    padding: 8px 8px 12px;
+  }
+  .side-txt,
+  .side-section-tete,
+  .side-usines,
+  .side-sep {
+    display: none;
+  }
+  .side-reglages {
+    flex-direction: column;
+    align-items: center;
+    padding: 4px 0 0;
+  }
+  .side-usines-compact {
+    display: block;
+  }
+  .side-item,
+  .side-etapes .rail-step {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    padding: 8px 0;
+  }
+  .side-etapes .rail-step .txt {
+    display: none;
+  }
+  .side-etapes .rail-steps {
+    --fil: 27px;
+  }
+  .side-item::before {
+    left: -10px;
+  }
+}
+
+/* ---------- Téléphone et petite tablette : menu qui glisse ---------- */
+@media (max-width: 900px) {
+  :root {
+    --header-h: 56px;
+  }
+  .app,
+  .app.exploitation,
+  .app.exploitation.page,
+  .app.replie {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: var(--header-h) auto minmax(46vh, 1fr) auto;
+    grid-template-areas:
+      'head'
+      'kpis'
+      'stage'
+      'panel';
+    overflow-y: auto;
+    height: auto;
+    min-height: 100%;
+  }
+  .app.exploitation.page {
+    grid-template-rows: var(--header-h) 0 calc(100dvh - var(--header-h)) 0;
+    overflow: hidden;
+    height: 100%;
+  }
+  .topbar {
+    position: sticky;
+    top: 0;
+    padding: 0 8px;
+  }
+  .topbar-menu {
+    display: inline-flex;
+  }
+  .side {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: min(320px, 86vw);
+    z-index: 140;
+    border-right: 1px solid var(--border-strong);
+    background: var(--surface);
+    box-shadow: var(--shadow-3);
+    transform: translateX(-104%);
+    visibility: hidden;
+    transition:
+      transform 340ms var(--ease-out),
+      visibility 0s linear 340ms;
+  }
+  .side.ouvert {
+    transform: translateX(0);
+    visibility: visible;
+    transition: transform 340ms var(--ease-out);
+  }
+  .side-replier {
+    display: none;
+  }
+  .side-fermer {
+    display: inline-flex;
+  }
+  /* Le menu est toujours déplié : la préférence « repliée » ne vaut que sur grand écran. */
+  .app.replie .side-txt,
+  .app.replie .side-section-tete,
+  .app.replie .side-sep {
+    display: flex;
+  }
+  .app.replie .side-reglages,
+  .side-reglages {
+    flex-direction: row;
+    padding: 8px 4px 0;
+  }
+  .app.replie .side-usines {
+    display: block;
+  }
+  .app.replie .side-usines-compact {
+    display: none;
+  }
+  .app.replie .side-item {
+    grid-template-columns: 34px minmax(0, 1fr);
+    justify-items: stretch;
+    padding: 8px;
+  }
+  .app.replie .side-tete {
+    flex-direction: row;
+    justify-content: space-between;
+    height: var(--header-h);
+    min-height: 0;
+    padding: 0 8px 0 16px;
+  }
+  .app.replie .side-etapes .rail-step {
+    grid-template-columns: 34px 1fr;
+    justify-items: stretch;
+  }
+  .app.replie .side-etapes .rail-step .txt {
+    display: block;
+  }
+  .side-fond {
+    position: fixed;
+    inset: 0;
+    z-index: 130;
+    background: var(--scrim, rgba(2, 5, 12, 0.5));
+    animation: fond 240ms var(--ease) both;
+  }
+  .ecran-titre {
+    font-size: 15.5px;
+  }
+}

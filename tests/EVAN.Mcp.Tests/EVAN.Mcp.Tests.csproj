@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Serveur MCP : un vrai client MCP (Streamable HTTP) liste les outils d'EVAN et les appelle. -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\EVAN.Mcp\EVAN.Mcp.csproj" />
+    <ProjectReference Include="..\..\src\EVAN.Infrastructure\EVAN.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,1612 @@
+{
+  "schema": "evan-kit-machines/1.0",
+  "genere_le": "2026-10-07",
+  "entreprise": {
+    "nom": "Valtiq (entreprise fictive de la démo)",
+    "site": "ZI du Menneton, avenue Thérèse Voisin, 37000 Tours",
+    "activite": "Fabrication et impression d'étiquettes industrielles"
+  },
+  "legende_fiabilite": {
+    "source_directe": "Modèle de machine identifié : organes et caractéristiques du constructeur",
+    "technologie_confirmee": "Procédé connu, modèle à relever : organes d'une machine type",
+    "deduit": "Machine supposée d'après les produits fabriqués, à confirmer sur place"
+  },
+  "animation": {
+    "vitesse_bande_m_s": 0.5,
+    "pas_etiquette_m": 0.11,
+    "noeuds_rotatifs": "noms rotatif_N, tourner autour de l'axe Y local à extras.vitesseRadS",
+    "bandes": "noms bande_N, décaler la texture en U de vitesse / pas par seconde",
+    "voyants": "voyant_vert, voyant_orange, voyant_rouge",
+    "points_diagnostic": "noeuds vides diag_N_nom dans le groupe points_diagnostic",
+    "reperes": "noeuds vides repere_nom dans le groupe reperes"
+  },
+  "machines": [
+    {
+      "id": "flexo",
+      "nom": "Gallus Labelmaster 440",
+      "procede": "Impression flexographique",
+      "fiabilite": {
+        "niveau": "source_directe",
+        "libelle": "Modèle identifié"
+      },
+      "nombre": "1",
+      "description": "Presse flexo conventionnelle 8 groupes, la plus récente du parc. Elle complète les rotatives offset : calage rapide, peu de gâche, découpe et dorure à froid en ligne.",
+      "caracteristiques": {
+        "Procédé": "Flexographie, 8 groupes",
+        "Laize": "440 mm",
+        "Finition": "3 postes de découpe, dorure à froid intégrée",
+        "Vitesse": "jusqu'à 200 m/min",
+        "Particularité": "1,4 m de bande entre groupes : peu de gâche au calage"
+      },
+      "connectivite": {
+        "pilotage_et_protocoles": "Servomoteurs directs sans engrenage, pupitre tactile, séchage UV et air chaud. Télémaintenance Gallus Remote Access. Ordres de fabrication et compteurs en JDF/JMF avec un MIS.",
+        "donnees_a_recuperer": "Compteurs, consommation de matière, gâche, états machine, alarmes",
+        "localiser_une_panne": "Alarme rattachée à un axe donc à un groupe ; pas d'un défaut répétitif comparé aux circonférences des cylindres"
+      },
+      "modele_3d": {
+        "fichier": "modeles/flexo.glb",
+        "format": "glTF 2.0 binaire",
+        "unite": "mètre",
+        "axe_vertical": "Y",
+        "socle_inclus": true,
+        "remarque": "Rendu illustratif, proportions approximatives, sans logo ni design de marque."
+      },
+      "reperes": [
+        {
+          "texte": "Dérouleur",
+          "position": [
+            -3.62,
+            1.52,
+            0
+          ]
+        },
+        {
+          "texte": "8 groupes flexo + séchage",
+          "position": [
+            -1.12,
+            1.66,
+            0
+          ]
+        },
+        {
+          "texte": "Dorure à froid",
+          "position": [
+            0.96,
+            1.78,
+            0
+          ]
+        },
+        {
+          "texte": "3 postes de découpe",
+          "position": [
+            1.85,
+            1.42,
+            0
+          ]
+        },
+        {
+          "texte": "Échenillage",
+          "position": [
+            2.62,
+            1.72,
+            0
+          ]
+        },
+        {
+          "texte": "Rembobineur",
+          "position": [
+            3.22,
+            1.38,
+            0
+          ]
+        }
+      ],
+      "points_diagnostic": [
+        {
+          "numero": 1,
+          "nom": "Dérouleur et guide-bande",
+          "position": [
+            -3.62,
+            1,
+            0.3
+          ],
+          "capteurs_donnees": [
+            "Diamètre de bobine",
+            "Tension de bande (cellule de charge)",
+            "Position de bande (guide optique)"
+          ],
+          "pannes_typiques": [
+            "Casse de bande",
+            "Fin de bobine non anticipée",
+            "Tension instable qui fait des plis"
+          ],
+          "remonter_a_la_cause": "Croiser la courbe de tension avec le diamètre : une tension qui décroche toujours au même diamètre désigne le frein ou le capteur, pas la matière.",
+          "se_connecter": "Variables de l’automate (tension, diamètre, alarmes) lues en OPC UA, ou via la télémaintenance du constructeur.",
+          "alarme_simulee": {
+            "code": "TB-101",
+            "message": "Tension hors tolérance au dérouleur"
+          }
+        },
+        {
+          "numero": 2,
+          "nom": "Groupe flexo (servo direct)",
+          "position": [
+            -2.19,
+            1.07,
+            0.3
+          ],
+          "capteurs_donnees": [
+            "Un servomoteur par cylindre, sans engrenage",
+            "Couple, position et erreur de poursuite de chaque axe",
+            "Écart de repérage par groupe"
+          ],
+          "pannes_typiques": [
+            "Défaut de repérage",
+            "Erreur de poursuite ou surchauffe d’un axe",
+            "Cliché abîmé"
+          ],
+          "remonter_a_la_cause": "Chaque variateur journalise ses défauts : l’alarme désigne l’axe, donc le groupe exact. Un défaut qui revient sur la bande à un pas égal à la circonférence d’un cylindre désigne ce cylindre.",
+          "se_connecter": "Journal d’alarmes de l’automate, et compteurs JMF vers un MIS (intégration JDF/JMF documentée chez Gallus).",
+          "alarme_simulee": {
+            "code": "AX-02",
+            "message": "Erreur de poursuite sur l’axe du groupe 2"
+          }
+        },
+        {
+          "numero": 3,
+          "nom": "Encrage (anilox et chambre à racle)",
+          "position": [
+            -1.94,
+            0.85,
+            0.28
+          ],
+          "capteurs_donnees": [
+            "Niveau et viscosité de l’encre",
+            "Température",
+            "Heures de racle et d’anilox"
+          ],
+          "pannes_typiques": [
+            "Couleur qui dérive",
+            "Anilox bouché",
+            "Fuite de chambre"
+          ],
+          "remonter_a_la_cause": "Comparer la densité mesurée à la viscosité et aux heures de racle : une dérive lente signale l’usure, un saut brutal un incident.",
+          "se_connecter": "Capteurs de viscosité et de densité souvent ajoutés en rétrofit, remontés par une passerelle IoT.",
+          "alarme_simulee": {
+            "code": "IN-03",
+            "message": "Viscosité d’encre hors plage au groupe 3"
+          }
+        },
+        {
+          "numero": 4,
+          "nom": "Séchage UV et air chaud",
+          "position": [
+            -0.41,
+            1.23,
+            0.3
+          ],
+          "capteurs_donnees": [
+            "Température et débit d’air",
+            "Puissance et heures des lampes UV",
+            "Température de bande"
+          ],
+          "pannes_typiques": [
+            "Encre mal sèche qui macule",
+            "Lampe UV en fin de vie",
+            "Film qui chauffe et se déforme"
+          ],
+          "remonter_a_la_cause": "Suivre la puissance UV dans le temps : la baisse se voit des semaines avant le défaut visible.",
+          "se_connecter": "Valeurs exposées par l’automate ou le contrôleur du sécheur (OPC UA, Modbus).",
+          "alarme_simulee": {
+            "code": "DR-12",
+            "message": "Température de séchage trop basse"
+          }
+        },
+        {
+          "numero": 5,
+          "nom": "Dorure à froid",
+          "position": [
+            0.96,
+            1.6,
+            0.25
+          ],
+          "capteurs_donnees": [
+            "Tension du film",
+            "Diamètre restant de film",
+            "Pression de la station"
+          ],
+          "pannes_typiques": [
+            "Arrachage ou manque de dorure",
+            "Casse du film",
+            "Surconsommation de film"
+          ],
+          "remonter_a_la_cause": "Rapporter la consommation de film aux mètres imprimés : un écart signale un réglage de tension ou un saut de film défaillant.",
+          "se_connecter": "Compteurs et alarmes de l’automate de la presse.",
+          "alarme_simulee": {
+            "code": "CF-02",
+            "message": "Casse du film de dorure à froid"
+          }
+        },
+        {
+          "numero": 6,
+          "nom": "Postes de découpe",
+          "position": [
+            1.85,
+            1.05,
+            0.3
+          ],
+          "capteurs_donnees": [
+            "Pression de découpe",
+            "Mètres réalisés par outil",
+            "Repérage de la découpe"
+          ],
+          "pannes_typiques": [
+            "Découpe trop profonde qui coupe le dorsal",
+            "Découpe incomplète",
+            "Outil usé"
+          ],
+          "remonter_a_la_cause": "Associer chaque casse d’échenillage à l’outil et à la pression du moment : la même plaque qui casse sur plusieurs commandes est usée.",
+          "se_connecter": "Compteur par outil dans le MIS, pressions lues sur l’automate ou ajoutées par capteurs.",
+          "alarme_simulee": {
+            "code": "DC-07",
+            "message": "Surpression au poste de découpe 2"
+          }
+        },
+        {
+          "numero": 7,
+          "nom": "Échenillage",
+          "position": [
+            2.48,
+            1.3,
+            0.25
+          ],
+          "capteurs_donnees": [
+            "Détection de casse du squelette",
+            "Tension du déchet",
+            "Diamètre de la bobine de déchet"
+          ],
+          "pannes_typiques": [
+            "Casse d’échenillage qui arrête la machine",
+            "Étiquettes arrachées avec le déchet"
+          ],
+          "remonter_a_la_cause": "Le nombre d’arrêts par commande, par matière et par vitesse montre si la cause est la matière, l’outil ou le réglage.",
+          "se_connecter": "Alarme et compteur d’arrêts de l’automate, historisés pour le calcul du TRS.",
+          "alarme_simulee": {
+            "code": "EM-01",
+            "message": "Casse du squelette d’échenillage"
+          }
+        },
+        {
+          "numero": 8,
+          "nom": "Rembobineur",
+          "position": [
+            3.22,
+            1,
+            0.3
+          ],
+          "capteurs_donnees": [
+            "Diamètre et tension de rembobinage",
+            "Métrage et nombre d’étiquettes",
+            "Fin de bobine client"
+          ],
+          "pannes_typiques": [
+            "Bobine télescopée",
+            "Comptage faux",
+            "Mandrin mal positionné"
+          ],
+          "remonter_a_la_cause": "Comparer le comptage machine à la quantité commandée : l’écart donne la gâche réelle de la commande.",
+          "se_connecter": "Compteurs JMF renvoyés au MIS pour la consommation de matière.",
+          "alarme_simulee": {
+            "code": "RW-05",
+            "message": "Tension de rembobinage instable"
+          }
+        },
+        {
+          "numero": 9,
+          "nom": "Pupitre et automate",
+          "position": [
+            -1.05,
+            1.24,
+            0.78
+          ],
+          "capteurs_donnees": [
+            "Recettes de travail",
+            "Journal d’alarmes horodaté",
+            "États machine : marche, calage, arrêt"
+          ],
+          "pannes_typiques": [
+            "Recette perdue",
+            "Arrêts non qualifiés"
+          ],
+          "remonter_a_la_cause": "C’est le point de départ : chaque alarme y est datée et rattachée à une station. Tout le diagnostic part de ce journal.",
+          "se_connecter": "Télémaintenance Gallus Remote Access, échanges JDF/JMF avec un MIS. Pour un historique interne : passerelle OPC UA vers une base de données.",
+          "alarme_simulee": null
+        }
+      ]
+    },
+    {
+      "id": "offset",
+      "nom": "Rotatives offset étiquettes",
+      "procede": "Impression offset rotative",
+      "fiabilite": {
+        "niveau": "technologie_confirmee",
+        "libelle": "Machine type"
+      },
+      "nombre": "7",
+      "description": "Le cœur du parc. Le rendu montre une rotative offset bande étroite type, avec ses groupes d'encrage, de mouillage, plaque et blanchet.",
+      "caracteristiques": {
+        "Procédé": "Offset rotatif, encres à l'eau",
+        "Atout": "Qualité d'image, plaques moins chères que la flexo",
+        "À demander": "Marques, âge, nombre de couleurs"
+      },
+      "connectivite": {
+        "pilotage_et_protocoles": "Automate à identifier dans l'armoire électrique (Siemens, B&R, Beckhoff ou autre). OPC UA, S7 ou Modbus TCP selon la marque ; passerelle IoT si la machine est ancienne.",
+        "donnees_a_recuperer": "Vitesse, états, alarmes, mouillage (pH, conductivité, température)",
+        "localiser_une_panne": "Journal d'alarmes ; chimie du mouillage ; fantôme répété à la circonférence d'un rouleau"
+      },
+      "modele_3d": {
+        "fichier": "modeles/offset.glb",
+        "format": "glTF 2.0 binaire",
+        "unite": "mètre",
+        "axe_vertical": "Y",
+        "socle_inclus": true,
+        "remarque": "Rendu illustratif, proportions approximatives, sans logo ni design de marque."
+      },
+      "reperes": [
+        {
+          "texte": "Dérouleur",
+          "position": [
+            -3.45,
+            1.42,
+            0
+          ]
+        },
+        {
+          "texte": "6 groupes offset",
+          "position": [
+            -0.87,
+            2.06,
+            0
+          ]
+        },
+        {
+          "texte": "Mouillage",
+          "position": [
+            -2.59,
+            1.2,
+            0.3
+          ]
+        },
+        {
+          "texte": "Encrage",
+          "position": [
+            -1.63,
+            1.82,
+            0
+          ]
+        },
+        {
+          "texte": "Découpe rotative",
+          "position": [
+            1.72,
+            1.2,
+            0
+          ]
+        },
+        {
+          "texte": "Rembobineur",
+          "position": [
+            2.85,
+            1.3,
+            0
+          ]
+        }
+      ],
+      "points_diagnostic": [
+        {
+          "numero": 1,
+          "nom": "Dérouleur",
+          "position": [
+            -3.45,
+            0.92,
+            0.3
+          ],
+          "capteurs_donnees": [
+            "Diamètre de bobine",
+            "Tension de bande",
+            "Guide-bande"
+          ],
+          "pannes_typiques": [
+            "Casse de bande",
+            "Plis"
+          ],
+          "remonter_a_la_cause": "Courbe de tension en fonction du diamètre : un décrochage au même diamètre désigne le frein.",
+          "se_connecter": "Automate de la presse : marque à relever dans l’armoire électrique.",
+          "alarme_simulee": {
+            "code": "TB-101",
+            "message": "Tension hors tolérance au dérouleur"
+          }
+        },
+        {
+          "numero": 2,
+          "nom": "Mouillage",
+          "position": [
+            -1.97,
+            1.12,
+            0.32
+          ],
+          "capteurs_donnees": [
+            "Température de l’eau",
+            "pH et conductivité",
+            "Vitesse des rouleaux mouilleurs"
+          ],
+          "pannes_typiques": [
+            "Voilage : de l’encre dans les blancs",
+            "Émulsion de l’encre"
+          ],
+          "remonter_a_la_cause": "La chimie du mouillage dérive lentement : un historique pH et conductivité explique la plupart des voilages.",
+          "se_connecter": "Le circuit de mouillage a souvent son propre contrôleur, raccordable en Modbus, ou des sondes ajoutées.",
+          "alarme_simulee": {
+            "code": "DW-08",
+            "message": "Conductivité du mouillage hors plage"
+          }
+        },
+        {
+          "numero": 3,
+          "nom": "Encrage",
+          "position": [
+            0.18,
+            1.5,
+            0.32
+          ],
+          "capteurs_donnees": [
+            "Ouverture des vis d’encrier",
+            "Température des rouleaux",
+            "Densité mesurée"
+          ],
+          "pannes_typiques": [
+            "Couleur instable",
+            "Fantômes",
+            "Rouleau encreur usé"
+          ],
+          "remonter_a_la_cause": "Un fantôme qui revient à la circonférence d’un rouleau encreur désigne ce rouleau.",
+          "se_connecter": "Préréglages d’encrage et alarmes dans l’automate.",
+          "alarme_simulee": {
+            "code": "IK-05",
+            "message": "Écart de densité au groupe 5"
+          }
+        },
+        {
+          "numero": 4,
+          "nom": "Plaque et blanchet",
+          "position": [
+            -0.56,
+            1.03,
+            0.32
+          ],
+          "capteurs_donnees": [
+            "Repérage par groupe",
+            "Heures du blanchet",
+            "Pression d’impression"
+          ],
+          "pannes_typiques": [
+            "Blanchet écrasé",
+            "Plaque usée",
+            "Défaut de repérage"
+          ],
+          "remonter_a_la_cause": "Défaut répété tous les X mm : comparer X aux circonférences de la plaque et du blanchet.",
+          "se_connecter": "Alarmes de repérage et compteurs de l’automate.",
+          "alarme_simulee": {
+            "code": "RG-04",
+            "message": "Repérage hors tolérance au groupe 4"
+          }
+        },
+        {
+          "numero": 5,
+          "nom": "Séchage UV",
+          "position": [
+            1.22,
+            1.01,
+            0.3
+          ],
+          "capteurs_donnees": [
+            "Puissance et heures des lampes",
+            "Température"
+          ],
+          "pannes_typiques": [
+            "Encre mal polymérisée",
+            "Lampe en fin de vie"
+          ],
+          "remonter_a_la_cause": "Tendance de la puissance des lampes, à rapprocher des réclamations de tenue d’encre.",
+          "se_connecter": "Contrôleur UV, souvent raccordable à l’automate.",
+          "alarme_simulee": {
+            "code": "UV-06",
+            "message": "Puissance UV insuffisante"
+          }
+        },
+        {
+          "numero": 6,
+          "nom": "Découpe rotative",
+          "position": [
+            1.72,
+            0.93,
+            0.3
+          ],
+          "capteurs_donnees": [
+            "Pression",
+            "Mètres par outil"
+          ],
+          "pannes_typiques": [
+            "Découpe trop profonde",
+            "Outil usé"
+          ],
+          "remonter_a_la_cause": "Compter les casses d’échenillage par outil.",
+          "se_connecter": "Compteurs par outil dans le MIS.",
+          "alarme_simulee": {
+            "code": "DC-07",
+            "message": "Surpression au poste de découpe"
+          }
+        },
+        {
+          "numero": 7,
+          "nom": "Rembobineur",
+          "position": [
+            2.85,
+            0.92,
+            0.3
+          ],
+          "capteurs_donnees": [
+            "Tension",
+            "Métrage",
+            "Comptage"
+          ],
+          "pannes_typiques": [
+            "Bobine télescopée",
+            "Comptage faux"
+          ],
+          "remonter_a_la_cause": "Comptage machine contre quantité commandée : la gâche réelle.",
+          "se_connecter": "Compteurs de l’automate.",
+          "alarme_simulee": {
+            "code": "RW-05",
+            "message": "Tension de rembobinage instable"
+          }
+        },
+        {
+          "numero": 8,
+          "nom": "Pupitre et automate",
+          "position": [
+            -1.2,
+            1.3,
+            0.8
+          ],
+          "capteurs_donnees": [
+            "Journal d’alarmes",
+            "États machine",
+            "Recettes"
+          ],
+          "pannes_typiques": [
+            "Arrêts non qualifiés"
+          ],
+          "remonter_a_la_cause": "Point de départ de tout diagnostic : alarme datée et rattachée à un groupe.",
+          "se_connecter": "Selon la marque de l’automate : OPC UA, S7 ou Modbus TCP. Une machine ancienne se raccorde par une passerelle.",
+          "alarme_simulee": null
+        }
+      ]
+    },
+    {
+      "id": "ctp",
+      "nom": "Prépresse et gravure de plaques",
+      "procede": "Prépresse et gravure de plaques",
+      "fiabilite": {
+        "niveau": "technologie_confirmee",
+        "libelle": "Machine type"
+      },
+      "nombre": "2",
+      "description": "Offset et flexo exigent des plaques : chaque commande passe par le prépresse. Le rendu montre un poste PAO, un graveur de plaques (CTP) et sa ligne de développement.",
+      "caracteristiques": {
+        "Rôle": "Fichiers clients, BAT, amalgame, plaques",
+        "Enjeu SI": "Point de passage obligé de chaque commande",
+        "À demander": "Logiciel de flux prépresse utilisé"
+      },
+      "connectivite": {
+        "pilotage_et_protocoles": "Flux prépresse avec dossiers surveillés et JDF ; journaux du graveur et de la développeuse.",
+        "donnees_a_recuperer": "Plaques par commande, plaques refaites, délais de BAT",
+        "localiser_une_panne": "Journal d'événements ; bande sur la plaque = diode ; conductivité du bain"
+      },
+      "modele_3d": {
+        "fichier": "modeles/ctp.glb",
+        "format": "glTF 2.0 binaire",
+        "unite": "mètre",
+        "axe_vertical": "Y",
+        "socle_inclus": true,
+        "remarque": "Rendu illustratif, proportions approximatives, sans logo ni design de marque."
+      },
+      "reperes": [
+        {
+          "texte": "Plaques vierges",
+          "position": [
+            -1.32,
+            0.7,
+            0
+          ]
+        },
+        {
+          "texte": "Graveur de plaques (CTP)",
+          "position": [
+            0,
+            1.2,
+            0
+          ]
+        },
+        {
+          "texte": "Développement",
+          "position": [
+            1.88,
+            0.95,
+            0
+          ]
+        },
+        {
+          "texte": "Plaques prêtes",
+          "position": [
+            2.92,
+            0.86,
+            0
+          ]
+        },
+        {
+          "texte": "Poste PAO et BAT",
+          "position": [
+            0.2,
+            1.25,
+            1.2
+          ]
+        }
+      ],
+      "points_diagnostic": [
+        {
+          "numero": 1,
+          "nom": "Chargement des plaques",
+          "position": [
+            -1.32,
+            0.62,
+            0.3
+          ],
+          "capteurs_donnees": [
+            "Capteurs de présence et de bourrage",
+            "Stock de plaques"
+          ],
+          "pannes_typiques": [
+            "Bourrage",
+            "Plaque double"
+          ],
+          "remonter_a_la_cause": "Le journal du graveur date chaque bourrage : s’il revient sur la même référence de plaque, c’est la plaque.",
+          "se_connecter": "Statuts exposés au logiciel de flux prépresse.",
+          "alarme_simulee": {
+            "code": "PL-11",
+            "message": "Bourrage au chargement des plaques"
+          }
+        },
+        {
+          "numero": 2,
+          "nom": "Tête laser",
+          "position": [
+            0,
+            0.8,
+            0.5
+          ],
+          "capteurs_donnees": [
+            "Puissance et température des diodes",
+            "Heures d’exposition",
+            "Mise au point"
+          ],
+          "pannes_typiques": [
+            "Bandes sur la plaque",
+            "Points manquants"
+          ],
+          "remonter_a_la_cause": "Une bande toujours à la même position sur la plaque désigne une diode précise.",
+          "se_connecter": "Journal machine lu en télémaintenance par le constructeur ; statut via JDF/JMF dans le flux.",
+          "alarme_simulee": {
+            "code": "LS-04",
+            "message": "Puissance laser faible sur une diode"
+          }
+        },
+        {
+          "numero": 3,
+          "nom": "Développeuse",
+          "position": [
+            1.88,
+            0.83,
+            0.3
+          ],
+          "capteurs_donnees": [
+            "Température du bain",
+            "Conductivité",
+            "Régénération",
+            "Vitesse et brosses"
+          ],
+          "pannes_typiques": [
+            "Plaque sous-développée",
+            "Voile sur la plaque"
+          ],
+          "remonter_a_la_cause": "Rapprocher la conductivité du bain des m² développés : il s’épuise de façon prévisible.",
+          "se_connecter": "Sondes et compteurs du processeur, souvent en Modbus ou en fichiers journaux.",
+          "alarme_simulee": {
+            "code": "DV-02",
+            "message": "Température du bain trop basse"
+          }
+        },
+        {
+          "numero": 4,
+          "nom": "Flux prépresse et BAT",
+          "position": [
+            0.2,
+            1,
+            1.25
+          ],
+          "capteurs_donnees": [
+            "Files d’attente",
+            "Versions de fichiers et BAT",
+            "Plaques par commande"
+          ],
+          "pannes_typiques": [
+            "Mauvaise version de fichier",
+            "Plaque à refaire"
+          ],
+          "remonter_a_la_cause": "Chaque plaque refaite est une donnée : en classer les causes (fichier, gravure, développement) dans le MIS.",
+          "se_connecter": "Dossiers surveillés et JDF entre MIS, flux prépresse et graveur.",
+          "alarme_simulee": null
+        }
+      ]
+    },
+    {
+      "id": "digital",
+      "nom": "Impression numérique",
+      "procede": "Impression numérique jet d’encre",
+      "fiabilite": {
+        "niveau": "technologie_confirmee",
+        "libelle": "Machine type"
+      },
+      "nombre": "3",
+      "description": "Pour les petites séries et l'impression de données variables (numéros, codes-barres). Le rendu montre une presse jet d'encre bande étroite type, CMJN avec séchage UV.",
+      "caracteristiques": {
+        "Usage": "Petites séries, données variables, prototypes",
+        "Atout": "Pas de plaque, calage quasi nul",
+        "À demander": "Technologie (jet d'encre ou toner) et modèle"
+      },
+      "connectivite": {
+        "pilotage_et_protocoles": "Portail ou API du constructeur sur la plupart des modèles récents ; JDF.",
+        "donnees_a_recuperer": "Encre par travail, événements, compteurs",
+        "localiser_une_panne": "Mire de contrôle des buses ; raie fixe = buse ou tête"
+      },
+      "modele_3d": {
+        "fichier": "modeles/digital.glb",
+        "format": "glTF 2.0 binaire",
+        "unite": "mètre",
+        "axe_vertical": "Y",
+        "socle_inclus": true,
+        "remarque": "Rendu illustratif, proportions approximatives, sans logo ni design de marque."
+      },
+      "reperes": [
+        {
+          "texte": "Dérouleur",
+          "position": [
+            -2.35,
+            1.6,
+            0
+          ]
+        },
+        {
+          "texte": "Têtes jet d’encre CMJN",
+          "position": [
+            -1.14,
+            1.56,
+            0
+          ]
+        },
+        {
+          "texte": "Séchage UV",
+          "position": [
+            -0.34,
+            1.32,
+            0
+          ]
+        },
+        {
+          "texte": "Finition en ligne",
+          "position": [
+            0.6,
+            1.46,
+            0
+          ]
+        },
+        {
+          "texte": "Rembobineur",
+          "position": [
+            1.98,
+            1.42,
+            0
+          ]
+        }
+      ],
+      "points_diagnostic": [
+        {
+          "numero": 1,
+          "nom": "Dérouleur",
+          "position": [
+            -2.35,
+            1.2,
+            0.25
+          ],
+          "capteurs_donnees": [
+            "Diamètre",
+            "Tension"
+          ],
+          "pannes_typiques": [
+            "Casse de bande"
+          ],
+          "remonter_a_la_cause": "Tension en fonction du diamètre.",
+          "se_connecter": "Contrôleur de la presse.",
+          "alarme_simulee": {
+            "code": "TB-101",
+            "message": "Tension hors tolérance au dérouleur"
+          }
+        },
+        {
+          "numero": 2,
+          "nom": "Têtes jet d’encre",
+          "position": [
+            -1.14,
+            1.15,
+            0.3
+          ],
+          "capteurs_donnees": [
+            "Contrôle des buses",
+            "Température des têtes",
+            "Niveaux d’encre"
+          ],
+          "pannes_typiques": [
+            "Raies dans l’impression",
+            "Couleur faible"
+          ],
+          "remonter_a_la_cause": "Une raie à position fixe dans le sens de la bande désigne une buse ou une tête : la mire de contrôle la localise.",
+          "se_connecter": "Les presses numériques récentes ont souvent un portail ou une API du constructeur : encre par travail, événements, compteurs.",
+          "alarme_simulee": {
+            "code": "PH-21",
+            "message": "Buses manquantes sur la tête magenta"
+          }
+        },
+        {
+          "numero": 3,
+          "nom": "Séchage UV LED",
+          "position": [
+            -0.34,
+            1.13,
+            0.3
+          ],
+          "capteurs_donnees": [
+            "Température des LED",
+            "Puissance"
+          ],
+          "pannes_typiques": [
+            "Encre mal polymérisée"
+          ],
+          "remonter_a_la_cause": "Tendance de puissance et de température.",
+          "se_connecter": "Remonté par la presse.",
+          "alarme_simulee": {
+            "code": "UV-02",
+            "message": "Surchauffe des LED UV"
+          }
+        },
+        {
+          "numero": 4,
+          "nom": "Finition en ligne",
+          "position": [
+            0.42,
+            1.07,
+            0.28
+          ],
+          "capteurs_donnees": [
+            "Pression de découpe",
+            "Repérage",
+            "Film de pelliculage"
+          ],
+          "pannes_typiques": [
+            "Découpe décalée",
+            "Bulles de pelliculage"
+          ],
+          "remonter_a_la_cause": "Repérage de découpe contre repérage d’impression.",
+          "se_connecter": "Contrôleur du module.",
+          "alarme_simulee": {
+            "code": "FN-03",
+            "message": "Repérage de découpe hors tolérance"
+          }
+        },
+        {
+          "numero": 5,
+          "nom": "Rembobineur",
+          "position": [
+            1.98,
+            1.1,
+            0.28
+          ],
+          "capteurs_donnees": [
+            "Tension",
+            "Comptage"
+          ],
+          "pannes_typiques": [
+            "Comptage faux"
+          ],
+          "remonter_a_la_cause": "Comptage contre commande.",
+          "se_connecter": "Compteurs de la presse.",
+          "alarme_simulee": {
+            "code": "RW-05",
+            "message": "Tension de rembobinage instable"
+          }
+        },
+        {
+          "numero": 6,
+          "nom": "Pupitre et flux numérique",
+          "position": [
+            -0.45,
+            1.28,
+            0.75
+          ],
+          "capteurs_donnees": [
+            "File de travaux",
+            "Consommations par travail",
+            "Événements"
+          ],
+          "pannes_typiques": [
+            "Fichier non conforme",
+            "Arrêts"
+          ],
+          "remonter_a_la_cause": "Le journal d’événements de la presse relie chaque arrêt à un travail.",
+          "se_connecter": "JDF ou API du constructeur, selon le modèle.",
+          "alarme_simulee": null
+        }
+      ]
+    },
+    {
+      "id": "slitter",
+      "nom": "Refendeuse-rembobineuse",
+      "procede": "Refente et rembobinage",
+      "fiabilite": {
+        "niveau": "deduit",
+        "libelle": "À confirmer"
+      },
+      "nombre": "3",
+      "description": "Toute étiquette livrée en bobine passe par une refente : la bande imprimée est coupée en plusieurs largeurs et rembobinée sur des mandrins au métrage du client.",
+      "caracteristiques": {
+        "Rôle": "Bobine mère vers petites bobines prêtes à l'emploi",
+        "Données": "Nombre d'étiquettes par bobine, lots, contrôle"
+      },
+      "connectivite": {
+        "pilotage_et_protocoles": "Automate de la machine ; fichiers de défauts si la presse a une inspection.",
+        "donnees_a_recuperer": "Comptage par bobine, tension, métrage par lame",
+        "localiser_une_panne": "Fichier de défauts de la presse ; usure des lames"
+      },
+      "modele_3d": {
+        "fichier": "modeles/slitter.glb",
+        "format": "glTF 2.0 binaire",
+        "unite": "mètre",
+        "axe_vertical": "Y",
+        "socle_inclus": true,
+        "remarque": "Rendu illustratif, proportions approximatives, sans logo ni design de marque."
+      },
+      "reperes": [
+        {
+          "texte": "Bobine mère",
+          "position": [
+            -0.72,
+            1.32,
+            0
+          ]
+        },
+        {
+          "texte": "Table lumineuse de contrôle",
+          "position": [
+            0.18,
+            1.52,
+            0
+          ]
+        },
+        {
+          "texte": "Couteaux circulaires",
+          "position": [
+            0.82,
+            1.72,
+            0
+          ]
+        },
+        {
+          "texte": "Bobines client",
+          "position": [
+            1.42,
+            1.3,
+            0.34
+          ]
+        }
+      ],
+      "points_diagnostic": [
+        {
+          "numero": 1,
+          "nom": "Bobine mère",
+          "position": [
+            -0.72,
+            0.86,
+            0.48
+          ],
+          "capteurs_donnees": [
+            "Diamètre",
+            "Tension"
+          ],
+          "pannes_typiques": [
+            "Casse",
+            "Plis"
+          ],
+          "remonter_a_la_cause": "Tension en fonction du diamètre.",
+          "se_connecter": "Automate de la refendeuse.",
+          "alarme_simulee": {
+            "code": "TB-101",
+            "message": "Tension hors tolérance au dérouleur"
+          }
+        },
+        {
+          "numero": 2,
+          "nom": "Table lumineuse et contrôle",
+          "position": [
+            0.18,
+            1.3,
+            0.3
+          ],
+          "capteurs_donnees": [
+            "Inspection visuelle ou caméra",
+            "Détecteur d’étiquette manquante",
+            "Position des défauts"
+          ],
+          "pannes_typiques": [
+            "Étiquette manquante livrée au client"
+          ],
+          "remonter_a_la_cause": "Si la presse a une caméra d’inspection, son fichier de défauts permet d’arrêter la refendeuse pile sur chaque défaut.",
+          "se_connecter": "Fichiers de défauts échangés entre inspection et refendeuse.",
+          "alarme_simulee": {
+            "code": "MS-03",
+            "message": "Étiquette manquante détectée"
+          }
+        },
+        {
+          "numero": 3,
+          "nom": "Couteaux circulaires",
+          "position": [
+            0.82,
+            1.48,
+            0.3
+          ],
+          "capteurs_donnees": [
+            "Position des lames",
+            "Métrage par lame"
+          ],
+          "pannes_typiques": [
+            "Bords déchiquetés",
+            "Largeur hors tolérance"
+          ],
+          "remonter_a_la_cause": "Le métrage par lame comparé à la qualité de coupe donne le moment idéal de remplacement.",
+          "se_connecter": "Compteurs de l’automate.",
+          "alarme_simulee": {
+            "code": "KN-02",
+            "message": "Usure de la lame 3"
+          }
+        },
+        {
+          "numero": 4,
+          "nom": "Rembobinage",
+          "position": [
+            1.42,
+            1.08,
+            0.3
+          ],
+          "capteurs_donnees": [
+            "Tension par bobine",
+            "Comptage d’étiquettes",
+            "Diamètre"
+          ],
+          "pannes_typiques": [
+            "Bobine molle ou télescopée",
+            "Comptage faux"
+          ],
+          "remonter_a_la_cause": "Comptage par bobine contre quantité par mandrin commandée.",
+          "se_connecter": "Compteurs exportés vers le MIS.",
+          "alarme_simulee": {
+            "code": "RW-07",
+            "message": "Comptage d’étiquettes incohérent"
+          }
+        },
+        {
+          "numero": 5,
+          "nom": "Pupitre",
+          "position": [
+            2.05,
+            1.18,
+            0.58
+          ],
+          "capteurs_donnees": [
+            "Recettes",
+            "Alarmes"
+          ],
+          "pannes_typiques": [
+            "Arrêts non qualifiés"
+          ],
+          "remonter_a_la_cause": "Point de départ du diagnostic.",
+          "se_connecter": "Automate : marque à relever sur place.",
+          "alarme_simulee": null
+        }
+      ]
+    },
+    {
+      "id": "paravent",
+      "nom": "Ligne paravent",
+      "procede": "Façonnage paravent (pli zigzag)",
+      "fiabilite": {
+        "niveau": "deduit",
+        "libelle": "À confirmer"
+      },
+      "nombre": "1",
+      "description": "Étiquettes en paravent, pliées en zigzag pour les imprimantes en continu. Le rendu montre la sortie paravent : perforation transversale puis pliage alterné en paquet.",
+      "caracteristiques": {
+        "Produits": "Paravents pour imprimantes en continu"
+      },
+      "connectivite": {
+        "pilotage_et_protocoles": "Automate de la ligne.",
+        "donnees_a_recuperer": "Plis, bourrages, repérage de perforation",
+        "localiser_une_panne": "Dérive du repérage ou couteau abîmé"
+      },
+      "modele_3d": {
+        "fichier": "modeles/paravent.glb",
+        "format": "glTF 2.0 binaire",
+        "unite": "mètre",
+        "axe_vertical": "Y",
+        "socle_inclus": true,
+        "remarque": "Rendu illustratif, proportions approximatives, sans logo ni design de marque."
+      },
+      "reperes": [
+        {
+          "texte": "Bobine imprimée",
+          "position": [
+            -2.4,
+            1.3,
+            0
+          ]
+        },
+        {
+          "texte": "Perforation transversale",
+          "position": [
+            -1.25,
+            1.42,
+            0
+          ]
+        },
+        {
+          "texte": "Pliage en zigzag",
+          "position": [
+            -0.25,
+            1.36,
+            0
+          ]
+        },
+        {
+          "texte": "Cartons de paravents",
+          "position": [
+            0.95,
+            1.18,
+            0
+          ]
+        }
+      ],
+      "points_diagnostic": [
+        {
+          "numero": 1,
+          "nom": "Dérouleur",
+          "position": [
+            -2.4,
+            0.9,
+            0.25
+          ],
+          "capteurs_donnees": [
+            "Diamètre",
+            "Tension"
+          ],
+          "pannes_typiques": [
+            "Casse"
+          ],
+          "remonter_a_la_cause": "Tension en fonction du diamètre.",
+          "se_connecter": "Automate de la ligne.",
+          "alarme_simulee": {
+            "code": "TB-101",
+            "message": "Tension hors tolérance au dérouleur"
+          }
+        },
+        {
+          "numero": 2,
+          "nom": "Perforation transversale",
+          "position": [
+            -1.42,
+            1.07,
+            0.3
+          ],
+          "capteurs_donnees": [
+            "Repérage perforation et impression (cellule)",
+            "Usure du cylindre perforateur"
+          ],
+          "pannes_typiques": [
+            "Perforation décalée",
+            "Perforation incomplète"
+          ],
+          "remonter_a_la_cause": "Une perforation qui glisse peu à peu signale un problème de repérage, un défaut net un couteau abîmé.",
+          "se_connecter": "Alarmes de repérage de l’automate.",
+          "alarme_simulee": {
+            "code": "PF-04",
+            "message": "Décalage du repérage de perforation"
+          }
+        },
+        {
+          "numero": 3,
+          "nom": "Pliage en zigzag",
+          "position": [
+            -0.25,
+            0.8,
+            0.25
+          ],
+          "capteurs_donnees": [
+            "Comptage des plis",
+            "Capteur de bourrage"
+          ],
+          "pannes_typiques": [
+            "Bourrage",
+            "Pli mal formé"
+          ],
+          "remonter_a_la_cause": "Les bourrages répétés à la même vitesse donnent la vitesse maximale réelle par matière.",
+          "se_connecter": "Compteurs et alarmes de l’automate.",
+          "alarme_simulee": {
+            "code": "FD-01",
+            "message": "Bourrage au pliage"
+          }
+        },
+        {
+          "numero": 4,
+          "nom": "Pupitre",
+          "position": [
+            -1.25,
+            1.28,
+            0.65
+          ],
+          "capteurs_donnees": [
+            "Recettes",
+            "Alarmes"
+          ],
+          "pannes_typiques": [
+            "Arrêts non qualifiés"
+          ],
+          "remonter_a_la_cause": "Point de départ du diagnostic.",
+          "se_connecter": "Automate : marque à relever sur place.",
+          "alarme_simulee": null
+        }
+      ]
+    },
+    {
+      "id": "sheeter",
+      "nom": "Feuilleteuse planches A4",
+      "procede": "Coupe en planches",
+      "fiabilite": {
+        "niveau": "deduit",
+        "libelle": "À confirmer"
+      },
+      "nombre": "3",
+      "description": "Étiquettes en planches A4, A5 et mini-feuilles pour imprimantes laser et jet d'encre. La bobine d'étiquettes est coupée en feuilles au format puis empilée.",
+      "caracteristiques": {
+        "Produits": "Planches A4, A5, mini-feuilles",
+        "Données": "Nombre de feuilles, longueur de coupe, doubles feuilles"
+      },
+      "connectivite": {
+        "pilotage_et_protocoles": "Automate de la machine.",
+        "donnees_a_recuperer": "Feuilles, doubles feuilles, longueur de coupe",
+        "localiser_une_panne": "Longueur de feuille mesurée en continu"
+      },
+      "modele_3d": {
+        "fichier": "modeles/sheeter.glb",
+        "format": "glTF 2.0 binaire",
+        "unite": "mètre",
+        "axe_vertical": "Y",
+        "socle_inclus": true,
+        "remarque": "Rendu illustratif, proportions approximatives, sans logo ni design de marque."
+      },
+      "reperes": [
+        {
+          "texte": "Bobine d’étiquettes",
+          "position": [
+            -2.05,
+            1.24,
+            0
+          ]
+        },
+        {
+          "texte": "Coupe transversale",
+          "position": [
+            -0.85,
+            1.32,
+            0
+          ]
+        },
+        {
+          "texte": "Convoyeur",
+          "position": [
+            0.02,
+            1.05,
+            0
+          ]
+        },
+        {
+          "texte": "Pile de planches A4",
+          "position": [
+            0.8,
+            0.95,
+            0
+          ]
+        },
+        {
+          "texte": "Cartons de planches",
+          "position": [
+            1.55,
+            0.5,
+            0
+          ]
+        }
+      ],
+      "points_diagnostic": [
+        {
+          "numero": 1,
+          "nom": "Bobine d’étiquettes",
+          "position": [
+            -2.05,
+            0.88,
+            0.22
+          ],
+          "capteurs_donnees": [
+            "Diamètre",
+            "Tension"
+          ],
+          "pannes_typiques": [
+            "Casse",
+            "Plis"
+          ],
+          "remonter_a_la_cause": "Tension en fonction du diamètre.",
+          "se_connecter": "Automate de la feuilleteuse.",
+          "alarme_simulee": {
+            "code": "TB-101",
+            "message": "Tension hors tolérance au dérouleur"
+          }
+        },
+        {
+          "numero": 2,
+          "nom": "Coupe transversale",
+          "position": [
+            -0.85,
+            1.04,
+            0.3
+          ],
+          "capteurs_donnees": [
+            "Repérage de coupe (cellule)",
+            "Usure du couteau",
+            "Longueur de feuille"
+          ],
+          "pannes_typiques": [
+            "Feuille hors format",
+            "Coupe à travers les étiquettes"
+          ],
+          "remonter_a_la_cause": "Mesurer la longueur réelle des feuilles en continu : une dérive désigne le repérage, un saut le couteau.",
+          "se_connecter": "Alarmes de repérage et compteurs de l’automate.",
+          "alarme_simulee": {
+            "code": "CT-02",
+            "message": "Longueur de feuille hors tolérance"
+          }
+        },
+        {
+          "numero": 3,
+          "nom": "Convoyeur et pile",
+          "position": [
+            0.78,
+            0.82,
+            0.2
+          ],
+          "capteurs_donnees": [
+            "Comptage de feuilles",
+            "Détection de double feuille",
+            "Hauteur de pile"
+          ],
+          "pannes_typiques": [
+            "Double feuille",
+            "Pile mal taquée"
+          ],
+          "remonter_a_la_cause": "Les doubles feuilles par lot de matière montrent si la cause est le papier ou le réglage.",
+          "se_connecter": "Compteurs de l’automate vers le MIS.",
+          "alarme_simulee": {
+            "code": "ST-05",
+            "message": "Double feuille détectée"
+          }
+        },
+        {
+          "numero": 4,
+          "nom": "Pupitre",
+          "position": [
+            -1,
+            1.28,
+            0.62
+          ],
+          "capteurs_donnees": [
+            "Recettes de format",
+            "Alarmes"
+          ],
+          "pannes_typiques": [
+            "Mauvais format chargé"
+          ],
+          "remonter_a_la_cause": "Point de départ du diagnostic.",
+          "se_connecter": "Automate : marque à relever sur place.",
+          "alarme_simulee": null
+        }
+      ]
+    },
+    {
+      "id": "rfid",
+      "nom": "Atelier imprimantes et RFID",
+      "procede": "Encodage RFID et données variables",
+      "fiabilite": {
+        "niveau": "deduit",
+        "libelle": "À confirmer"
+      },
+      "nombre": "2",
+      "description": "Poste de préparation des étiquettes RFID et des imprimantes thermiques posées chez les clients : encodage des puces, données variables, tests et réparation.",
+      "caracteristiques": {
+        "Rôle": "Encodage RFID, données variables, tests, réparation",
+        "Logiciels": "Codesoft ou BarTender"
+      },
+      "connectivite": {
+        "pilotage_et_protocoles": "Imprimantes administrables en réseau (outils et API des constructeurs, SNMP) ; logiciels Codesoft et BarTender.",
+        "donnees_a_recuperer": "Journal d'encodage, échecs de puce, compteurs de tête",
+        "localiser_une_panne": "Taux d'échec par lot d'inlays et par imprimante"
+      },
+      "modele_3d": {
+        "fichier": "modeles/rfid.glb",
+        "format": "glTF 2.0 binaire",
+        "unite": "mètre",
+        "axe_vertical": "Y",
+        "socle_inclus": true,
+        "remarque": "Rendu illustratif, proportions approximatives, sans logo ni design de marque."
+      },
+      "reperes": [
+        {
+          "texte": "Imprimante et encodeur RFID",
+          "position": [
+            -0.35,
+            1.45,
+            0
+          ]
+        },
+        {
+          "texte": "Antenne de contrôle",
+          "position": [
+            0.2,
+            1,
+            0.08
+          ]
+        },
+        {
+          "texte": "Logiciel d’étiquetage",
+          "position": [
+            1,
+            1.42,
+            -0.14
+          ]
+        },
+        {
+          "texte": "Terminal de lecture",
+          "position": [
+            0.45,
+            0.98,
+            0.26
+          ]
+        }
+      ],
+      "points_diagnostic": [
+        {
+          "numero": 1,
+          "nom": "Imprimante et encodeur RFID",
+          "position": [
+            -0.35,
+            1.1,
+            0.3
+          ],
+          "capteurs_donnees": [
+            "Lecture et écriture de la puce (EPC)",
+            "Puissance RF",
+            "Tête thermique : température, résistances"
+          ],
+          "pannes_typiques": [
+            "Puce illisible, étiquette rejetée",
+            "Impression pâle",
+            "Ruban cassé"
+          ],
+          "remonter_a_la_cause": "L’imprimante journalise chaque échec d’encodage : un taux qui bondit d’un coup désigne le lot d’inlays, une hausse progressive la calibration ou l’antenne.",
+          "se_connecter": "Les imprimantes thermiques industrielles s’administrent en réseau (outils et API des constructeurs, SNMP) : statuts et compteurs remontent.",
+          "alarme_simulee": {
+            "code": "RF-09",
+            "message": "Échec d’encodage RFID, étiquette rejetée"
+          }
+        },
+        {
+          "numero": 2,
+          "nom": "Antenne de contrôle",
+          "position": [
+            0.15,
+            0.96,
+            0.2
+          ],
+          "capteurs_donnees": [
+            "Lecture de vérification",
+            "Taux de lecture"
+          ],
+          "pannes_typiques": [
+            "Puce faible détectée chez le client"
+          ],
+          "remonter_a_la_cause": "Comparer le taux de lecture par lot de puces et par imprimante.",
+          "se_connecter": "Journal du logiciel d’encodage.",
+          "alarme_simulee": {
+            "code": "RF-12",
+            "message": "Taux de lecture insuffisant"
+          }
+        },
+        {
+          "numero": 3,
+          "nom": "Logiciel d’étiquetage",
+          "position": [
+            0.95,
+            1.18,
+            0.05
+          ],
+          "capteurs_donnees": [
+            "Données variables : numéros, EPC",
+            "Journal d’encodage par commande"
+          ],
+          "pannes_typiques": [
+            "Doublon de numéro",
+            "Mauvais modèle d’étiquette"
+          ],
+          "remonter_a_la_cause": "Le journal relie chaque numéro de série à sa commande : c’est la base de la traçabilité vendue aux clients.",
+          "se_connecter": "Logiciels type Codesoft ou BarTender, raccordables à un ERP.",
+          "alarme_simulee": null
+        }
+      ]
+    }
+  ],
+  "parc_clients": {
+    "nom": "Imprimantes installées chez les clients",
+    "marques": [
+      "Zebra",
+      "Toshiba",
+      "TSC"
+    ],
+    "fiabilite": {
+      "niveau": "source_directe",
+      "libelle": "Modèle identifié"
+    },
+    "connectivite": {
+      "pilotage_et_protocoles": "L'imprimeur installe, paramètre et entretient ce parc. Mêmes outils d'administration réseau, avec l'accord du client.",
+      "donnees_a_recuperer": "État, consommation d'étiquettes et de ruban",
+      "localiser_une_panne": "Alertes à distance ; base d'un réassort automatique"
+    }
+  },
+  "sources": [
+    "https://www.gallus-group.com/en/labelprinting/products/gallus-labelmaster",
+    "https://www.gallus-group.com/media/downloads/flyer-gallus-labelmaster-en.pdf",
+    "https://cerm.net/partnerintegrations/production/gallus"
+  ]
+}

@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Passerelle edge : file d'envoi (ordre par sujet, refus, abandon), état publié au changement et au battement, valeurs
+    OPC UA, garde des tests de liaison (cibles déclarées ou autorisées, adresse vérifiée).
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\EVAN.Gateway\EVAN.Gateway.csproj" />
+  </ItemGroup>
+</Project>

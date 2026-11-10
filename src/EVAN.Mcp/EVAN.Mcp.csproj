@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Serveur MCP d'EVAN : les outils de l'assistant (EVAN.Application) exposés en Model Context Protocol, transport
+    Streamable HTTP, lecture seule. Présentation, au même titre que l'API REST : hébergé par EVAN.Api sur /mcp.
+  -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="ModelContextProtocol.AspNetCore" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\EVAN.Application\EVAN.Application.csproj" />
+  </ItemGroup>
+</Project>

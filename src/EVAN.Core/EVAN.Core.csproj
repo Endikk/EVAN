@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Domaine (sites, machines, catalogue, alarmes et moteur de règles) et contrat d'intégration MQTT evan/v1.
+    Aucune dépendance : ni base, ni broker, ni ASP.NET. Tous les autres projets en dépendent.
+  -->
+</Project>

@@ -1,0 +1,228 @@
+/* ============================================================
+   Hors des écrans : chargement, adresse inconnue, erreur, vue indisponible
+   ============================================================ */
+.hors-route {
+  position: relative;
+  min-height: 100%;
+  display: grid;
+  place-items: center;
+  padding: 32px 16px;
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--bg);
+}
+.hors-route > .pixel-field {
+  opacity: 0.9;
+  /* Le nuage reste dans le coin : il s'efface avant d'atteindre le texte. */
+  -webkit-mask-image: linear-gradient(115deg, transparent 52%, #000 88%);
+  mask-image: linear-gradient(115deg, transparent 52%, #000 88%);
+}
+.hr-contenu {
+  position: relative;
+  z-index: 1;
+  width: min(560px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.hr-logo {
+  color: var(--text);
+}
+.hr-code {
+  margin: 32px 0 8px;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--accent-text);
+}
+.hors-route h1 {
+  margin: 0;
+  font-size: clamp(28px, 1.4rem + 1.6vw, 40px);
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+.hr-texte {
+  margin: 12px 0 0;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text-2);
+}
+.hr-texte code {
+  font-family: var(--mono);
+  font-size: 0.9em;
+  padding: 0 8px;
+  border-radius: var(--r-sm);
+  color: var(--text);
+  background: var(--surface-2);
+  overflow-wrap: anywhere;
+}
+.hr-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 24px;
+}
+.hr-ecrans {
+  width: 100%;
+  margin-top: 32px;
+}
+.hr-ecrans h2 {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-3);
+}
+.hr-ecrans ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.hr-ecrans a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 100%;
+  padding: 12px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  color: var(--text);
+  text-decoration: none;
+  transition:
+    border-color var(--dur) var(--ease),
+    background var(--dur) var(--ease);
+}
+.hr-ecrans a:hover {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: var(--surface-2);
+}
+.hr-ecrans a > svg:first-child {
+  flex: none;
+  width: var(--icon-lg);
+  height: var(--icon-lg);
+  color: var(--accent-text);
+}
+.hr-ecrans span {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+.hr-ecrans b {
+  font-size: 13.5px;
+  font-weight: 620;
+}
+.hr-ecrans small {
+  font-size: 12px;
+  color: var(--text-2);
+}
+.hr-fleche {
+  flex: none;
+  width: var(--icon);
+  height: var(--icon);
+  color: var(--text-3);
+}
+.hr-ecrans a:hover .hr-fleche {
+  color: var(--accent-text);
+}
+@media (max-width: 600px) {
+  .hr-ecrans ul {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .hr-actions {
+    align-self: stretch;
+  }
+  .hr-actions .btn {
+    flex: 1 1 100%;
+  }
+}
+
+/* Chargement : le logo, une phrase, une barre qui avance sans pourcentage inventé. */
+.hors-route.chargement .hr-contenu {
+  width: auto;
+  align-items: center;
+  gap: 16px;
+  animation: entree 420ms var(--ease-out) 150ms backwards;
+}
+.hors-route.chargement .evan-logo {
+  color: var(--text);
+}
+.hr-phrase {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-2);
+}
+.hr-barre {
+  position: relative;
+  display: block;
+  width: 180px;
+  height: 3px;
+  border-radius: var(--r-xs);
+  background: var(--surface-3);
+  overflow: hidden;
+}
+.hr-barre i {
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  border-radius: inherit;
+  background: var(--accent);
+  animation: hr-avance 1.3s var(--ease) infinite;
+}
+@keyframes hr-avance {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+
+/* Vue indisponible (carte, 3D, écran) : même allure, à l'échelle d'une zone. */
+.indispo {
+  height: 100%;
+  min-height: 220px;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  text-align: center;
+}
+.indispo-carte {
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px;
+  border-radius: var(--r-lg);
+  border: 1px dashed var(--border-strong);
+  background: var(--surface);
+  animation: entree 360ms var(--ease-out) backwards;
+}
+.indispo-icone {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-md);
+  display: grid;
+  place-items: center;
+  color: var(--warn);
+  background: var(--warn-soft);
+}
+.indispo-icone svg {
+  width: var(--icon-lg);
+  height: var(--icon-lg);
+}
+.indispo h3 {
+  margin: 4px 0 0;
+  font-size: 16px;
+}
+.indispo p {
+  margin: 0 0 8px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text-2);
+}

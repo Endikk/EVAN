@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+  <!-- Worker de démonstration : joue les machines de l'usine d'exemple et publie sur MQTT comme une passerelle. -->
+  <PropertyGroup>
+    <UserSecretsId>evan-simulator</UserSecretsId>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\EVAN.Infrastructure\EVAN.Infrastructure.csproj" />
+    <ProjectReference Include="..\EVAN.Messaging\EVAN.Messaging.csproj" />
+  </ItemGroup>
+</Project>

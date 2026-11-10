@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#040812" />
+    <!-- Outil interne de l'entreprise : pas d'indexation (aussi robots.txt et l'en-tête X-Robots-Tag de nginx). -->
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="description" content="EVAN, supervision d'usine : localisez votre usine, dessinez son plan, placez et connectez vos machines, voyez en temps réel quel organe est en défaut." />
+    <!-- PNG d'abord, avec sa taille : un navigateur qui lit le SVG le préfère, et src/ui/brand.ts y peint l'état de l'atelier. -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <title>EVAN · Supervision d'usine</title>
+    <!-- Partage de lien. Image tirée d'une vraie capture de la démo (npm run icones) ; adresses absolues au build si
+         EVAN_URL_PUBLIQUE est posée (build/publication.ts). -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="EVAN" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:title" content="EVAN · Supervision d'usine" />
+    <meta property="og:description" content="Quelle machine est en panne et, dans la machine, quel organe. Supervision en temps réel pour l'imprimerie d'étiquettes, avec une démo ouverte sans compte." />
+    <meta property="og:image" content="/partage.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Supervision de l'usine d'exemple dans EVAN : indicateurs de production, bâtiment en 3D sur la vue satellite avec l'état de chaque machine, alarmes actives à droite." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="EVAN · Supervision d'usine" />
+    <meta name="twitter:description" content="Quelle machine est en panne et, dans la machine, quel organe. Supervision en temps réel pour l'imprimerie d'étiquettes." />
+    <meta name="twitter:image" content="/partage.jpg" />
+    <meta name="twitter:image:alt" content="Supervision de l'usine d'exemple dans EVAN : indicateurs de production, bâtiment en 3D sur la vue satellite avec l'état de chaque machine, alarmes actives à droite." />
+    <script>
+      // Applique le thème avant le premier rendu pour éviter le flash.
+      try {
+        var t = localStorage.getItem('evan.theme');
+        if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/app/main.tsx"></script>
+  </body>
+</html>

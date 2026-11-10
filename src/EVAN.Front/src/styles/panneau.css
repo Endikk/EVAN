@@ -1,0 +1,446 @@
+/* Panneau latéral, légende narrée de la visite, avis ; listes, indicateurs et mesures. */
+
+/* Panneau latéral */
+.panel {
+  grid-area: panel;
+  border-left: 1px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+/* Panneau latéral : 16 px de gouttière, la même pour la tête, le corps et le pied. */
+.panel-head {
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.panel-head .kicker {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--accent-text);
+}
+.panel-head h2 {
+  margin: 4px 0;
+  font-size: 20px;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+}
+.ph-titre {
+  animation: entree 420ms var(--ease-out) backwards;
+}
+.ph-progres {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+  margin-bottom: 12px;
+}
+.ph-progres i {
+  position: relative;
+  height: 4px;
+  border-radius: var(--r-xs);
+  background: var(--surface-3);
+  overflow: hidden;
+}
+.ph-progres i::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--accent);
+  transform-origin: left center;
+  transform: scaleX(0);
+  transition: transform 600ms var(--ease-out);
+}
+.ph-progres i.fait::after {
+  transform: scaleX(1);
+  background: var(--ok);
+}
+.ph-progres i.en-cours::after {
+  transform: scaleX(0.5);
+}
+.panel-head p {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 16px 24px;
+  overscroll-behavior: contain;
+}
+/* Le panneau défile : ses blocs gardent leur hauteur au lieu d'être écrasés (boutons aplatis). */
+.panel-body.stack > *,
+.panel-body .stack > * {
+  flex-shrink: 0;
+}
+.wizard-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.panel-foot {
+  border-top: 1px solid var(--border);
+  padding: 12px 16px;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Légende narrée (visite guidée) */
+/* Centrée sur la scène (entre rail et panneau), au-dessus des fenêtres ouvertes par la visite. */
+.caption {
+  --cap-l: 0px;
+  --cap-r: var(--panel-w);
+  position: fixed;
+  left: calc(var(--cap-l) + (100vw - var(--cap-l) - var(--cap-r)) / 2);
+  bottom: 16px;
+  transform: translateX(-50%);
+  z-index: 30;
+  width: min(720px, calc(100vw - var(--cap-l) - var(--cap-r) - 32px));
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 8px 8px 16px;
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-3);
+  animation: rise 420ms var(--ease);
+}
+.caption .txt {
+  flex: 1;
+  min-width: 0;
+}
+.caption b {
+  display: block;
+  font-size: 14px;
+}
+.caption span {
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+/* Visite en pause : la légende reste, atténuée, pour reprendre ou choisir un chapitre. */
+.caption.paused .txt > b,
+.caption.paused .txt > span {
+  opacity: 0.6;
+}
+.caption-ctl {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+}
+/* Chapitres de la visite : une pastille par chapitre, la courante allongée. */
+.tour-dots {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+}
+.tour-dots button {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--border-strong);
+  cursor: pointer;
+  transition:
+    width var(--dur) var(--ease),
+    background var(--dur) var(--ease);
+}
+.tour-dots button.done {
+  background: color-mix(in srgb, var(--accent) 45%, var(--border));
+}
+.tour-dots button.on {
+  width: 20px;
+  background: var(--accent);
+}
+.tour-dots button:hover {
+  background: var(--accent);
+}
+.tour-dots button:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+.tour-dots {
+  flex-wrap: wrap;
+}
+.tour-dots small {
+  margin-left: 8px;
+  font-size: 11px;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+.app .caption {
+  --cap-l: var(--side-w);
+}
+.app.page .caption {
+  --cap-r: 0px;
+}
+/* L'assistant occupe la droite : la légende se décale pour rester lisible. */
+.app:has(.assistant) .caption {
+  --cap-r: 476px;
+}
+/* Fenêtre ouverte par la visite (intervention, panne rejouée, accès) : la légende passe devant, centrée sur l'écran. */
+.app:has(.modal-backdrop) .caption {
+  --cap-l: 0px;
+  --cap-r: 0px;
+  z-index: 110;
+}
+@media (max-width: 900px) {
+  .caption {
+    --cap-l: 0px !important;
+    --cap-r: 0px !important;
+  }
+}
+/* Carte racontée par la visite sur un écran d'exploitation. */
+.tour-spot {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  transition: outline-color var(--dur) var(--ease);
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px);
+  }
+}
+
+/* Toasts */
+/* Les avis se posent en bas à droite de la scène, au-dessus de la ligne de la légende des états : ni sur le bandeau
+   de la supervision, ni sur le panneau des alarmes. Le plus récent est le plus bas, près du bord. */
+.toasts {
+  position: fixed;
+  bottom: 66px;
+  right: calc(var(--panel-w) + 16px);
+  z-index: 60;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 8px;
+  width: min(360px, calc(100vw - 32px));
+  transition: transform 360ms var(--ease-out);
+}
+/* Écran en pleine page : pas de panneau à droite. */
+.app.page .toasts {
+  right: 16px;
+}
+/* L'assistant ouvert occupe la droite : les avis restent à sa gauche. */
+.app:has(.assistant) .toasts {
+  right: 484px;
+}
+/* Pendant la visite guidée, la légende narrée occupe le bas : les avis remontent au-dessus. */
+.app:has(.caption) .toasts {
+  transform: translateY(-96px);
+}
+/* Un avis : ce qui vient de se passer en une ligne (« Panne détectée »), le détail, l'action utile. Il glisse depuis
+   la droite ; le trait du bas se vide pendant le temps où il reste affiché. */
+.toast {
+  --c: var(--accent-text);
+  position: relative;
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: start;
+  padding: 12px 8px 16px 12px;
+  border-radius: var(--r-md);
+  background: var(--surface);
+  border: 1px solid color-mix(in srgb, var(--c) 35%, var(--border));
+  box-shadow: var(--shadow-3);
+  overflow: hidden;
+  animation: toast-entree 420ms var(--ease-out) backwards;
+}
+.toast.critique {
+  --c: var(--crit);
+}
+.toast.attention {
+  --c: var(--warn);
+}
+.toast.succes {
+  --c: var(--ok);
+}
+.toast-icone {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-sm);
+  display: grid;
+  place-items: center;
+  color: var(--c);
+  background: color-mix(in srgb, var(--c) 15%, transparent);
+}
+.toast-icone svg {
+  width: var(--icon);
+  height: var(--icon);
+}
+.toast.critique .toast-icone svg {
+  animation: pulse 1.15s var(--ease) 3;
+}
+.toast-quoi {
+  display: block;
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--c);
+}
+.toast b {
+  font-size: 13.5px;
+  display: block;
+}
+.toast p {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--text-2);
+}
+.toast .btn {
+  margin-top: 8px;
+}
+.toast-temps {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: color-mix(in srgb, var(--c) 70%, transparent);
+  transform-origin: left center;
+  animation: toast-temps var(--duree, 6s) linear forwards;
+}
+@keyframes toast-entree {
+  from {
+    opacity: 0;
+    transform: translateX(calc(100% + 24px));
+  }
+}
+@keyframes toast-temps {
+  to {
+    transform: scaleX(0);
+  }
+}
+@keyframes slidein {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
+
+/* Listes */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition:
+    background var(--dur) var(--ease),
+    border-color var(--dur) var(--ease),
+    transform 120ms var(--ease);
+}
+.item:hover {
+  background: var(--surface-2);
+}
+.item[aria-selected='true'] {
+  border-color: var(--accent-text);
+  background: var(--accent-soft);
+}
+.item.crit {
+  border-color: color-mix(in srgb, var(--crit) 55%, transparent);
+  background: var(--crit-soft);
+}
+.item .t {
+  font-weight: 620;
+  font-size: 13.5px;
+}
+.item .s {
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+/* KPI */
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+.kpi {
+  padding: 12px 16px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+.kpi .l {
+  font-size: 11.5px;
+  font-weight: 650;
+  color: var(--text-3);
+  letter-spacing: 0;
+}
+.kpi .v {
+  font-size: 26px;
+  font-weight: 720;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+  margin-top: 4px;
+}
+.kpi .v small {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+  margin-left: 4px;
+}
+.kpi .d {
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+/* Grande mesure (surface) */
+.dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 16px;
+  font-size: 13px;
+  margin: 0;
+}
+.dl dt {
+  color: var(--text-2);
+}
+.dl dd {
+  margin: 0;
+  text-align: right;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+/* Mesures secondaires repliées sous l'essentiel. */
+/* Mode d'emploi en trois gestes, une ligne chacun. */
+.how-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+.how-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.how-list svg {
+  width: var(--icon);
+  height: var(--icon);
+  flex: none;
+  color: var(--accent-text);
+}

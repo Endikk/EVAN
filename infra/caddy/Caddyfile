@@ -1,0 +1,22 @@
+# Proxy TLS de la mise en ligne (docker-compose.prod.yml), seul service exposé sur le web : ports 80 et 443.
+# Caddy obtient et renouvelle seul le certificat Let's Encrypt du domaine EVAN_DOMAINE (défi HTTP sur le port 80,
+# ou TLS-ALPN sur le 443), redirige HTTP vers HTTPS, puis relaie tout à nginx (service web), qui garde ses en-têtes de
+# sécurité, ses limites par client et le relais vers l'API. Caddy ajoute X-Forwarded-For et X-Forwarded-Proto en
+# remplaçant ceux qu'un client aurait envoyés.
+{
+	# Pas de page d'administration à l'écoute : la configuration ne change qu'au redémarrage du conteneur.
+	admin off
+}
+
+{$EVAN_DOMAINE} {
+	header {
+		# HTTPS seul pendant un an, pour ce domaine. includeSubDomains et preload engageraient tous les sous-domaines :
+		# à décider par le propriétaire du domaine (docs/DEPLOIEMENT.md).
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+
+	# Flux de l'assistant (SSE) envoyés au fil de l'eau, WebSocket du hub relayé tel quel : Caddy le fait d'office.
+	# Pas de journal d'accès ici : nginx tient déjà le sien, avec l'adresse réelle du client.
+	reverse_proxy web:80
+}

@@ -1,0 +1,73 @@
+# Mise en ligne en HTTPS : surcharge de docker-compose.yml. Mode d'emploi complet dans docs/DEPLOIEMENT.md.
+#   EVAN_DOMAINE=evan.exemple.fr docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# Caddy reçoit le web sur 80 et 443 (certificat Let's Encrypt automatique, HTTP redirigé vers HTTPS, HSTS) et relaie à
+# nginx, qui ne publie plus rien en clair. Les images viennent de GHCR (publiées par la CI à chaque push sur main) ;
+# si elles ne sont pas accessibles, Compose les construit depuis les sources comme en local.
+
+# Mêmes journaux tournants que docker-compose.yml (une ancre YAML ne passe pas d'un fichier à l'autre).
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  proxy:
+    image: caddy:2.11-alpine
+    logging: *logging
+    environment:
+      EVAN_DOMAINE: ${EVAN_DOMAINE:?EVAN_DOMAINE requis, nom de domaine public pointé sur cet hôte (docs/DEPLOIEMENT.md)}
+    ports:
+      - "80:80"
+      - "443:443"
+      # HTTP/3 (QUIC).
+      - "443:443/udp"
+    volumes:
+      - ./infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      # Certificats et clé du compte ACME : à garder, sinon chaque redémarrage en redemande (limites de Let's Encrypt).
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - web
+    restart: unless-stopped
+
+  web:
+    image: ghcr.io/endikk/evan-web:${EVAN_VERSION:-latest}
+    build:
+      # Construit sur l'hôte (--build) : balises de partage avec l'adresse du site. L'image de GHCR, commune à tous les
+      # déploiements, les garde en adresses relatives (docs/DEPLOIEMENT.md).
+      args:
+        EVAN_URL_PUBLIQUE: https://${EVAN_DOMAINE:?EVAN_DOMAINE requis}
+    # Plus de port en clair : seul Caddy atteint nginx, par le réseau de la pile.
+    ports: !reset []
+    volumes:
+      # Caddy devant : nginx croit l'adresse du client et le protocole (https) qu'il annonce.
+      - ./infra/nginx/relais-tls.conf:/etc/nginx/evan/relais.conf:ro
+
+  api:
+    image: ghcr.io/endikk/evan-api:${EVAN_VERSION:-latest}
+    environment:
+      # Pas de mot de passe de démonstration en ligne.
+      ConnectionStrings__Evan: Host=db;Database=evan;Username=evan;Password=${EVAN_DB_PASSWORD:?EVAN_DB_PASSWORD requis (.env)}
+      # Origine du front en ligne, à la place des origines locales.
+      Evan__CorsOrigins__0: https://${EVAN_DOMAINE:?EVAN_DOMAINE requis}
+      Evan__CorsOrigins__1: https://${EVAN_DOMAINE:?EVAN_DOMAINE requis}
+      # Traces, métriques et journaux OpenTelemetry vers ce collecteur. Sans valeur ici : reprises de .env si elles y
+      # sont, absentes sinon, et alors rien n'est exporté.
+      OTEL_EXPORTER_OTLP_ENDPOINT:
+      OTEL_EXPORTER_OTLP_PROTOCOL:
+      OTEL_EXPORTER_OTLP_HEADERS:
+
+  db:
+    environment:
+      POSTGRES_PASSWORD: ${EVAN_DB_PASSWORD:?EVAN_DB_PASSWORD requis (.env)}
+
+  simulator:
+    image: ghcr.io/endikk/evan-simulator:${EVAN_VERSION:-latest}
+
+  gateway:
+    image: ghcr.io/endikk/evan-gateway:${EVAN_VERSION:-latest}
+
+volumes:
+  caddy-data:
+  caddy-config:

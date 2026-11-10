@@ -1,0 +1,45 @@
+{
+  "description": "Cas de test communs du diagnostic des défauts répétitifs (pas mesuré → pièce tournante), joués par src/EVAN.Front/src/analytics/repeatDefect.test.ts et tests/EVAN.Core.Tests/DefautRepetitifTests.cs.",
+  "cas": [
+    {
+      "nom": "Anilox de la Gallus",
+      "type": "flexo",
+      "pas": 339.5,
+      "premier": { "organe": 3, "cylindre": "Anilox G3", "rapport": 1, "confiance": "forte" }
+    },
+    {
+      "nom": "Même développement, départagé par une coupe incomplète",
+      "type": "flexo",
+      "pas": 381,
+      "nature": "decoupe",
+      "premier": { "organe": 6, "cylindre": "Cylindre magnétique P2", "rapport": 1, "confiance": "forte" },
+      "memeDeveloppement": ["Cylindre porte-cliché G2", "Contre-cylindre P2"]
+    },
+    {
+      "nom": "Même développement, départagé par un manque d'impression",
+      "type": "flexo",
+      "pas": 381,
+      "nature": "impression",
+      "premier": { "organe": 2, "cylindre": "Cylindre porte-cliché G2", "rapport": 1, "confiance": "forte" }
+    },
+    {
+      "nom": "Offset : défaut toutes les 3 étiquettes de 110 mm",
+      "type": "offset",
+      "pas": 330,
+      "premier": { "organe": 4, "cylindre": "Cylindre porte-plaque", "rapport": 1, "confiance": "forte" },
+      "contient": [{ "cylindre": "Cylindre de contre-pression (double développement)", "rapport": 0.5 }]
+    },
+    {
+      "nom": "Rouleau d'échenillage",
+      "type": "flexo",
+      "pas": 157,
+      "premier": { "organe": 7, "cylindre": "Rouleau d’échenillage", "rapport": 1, "confiance": "forte" }
+    },
+    {
+      "nom": "Aucune pièce à ce pas",
+      "type": "flexo",
+      "pas": 900,
+      "nombre": 0
+    }
+  ]
+}

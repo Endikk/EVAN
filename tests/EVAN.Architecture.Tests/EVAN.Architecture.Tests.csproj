@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Règles de dépendance entre projets, vérifiées sur les assemblages compilés. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\EVAN.Core\EVAN.Core.csproj" />
+    <ProjectReference Include="..\..\src\EVAN.Application\EVAN.Application.csproj" />
+    <ProjectReference Include="..\..\src\EVAN.Messaging\EVAN.Messaging.csproj" />
+    <ProjectReference Include="..\..\src\EVAN.Infrastructure\EVAN.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\EVAN.Api\EVAN.Api.csproj" />
+    <ProjectReference Include="..\..\src\EVAN.Mcp\EVAN.Mcp.csproj" />
+    <ProjectReference Include="..\..\src\EVAN.Simulator\EVAN.Simulator.csproj" />
+    <ProjectReference Include="..\..\src\EVAN.Gateway\EVAN.Gateway.csproj" />
+  </ItemGroup>
+</Project>

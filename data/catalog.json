@@ -1,0 +1,550 @@
+{
+  "schema": "evan-catalog/1",
+  "description": "Enrichissement EVAN du kit machines : points de mesure structurés (unité, valeur nominale, seuils), forme de la panne simulée et cause probable. Les organes sont indexés par le numéro des points de diagnostic du kit (diag_N_nom). Lu par le front (simulateur navigateur) et par EVAN.Simulator / EVAN.Api.",
+  "formes": {
+    "rampe": "la mesure glisse linéairement jusqu'à la cible pendant la durée",
+    "saut": "la mesure bascule sur la cible en une seconde",
+    "oscillation": "la mesure oscille autour de la nominale avec une amplitude croissante jusqu'à la cible"
+  },
+  "energie": {
+    "description": "Puissance électrique appelée par état (kW), par type de machine : estimations d'ordre de grandeur (puissance installée, part UV et entraînements), à remplacer par des mesures (compteurs ou analyseurs de réseau). Facteur d'émission et prix modifiables à l'écran.",
+    "facteurCo2": 0.04,
+    "sourceCo2": "Mix moyen de consommation, France continentale, en cycle de vie : ordre de grandeur 40 gCO₂e/kWh (RTE, ADEME). Pour un bilan GES, retenir le facteur « Électricité/2024 - mix moyen/consommation » de la Base Empreinte.",
+    "prixKwh": 0.15,
+    "sourcePrix": "Hypothèse : prix complet d'un site industriel en moyenne tension (énergie, acheminement, taxes), à remplacer par le contrat."
+  },
+  "maintenance": {
+    "description": "Plan de maintenance par type de machine (NF EN 13306) : systématique (intervalle en heures de marche « h » ou en jours « j ») ou conditionnelle (seuils d'un point de mesure d'usure). Cylindres : diamètre ou développement (circonférence) en mm, pour le diagnostic des défauts répétitifs."
+  },
+  "types": {
+    "flexo": {
+      "libelle": "Presse flexo",
+      "prefixe": "R",
+      "categorie": "impression",
+      "vitesse": { "nominale": 150, "max": 200, "unite": "m/min" },
+      "energie": { "marche": 72, "calage": 38, "panne": 18, "arret": 3 },
+      "maintenance": [
+        { "id": "outil", "organe": 6, "tache": "Changer la plaque magnétique de découpe", "nature": "conditionnelle", "point": "metres_outil", "duree": 40 },
+        { "id": "uv", "organe": 4, "tache": "Remplacer les lampes UV", "nature": "systematique", "intervalle": 1500, "unite": "h", "duree": 45 },
+        { "id": "anilox", "organe": 3, "tache": "Nettoyer les anilox en profondeur", "nature": "systematique", "intervalle": 160, "unite": "h", "duree": 40 },
+        { "id": "racle", "organe": 3, "tache": "Remplacer les lames de racle", "nature": "systematique", "intervalle": 120, "unite": "h", "duree": 20 },
+        { "id": "groupes", "organe": 2, "tache": "Graisser et contrôler les groupes d’impression", "nature": "systematique", "intervalle": 250, "unite": "h", "duree": 60 },
+        { "id": "frein", "organe": 1, "tache": "Contrôler le frein et la cellule de charge du dérouleur", "nature": "systematique", "intervalle": 500, "unite": "h", "duree": 30 },
+        { "id": "armoire", "organe": 9, "tache": "Nettoyer les filtres et ventilateurs de l’armoire", "nature": "systematique", "intervalle": 90, "unite": "j", "duree": 30 }
+      ],
+      "organes": {
+        "1": {
+          "mesures": [
+            { "cle": "tension", "libelle": "Tension de bande", "type": "tension", "unite": "N", "nominal": 180, "bruit": 2.5, "seuils": { "alarmeBas": 120, "attentionBas": 150, "attentionHaut": 212, "alarmeHaut": 235 } },
+            { "cle": "diametre", "libelle": "Diamètre bobine", "type": "diametre", "unite": "mm", "nominal": 640, "bruit": 0.4, "dynamique": "decroit", "seuils": { "attentionBas": 140, "alarmeBas": 90 } },
+            { "cle": "position", "libelle": "Position de bande", "type": "reperage", "unite": "mm", "nominal": 0, "bruit": 0.12, "seuils": { "alarmeBas": -3, "attentionBas": -1.5, "attentionHaut": 1.5, "alarmeHaut": 3 } }
+          ],
+          "cylindres": [
+            { "nom": "Rouleau de renvoi d’entrée", "nature": "marque", "diametre": 80 },
+            { "nom": "Rouleau danseur", "nature": "marque", "diametre": 100 },
+            { "nom": "Rouleau du guide-bande", "nature": "marque", "diametre": 63 }
+          ],
+          "panne": { "mesure": "tension", "forme": "oscillation", "cible": 252, "duree": 9, "cause": "Frein du dérouleur : la tension décroche toujours au même diamètre de bobine (≈ 410 mm). La matière n'est pas en cause ; contrôler le frein et la cellule de charge.", "action": "Frein du dérouleur démonté et nettoyé, garnitures contrôlées ; cellule de charge réétalonnée." }
+        },
+        "2": {
+          "mesures": [
+            { "cle": "poursuite", "libelle": "Erreur de poursuite axe G2", "type": "reperage", "unite": "µm", "nominal": 9, "bruit": 1.6, "seuils": { "attentionHaut": 40, "alarmeHaut": 80 } },
+            { "cle": "couple", "libelle": "Couple servomoteur G2", "type": "couple", "unite": "%", "nominal": 36, "bruit": 1.2, "seuils": { "attentionHaut": 75, "alarmeHaut": 90 } },
+            { "cle": "reperage", "libelle": "Écart de repérage G2", "type": "reperage", "unite": "µm", "nominal": 22, "bruit": 3, "seuils": { "attentionHaut": 80, "alarmeHaut": 150 } }
+          ],
+          "cylindres": [
+            { "nom": "Cylindre porte-cliché G2", "nature": "impression", "developpement": 381 },
+            { "nom": "Cylindre de contre-pression G2", "nature": "impression", "diametre": 158 }
+          ],
+          "panne": { "mesure": "poursuite", "forme": "rampe", "cible": 118, "duree": 8, "cause": "Variateur de l'axe du groupe 2 : l'erreur de poursuite monte avec le couple. Suspecter le roulement du cylindre porte-cliché ou un gain de régulation déréglé. L'alarme désigne l'axe, donc le groupe 2.", "action": "Roulement du cylindre porte-cliché G2 remplacé ; gains de l’axe G2 vérifiés et réglés." }
+        },
+        "3": {
+          "mesures": [
+            { "cle": "viscosite", "libelle": "Viscosité encre G3", "type": "viscosite", "unite": "s", "nominal": 25, "bruit": 0.25, "seuils": { "alarmeBas": 19, "attentionBas": 21, "attentionHaut": 29, "alarmeHaut": 32 } },
+            { "cle": "temperature", "libelle": "Température encre", "type": "temperature", "unite": "°C", "nominal": 23, "bruit": 0.2, "seuils": { "alarmeBas": 15, "attentionBas": 18, "attentionHaut": 28, "alarmeHaut": 32 } },
+            { "cle": "niveau", "libelle": "Niveau d'encre", "type": "taux", "unite": "%", "nominal": 72, "bruit": 0.3, "dynamique": "decroit", "seuils": { "attentionBas": 25, "alarmeBas": 10 } }
+          ],
+          "cylindres": [
+            { "nom": "Anilox G3", "nature": "impression", "diametre": 108 }
+          ],
+          "panne": { "mesure": "viscosite", "forme": "rampe", "cible": 34, "duree": 12, "cause": "Évaporation dans l'encre du groupe 3 : la viscosité monte lentement (dérive, pas un saut). Vérifier l'ajout d'eau ou d'additif et l'étanchéité de la chambre à racle.", "action": "Viscosité corrigée (eau et additif) ; joint de la chambre à racle G3 remplacé." }
+        },
+        "4": {
+          "mesures": [
+            { "cle": "temperature_air", "libelle": "Température air chaud", "type": "temperature", "unite": "°C", "nominal": 62, "bruit": 0.5, "seuils": { "alarmeBas": 45, "attentionBas": 52, "attentionHaut": 75, "alarmeHaut": 85 } },
+            { "cle": "puissance_uv", "libelle": "Puissance lampes UV", "type": "puissance", "unite": "%", "nominal": 86, "bruit": 0.4, "seuils": { "attentionBas": 70, "alarmeBas": 60 } },
+            { "cle": "temperature_bande", "libelle": "Température de bande", "type": "temperature", "unite": "°C", "nominal": 38, "bruit": 0.4, "seuils": { "attentionHaut": 50, "alarmeHaut": 58 } }
+          ],
+          "cylindres": [
+            { "nom": "Rouleau refroidisseur", "nature": "marque", "diametre": 180 }
+          ],
+          "panne": { "mesure": "temperature_air", "forme": "rampe", "cible": 41, "duree": 10, "cause": "Résistance de chauffe ou ventilateur du sécheur air chaud : la température chute alors que la consigne n'a pas changé.", "action": "Résistance de chauffe du sécheur remplacée ; ventilateur contrôlé." }
+        },
+        "5": {
+          "mesures": [
+            { "cle": "tension_film", "libelle": "Tension du film", "type": "tension", "unite": "N", "nominal": 42, "bruit": 0.8, "seuils": { "alarmeBas": 15, "attentionBas": 30, "attentionHaut": 56, "alarmeHaut": 70 } },
+            { "cle": "diametre_film", "libelle": "Diamètre restant de film", "type": "diametre", "unite": "mm", "nominal": 185, "bruit": 0.2, "dynamique": "decroit", "seuils": { "attentionBas": 60, "alarmeBas": 45 } },
+            { "cle": "pression", "libelle": "Pression de la station", "type": "pression", "unite": "bar", "nominal": 3.2, "bruit": 0.04, "seuils": { "alarmeBas": 2.2, "attentionBas": 2.6, "attentionHaut": 3.8, "alarmeHaut": 4.2 } }
+          ],
+          "cylindres": [
+            { "nom": "Rouleau de transfert du film", "nature": "dorure", "diametre": 90 }
+          ],
+          "panne": { "mesure": "tension_film", "forme": "saut", "cible": 0, "duree": 1, "cause": "Casse du film de dorure : la tension tombe brutalement à zéro. Contrôler le passage du film et la pression de la station (pic juste avant la casse).", "action": "Film de dorure repassé, pression de la station réduite, rouleau de transfert nettoyé." }
+        },
+        "6": {
+          "mesures": [
+            { "cle": "pression", "libelle": "Pression de découpe P2", "type": "pression", "unite": "bar", "nominal": 4.5, "bruit": 0.05, "seuils": { "alarmeBas": 3.4, "attentionBas": 3.8, "attentionHaut": 5.4, "alarmeHaut": 6.0 } },
+            { "cle": "metres_outil", "libelle": "Mètres réalisés par l'outil", "type": "usure", "unite": "km", "nominal": 182, "bruit": 0, "dynamique": "croit", "seuils": { "attentionHaut": 240, "alarmeHaut": 280 } },
+            { "cle": "reperage", "libelle": "Repérage de la découpe", "type": "reperage", "unite": "µm", "nominal": 35, "bruit": 4, "seuils": { "attentionHaut": 100, "alarmeHaut": 180 } }
+          ],
+          "cylindres": [
+            { "nom": "Cylindre magnétique P2", "nature": "decoupe", "developpement": 381 },
+            { "nom": "Contre-cylindre P2", "nature": "decoupe", "developpement": 381 }
+          ],
+          "panne": { "mesure": "pression", "forme": "rampe", "cible": 6.5, "duree": 9, "cause": "Surpression au poste 2 : l'opérateur compense une plaque de découpe usée (mètres réalisés proches de la fin de vie). Changer la plaque magnétique plutôt que monter la pression.", "action": "Plaque magnétique changée au poste 2 ; pression ramenée à la consigne." }
+        },
+        "7": {
+          "mesures": [
+            { "cle": "tension_dechet", "libelle": "Tension du déchet", "type": "tension", "unite": "N", "nominal": 26, "bruit": 0.6, "seuils": { "alarmeBas": 10, "attentionBas": 18, "attentionHaut": 36, "alarmeHaut": 45 } },
+            { "cle": "casse", "libelle": "Détection de casse du squelette", "type": "alarme", "unite": "", "nominal": 0, "bruit": 0, "seuils": { "alarmeHaut": 0.5 } },
+            { "cle": "diametre_dechet", "libelle": "Diamètre bobine de déchet", "type": "diametre", "unite": "mm", "nominal": 240, "bruit": 0.2, "dynamique": "croit", "seuils": { "attentionHaut": 560, "alarmeHaut": 600 } }
+          ],
+          "cylindres": [
+            { "nom": "Rouleau d’échenillage", "nature": "marque", "diametre": 50 }
+          ],
+          "panne": { "mesure": "tension_dechet", "forme": "saut", "cible": 3, "duree": 1, "lie": { "casse": 1 }, "cause": "Casse du squelette d'échenillage, rapprochée de la pression de découpe et de l'outil : si la casse revient sur plusieurs travaux avec le même outil, l'outil est usé.", "action": "Squelette repassé ; pression de découpe et état de l’outil contrôlés." }
+        },
+        "8": {
+          "mesures": [
+            { "cle": "tension", "libelle": "Tension de rembobinage", "type": "tension", "unite": "N", "nominal": 120, "bruit": 1.5, "seuils": { "alarmeBas": 80, "attentionBas": 96, "attentionHaut": 145, "alarmeHaut": 165 } },
+            { "cle": "diametre", "libelle": "Diamètre de rembobinage", "type": "diametre", "unite": "mm", "nominal": 180, "bruit": 0.2, "dynamique": "croit", "seuils": { "attentionHaut": 380, "alarmeHaut": 400 } },
+            { "cle": "comptage", "libelle": "Étiquettes rembobinées", "type": "comptage", "unite": "u", "nominal": 0, "bruit": 0, "dynamique": "compteur", "seuils": {} }
+          ],
+          "cylindres": [
+            { "nom": "Rouleau presseur du rembobineur", "nature": "marque", "diametre": 70 }
+          ],
+          "panne": { "mesure": "tension", "forme": "oscillation", "cible": 172, "duree": 9, "cause": "Tension de rembobinage instable : régulation du bras danseur ou mandrin mal serré. Vérifier aussi le capteur de diamètre.", "action": "Bras danseur réglé et mandrin resserré ; capteur de diamètre nettoyé." }
+        },
+        "9": {
+          "mesures": [
+            { "cle": "vitesse", "libelle": "Vitesse machine", "type": "vitesse", "unite": "m/min", "nominal": 150, "bruit": 1.2, "role": "vitesse", "seuils": {} },
+            { "cle": "temperature_armoire", "libelle": "Température armoire", "type": "temperature", "unite": "°C", "nominal": 31, "bruit": 0.2, "seuils": { "attentionHaut": 40, "alarmeHaut": 45 } },
+            { "cle": "alarmes", "libelle": "Alarmes actives automate", "type": "alarme", "unite": "", "nominal": 0, "bruit": 0, "role": "alarmes", "seuils": {} }
+          ]
+        }
+      }
+    },
+    "offset": {
+      "libelle": "Rotative offset",
+      "prefixe": "R",
+      "categorie": "impression",
+      "vitesse": { "nominale": 120, "max": 160, "unite": "m/min" },
+      "energie": { "marche": 55, "calage": 26, "panne": 14, "arret": 2.5 },
+      "maintenance": [
+        { "id": "blanchet", "organe": 4, "tache": "Changer le blanchet", "nature": "conditionnelle", "point": "heures_blanchet", "duree": 35 },
+        { "id": "outil", "organe": 6, "tache": "Changer l’outil de découpe", "nature": "conditionnelle", "point": "metres_outil", "duree": 40 },
+        { "id": "uv", "organe": 5, "tache": "Remplacer la lampe UV", "nature": "systematique", "intervalle": 1500, "unite": "h", "duree": 45 },
+        { "id": "mouillage", "organe": 2, "tache": "Vidanger et régler le mouillage", "nature": "systematique", "intervalle": 200, "unite": "h", "duree": 45 },
+        { "id": "encrage", "organe": 3, "tache": "Graisser les rouleaux d’encrage", "nature": "systematique", "intervalle": 250, "unite": "h", "duree": 40 },
+        { "id": "frein", "organe": 1, "tache": "Contrôler le frein du dérouleur", "nature": "systematique", "intervalle": 500, "unite": "h", "duree": 30 }
+      ],
+      "organes": {
+        "1": {
+          "mesures": [
+            { "cle": "tension", "libelle": "Tension de bande", "type": "tension", "unite": "N", "nominal": 170, "bruit": 2.5, "seuils": { "alarmeBas": 115, "attentionBas": 140, "attentionHaut": 200, "alarmeHaut": 225 } },
+            { "cle": "diametre", "libelle": "Diamètre bobine", "type": "diametre", "unite": "mm", "nominal": 700, "bruit": 0.4, "dynamique": "decroit", "seuils": { "attentionBas": 140, "alarmeBas": 90 } }
+          ],
+          "cylindres": [
+            { "nom": "Rouleau de renvoi", "nature": "marque", "diametre": 90 }
+          ],
+          "panne": { "mesure": "tension", "forme": "oscillation", "cible": 238, "duree": 9, "cause": "Frein du dérouleur : la tension décroche au même diamètre de bobine à chaque fois, la matière n'est pas en cause.", "action": "Frein du dérouleur nettoyé et réglé ; garnitures contrôlées." }
+        },
+        "2": {
+          "mesures": [
+            { "cle": "conductivite", "libelle": "Conductivité du mouillage", "type": "conductivite", "unite": "µS/cm", "nominal": 1200, "bruit": 8, "seuils": { "alarmeBas": 800, "attentionBas": 900, "attentionHaut": 1500, "alarmeHaut": 1700 } },
+            { "cle": "ph", "libelle": "pH du mouillage", "type": "ph", "unite": "pH", "nominal": 5.0, "bruit": 0.02, "seuils": { "alarmeBas": 4.3, "attentionBas": 4.6, "attentionHaut": 5.4, "alarmeHaut": 5.7 } },
+            { "cle": "temperature", "libelle": "Température de l'eau", "type": "temperature", "unite": "°C", "nominal": 12, "bruit": 0.1, "seuils": { "alarmeBas": 8, "attentionBas": 9, "attentionHaut": 15, "alarmeHaut": 17 } }
+          ],
+          "cylindres": [
+            { "nom": "Rouleau mouilleur", "nature": "impression", "diametre": 64 }
+          ],
+          "panne": { "mesure": "conductivite", "forme": "rampe", "cible": 1820, "duree": 12, "cause": "Dérive de la conductivité du mouillage : dosage d'additif ou eau d'appoint trop dure. C'est la cause la plus fréquente de voilage en offset ; contrôler aussi le pH.", "action": "Bac de mouillage vidangé, dosage d’additif corrigé ; conductivité et pH revenus à la consigne." }
+        },
+        "3": {
+          "mesures": [
+            { "cle": "densite", "libelle": "Densité mesurée G5", "type": "densite", "unite": "D", "nominal": 1.45, "bruit": 0.008, "seuils": { "alarmeBas": 1.3, "attentionBas": 1.36, "attentionHaut": 1.55, "alarmeHaut": 1.6 } },
+            { "cle": "temperature_rouleaux", "libelle": "Température des rouleaux", "type": "temperature", "unite": "°C", "nominal": 28, "bruit": 0.15, "seuils": { "attentionHaut": 33, "alarmeHaut": 36 } },
+            { "cle": "ouverture", "libelle": "Ouverture des vis d'encrier", "type": "taux", "unite": "%", "nominal": 46, "bruit": 0.3, "seuils": { "attentionHaut": 85, "alarmeHaut": 95 } }
+          ],
+          "cylindres": [
+            { "nom": "Rouleau toucheur encreur", "nature": "impression", "diametre": 72 },
+            { "nom": "Rouleau distributeur oscillant", "nature": "impression", "diametre": 86 }
+          ],
+          "panne": { "mesure": "densite", "forme": "rampe", "cible": 1.24, "duree": 10, "cause": "Écart de densité au groupe 5 : la température des rouleaux monte (émulsion encre-eau). Contrôler le refroidissement des rouleaux et le mouillage.", "action": "Circuit de refroidissement des rouleaux purgé ; mouillage rééquilibré." }
+        },
+        "4": {
+          "mesures": [
+            { "cle": "reperage", "libelle": "Repérage groupe 4", "type": "reperage", "unite": "µm", "nominal": 16, "bruit": 2.5, "seuils": { "attentionHaut": 60, "alarmeHaut": 100 } },
+            { "cle": "pression", "libelle": "Pression d'impression", "type": "pression", "unite": "bar", "nominal": 6.0, "bruit": 0.05, "seuils": { "alarmeBas": 4.8, "attentionBas": 5.3, "attentionHaut": 6.8, "alarmeHaut": 7.2 } },
+            { "cle": "heures_blanchet", "libelle": "Heures du blanchet", "type": "usure", "unite": "h", "nominal": 610, "bruit": 0, "dynamique": "croit", "seuils": { "attentionHaut": 900, "alarmeHaut": 1100 } }
+          ],
+          "cylindres": [
+            { "nom": "Cylindre porte-plaque", "nature": "impression", "developpement": 330.2 },
+            { "nom": "Cylindre porte-blanchet", "nature": "impression", "developpement": 330.2 },
+            { "nom": "Cylindre de contre-pression (double développement)", "nature": "impression", "developpement": 660.4 }
+          ],
+          "panne": { "mesure": "reperage", "forme": "rampe", "cible": 142, "duree": 9, "cause": "Repérage hors tolérance au groupe 4 : blanchet en fin de vie (heures élevées) ou plaque mal tendue. Un défaut au pas de la circonférence du cylindre le confirme.", "action": "Blanchet du groupe 4 remplacé ; plaque retendue et repérage recalé." }
+        },
+        "5": {
+          "mesures": [
+            { "cle": "puissance_uv", "libelle": "Puissance UV", "type": "puissance", "unite": "%", "nominal": 88, "bruit": 0.4, "seuils": { "attentionBas": 72, "alarmeBas": 62 } },
+            { "cle": "temperature", "libelle": "Température sécheur", "type": "temperature", "unite": "°C", "nominal": 45, "bruit": 0.4, "seuils": { "attentionHaut": 60, "alarmeHaut": 70 } }
+          ],
+          "cylindres": [
+            { "nom": "Rouleau refroidisseur", "nature": "marque", "diametre": 160 }
+          ],
+          "panne": { "mesure": "puissance_uv", "forme": "rampe", "cible": 57, "duree": 12, "cause": "Lampe UV en fin de vie : la puissance baisse depuis plusieurs semaines (dérive). Remplacer la lampe avant le défaut de séchage.", "action": "Lampe UV remplacée ; compteur d’heures remis à zéro." }
+        },
+        "6": {
+          "mesures": [
+            { "cle": "pression", "libelle": "Pression de découpe", "type": "pression", "unite": "bar", "nominal": 4.2, "bruit": 0.05, "seuils": { "alarmeBas": 3.2, "attentionBas": 3.6, "attentionHaut": 5.1, "alarmeHaut": 5.7 } },
+            { "cle": "metres_outil", "libelle": "Mètres par outil", "type": "usure", "unite": "km", "nominal": 96, "bruit": 0, "dynamique": "croit", "seuils": { "attentionHaut": 240, "alarmeHaut": 280 } }
+          ],
+          "cylindres": [
+            { "nom": "Cylindre magnétique", "nature": "decoupe", "developpement": 330.2 },
+            { "nom": "Contre-cylindre", "nature": "decoupe", "developpement": 330.2 }
+          ],
+          "panne": { "mesure": "pression", "forme": "rampe", "cible": 6.1, "duree": 9, "cause": "Surpression à la découpe : compensation d'un outil usé. Changer l'outil plutôt qu'augmenter la pression.", "action": "Outil de découpe changé ; pression ramenée à la consigne." }
+        },
+        "7": {
+          "mesures": [
+            { "cle": "tension", "libelle": "Tension de rembobinage", "type": "tension", "unite": "N", "nominal": 115, "bruit": 1.5, "seuils": { "alarmeBas": 78, "attentionBas": 92, "attentionHaut": 140, "alarmeHaut": 160 } },
+            { "cle": "comptage", "libelle": "Étiquettes rembobinées", "type": "comptage", "unite": "u", "nominal": 0, "bruit": 0, "dynamique": "compteur", "seuils": {} }
+          ],
+          "cylindres": [
+            { "nom": "Rouleau presseur du rembobineur", "nature": "marque", "diametre": 75 }
+          ],
+          "panne": { "mesure": "tension", "forme": "oscillation", "cible": 168, "duree": 9, "cause": "Tension de rembobinage instable : bras danseur ou mandrin mal serré.", "action": "Bras danseur réglé et mandrin resserré." }
+        },
+        "8": {
+          "mesures": [
+            { "cle": "vitesse", "libelle": "Vitesse machine", "type": "vitesse", "unite": "m/min", "nominal": 120, "bruit": 1, "role": "vitesse", "seuils": {} },
+            { "cle": "temperature_armoire", "libelle": "Température armoire", "type": "temperature", "unite": "°C", "nominal": 33, "bruit": 0.2, "seuils": { "attentionHaut": 40, "alarmeHaut": 45 } },
+            { "cle": "alarmes", "libelle": "Alarmes actives automate", "type": "alarme", "unite": "", "nominal": 0, "bruit": 0, "role": "alarmes", "seuils": {} }
+          ]
+        }
+      }
+    },
+    "ctp": {
+      "libelle": "Prépresse CTP",
+      "prefixe": "PP",
+      "categorie": "prepresse",
+      "vitesse": { "nominale": 24, "max": 30, "unite": "plaques/h" },
+      "energie": { "marche": 9, "calage": 5, "panne": 4, "arret": 1.2 },
+      "maintenance": [
+        { "id": "bain", "organe": 3, "tache": "Changer le bain de développement", "nature": "systematique", "intervalle": 21, "unite": "j", "duree": 50 },
+        { "id": "ventouses", "organe": 1, "tache": "Nettoyer les ventouses de chargement", "nature": "systematique", "intervalle": 14, "unite": "j", "duree": 15 },
+        { "id": "laser", "organe": 2, "tache": "Calibrer la tête laser", "nature": "systematique", "intervalle": 90, "unite": "j", "duree": 60 }
+      ],
+      "organes": {
+        "1": {
+          "mesures": [
+            { "cle": "bourrage", "libelle": "Capteur de bourrage", "type": "alarme", "unite": "", "nominal": 0, "bruit": 0, "seuils": { "alarmeHaut": 0.5 } },
+            { "cle": "stock", "libelle": "Stock de plaques", "type": "comptage", "unite": "u", "nominal": 180, "bruit": 0, "dynamique": "decroit", "seuils": { "attentionBas": 30, "alarmeBas": 10 } }
+          ],
+          "panne": { "mesure": "bourrage", "forme": "saut", "cible": 1, "duree": 1, "cause": "Bourrage au chargement : s'il revient sur la même référence de plaque, c'est la plaque (format, intercalaires) ; sinon la ventouse ou le capteur de présence.", "action": "Ventouses nettoyées, capteur de présence contrôlé ; intercalaires de la référence vérifiés." }
+        },
+        "2": {
+          "mesures": [
+            { "cle": "puissance_diode", "libelle": "Puissance diode la plus faible", "type": "puissance", "unite": "%", "nominal": 98, "bruit": 0.15, "seuils": { "attentionBas": 90, "alarmeBas": 85 } },
+            { "cle": "temperature", "libelle": "Température des diodes", "type": "temperature", "unite": "°C", "nominal": 25, "bruit": 0.1, "seuils": { "attentionHaut": 30, "alarmeHaut": 33 } }
+          ],
+          "panne": { "mesure": "puissance_diode", "forme": "rampe", "cible": 81, "duree": 10, "cause": "Une diode laser faiblit : une bande fixe apparaît sur les plaques à la même position. Remplacer la diode ou recalibrer la tête.", "action": "Tête laser recalibrée ; diode défaillante remplacée." }
+        },
+        "3": {
+          "mesures": [
+            { "cle": "temperature_bain", "libelle": "Température du bain", "type": "temperature", "unite": "°C", "nominal": 23, "bruit": 0.05, "seuils": { "alarmeBas": 20, "attentionBas": 21, "attentionHaut": 25, "alarmeHaut": 26 } },
+            { "cle": "conductivite", "libelle": "Conductivité du bain", "type": "conductivite", "unite": "mS/cm", "nominal": 85, "bruit": 0.3, "seuils": { "alarmeBas": 75, "attentionBas": 78, "attentionHaut": 92, "alarmeHaut": 95 } },
+            { "cle": "vitesse_brosses", "libelle": "Vitesse des brosses", "type": "vitesse", "unite": "tr/min", "nominal": 140, "bruit": 0.8, "seuils": { "alarmeBas": 100, "attentionBas": 120 } }
+          ],
+          "panne": { "mesure": "temperature_bain", "forme": "rampe", "cible": 19.2, "duree": 10, "cause": "Température du bain trop basse : régulation thermique de la développeuse (résistance ou thermostat).", "action": "Thermostat de la développeuse remplacé ; bain remis en température." }
+        },
+        "4": {
+          "mesures": [
+            { "cle": "file", "libelle": "Travaux en file d'attente", "type": "comptage", "unite": "u", "nominal": 6, "bruit": 0.2, "role": "vitesse", "seuils": { "attentionHaut": 15, "alarmeHaut": 25 } },
+            { "cle": "plaques_refaites", "libelle": "Plaques refaites", "type": "taux", "unite": "%", "nominal": 2.1, "bruit": 0.05, "seuils": { "attentionHaut": 6, "alarmeHaut": 10 } }
+          ]
+        }
+      }
+    },
+    "digital": {
+      "libelle": "Presse numérique",
+      "prefixe": "R",
+      "categorie": "impression",
+      "vitesse": { "nominale": 50, "max": 70, "unite": "m/min" },
+      "energie": { "marche": 22, "calage": 12, "panne": 8, "arret": 1.5 },
+      "maintenance": [
+        { "id": "tetes", "organe": 2, "tache": "Nettoyer et purger les têtes", "nature": "systematique", "intervalle": 40, "unite": "h", "duree": 20 },
+        { "id": "filtre", "organe": 3, "tache": "Remplacer le filtre du refroidissement LED", "nature": "systematique", "intervalle": 1000, "unite": "h", "duree": 30 },
+        { "id": "cellule", "organe": 4, "tache": "Étalonner la cellule de repérage", "nature": "systematique", "intervalle": 30, "unite": "j", "duree": 15 }
+      ],
+      "organes": {
+        "1": {
+          "mesures": [
+            { "cle": "tension", "libelle": "Tension de bande", "type": "tension", "unite": "N", "nominal": 95, "bruit": 1.2, "seuils": { "alarmeBas": 60, "attentionBas": 75, "attentionHaut": 115, "alarmeHaut": 130 } },
+            { "cle": "diametre", "libelle": "Diamètre bobine", "type": "diametre", "unite": "mm", "nominal": 520, "bruit": 0.3, "dynamique": "decroit", "seuils": { "attentionBas": 120, "alarmeBas": 80 } }
+          ],
+          "cylindres": [
+            { "nom": "Rouleau de renvoi", "nature": "marque", "diametre": 76 }
+          ],
+          "panne": { "mesure": "tension", "forme": "oscillation", "cible": 138, "duree": 9, "cause": "Frein du dérouleur : décrochage de tension toujours au même diamètre.", "action": "Frein du dérouleur nettoyé et réglé." }
+        },
+        "2": {
+          "mesures": [
+            { "cle": "buses", "libelle": "Buses manquantes (magenta)", "type": "comptage", "unite": "u", "nominal": 0.4, "bruit": 0.2, "seuils": { "attentionHaut": 4, "alarmeHaut": 10 } },
+            { "cle": "temperature_tetes", "libelle": "Température des têtes", "type": "temperature", "unite": "°C", "nominal": 32, "bruit": 0.1, "seuils": { "alarmeBas": 26, "attentionBas": 28, "attentionHaut": 36, "alarmeHaut": 40 } },
+            { "cle": "niveau_magenta", "libelle": "Niveau encre magenta", "type": "taux", "unite": "%", "nominal": 64, "bruit": 0.2, "dynamique": "decroit", "seuils": { "attentionBas": 20, "alarmeBas": 8 } }
+          ],
+          "cylindres": [
+            { "nom": "Rouleau d’entraînement sous les têtes", "nature": "impression", "diametre": 95 }
+          ],
+          "panne": { "mesure": "buses", "forme": "saut", "cible": 14, "duree": 1, "cause": "Buses manquantes sur la tête magenta : raie fixe sur l'impression à la même position. Lancer un nettoyage, puis la mire de buses pour localiser la tête.", "action": "Tête magenta nettoyée et purgée ; mire de buses validée." }
+        },
+        "3": {
+          "mesures": [
+            { "cle": "temperature_led", "libelle": "Température des LED UV", "type": "temperature", "unite": "°C", "nominal": 42, "bruit": 0.3, "seuils": { "attentionHaut": 55, "alarmeHaut": 62 } },
+            { "cle": "puissance", "libelle": "Puissance UV LED", "type": "puissance", "unite": "%", "nominal": 90, "bruit": 0.3, "seuils": { "attentionBas": 75, "alarmeBas": 65 } }
+          ],
+          "cylindres": [
+            { "nom": "Rouleau de bande du séchage", "nature": "marque", "diametre": 120 }
+          ],
+          "panne": { "mesure": "temperature_led", "forme": "rampe", "cible": 67, "duree": 10, "cause": "Surchauffe des LED UV : débit du circuit de refroidissement insuffisant (filtre encrassé ou pompe).", "action": "Filtre du circuit de refroidissement remplacé ; débit de la pompe contrôlé." }
+        },
+        "4": {
+          "mesures": [
+            { "cle": "reperage", "libelle": "Repérage de découpe", "type": "reperage", "unite": "µm", "nominal": 40, "bruit": 4, "seuils": { "attentionHaut": 110, "alarmeHaut": 180 } },
+            { "cle": "pression", "libelle": "Pression de découpe", "type": "pression", "unite": "bar", "nominal": 3.8, "bruit": 0.04, "seuils": { "alarmeBas": 2.9, "attentionBas": 3.2, "attentionHaut": 4.6, "alarmeHaut": 5.1 } }
+          ],
+          "cylindres": [
+            { "nom": "Cylindre magnétique de finition", "nature": "decoupe", "developpement": 304.8 },
+            { "nom": "Contre-cylindre de finition", "nature": "decoupe", "developpement": 304.8 }
+          ],
+          "panne": { "mesure": "reperage", "forme": "rampe", "cible": 196, "duree": 9, "cause": "Repérage de découpe hors tolérance : la cellule de repérage ne lit plus la marque (encrassée) ou le pas d'étiquette a changé.", "action": "Cellule de repérage nettoyée et réétalonnée." }
+        },
+        "5": {
+          "mesures": [
+            { "cle": "tension", "libelle": "Tension de rembobinage", "type": "tension", "unite": "N", "nominal": 80, "bruit": 1, "seuils": { "alarmeBas": 50, "attentionBas": 62, "attentionHaut": 98, "alarmeHaut": 112 } },
+            { "cle": "comptage", "libelle": "Étiquettes rembobinées", "type": "comptage", "unite": "u", "nominal": 0, "bruit": 0, "dynamique": "compteur", "seuils": {} }
+          ],
+          "cylindres": [
+            { "nom": "Rouleau presseur du rembobineur", "nature": "marque", "diametre": 70 }
+          ],
+          "panne": { "mesure": "tension", "forme": "oscillation", "cible": 118, "duree": 9, "cause": "Tension de rembobinage instable : bras danseur ou mandrin mal serré.", "action": "Bras danseur réglé et mandrin resserré." }
+        },
+        "6": {
+          "mesures": [
+            { "cle": "vitesse", "libelle": "Vitesse machine", "type": "vitesse", "unite": "m/min", "nominal": 50, "bruit": 0.5, "role": "vitesse", "seuils": {} },
+            { "cle": "file", "libelle": "Travaux en file", "type": "comptage", "unite": "u", "nominal": 4, "bruit": 0.1, "seuils": { "attentionHaut": 20 } },
+            { "cle": "alarmes", "libelle": "Alarmes actives automate", "type": "alarme", "unite": "", "nominal": 0, "bruit": 0, "role": "alarmes", "seuils": {} }
+          ]
+        }
+      }
+    },
+    "slitter": {
+      "libelle": "Refendeuse",
+      "prefixe": "RF",
+      "categorie": "faconnage",
+      "vitesse": { "nominale": 250, "max": 400, "unite": "m/min" },
+      "energie": { "marche": 12, "calage": 4, "panne": 2.5, "arret": 0.6 },
+      "maintenance": [
+        { "id": "lame3", "organe": 3, "tache": "Réaffûter ou remplacer la lame 3", "nature": "conditionnelle", "point": "usure_lame3", "duree": 25 },
+        { "id": "frein", "organe": 1, "tache": "Contrôler le frein et les rouleaux de la bobine mère", "nature": "systematique", "intervalle": 500, "unite": "h", "duree": 30 },
+        { "id": "capteur", "organe": 4, "tache": "Étalonner le capteur de comptage", "nature": "systematique", "intervalle": 60, "unite": "j", "duree": 15 }
+      ],
+      "organes": {
+        "1": {
+          "mesures": [
+            { "cle": "tension", "libelle": "Tension bobine mère", "type": "tension", "unite": "N", "nominal": 150, "bruit": 2, "seuils": { "alarmeBas": 100, "attentionBas": 122, "attentionHaut": 178, "alarmeHaut": 200 } },
+            { "cle": "diametre", "libelle": "Diamètre bobine mère", "type": "diametre", "unite": "mm", "nominal": 760, "bruit": 0.4, "dynamique": "decroit", "seuils": { "attentionBas": 140, "alarmeBas": 90 } }
+          ],
+          "cylindres": [
+            { "nom": "Rouleau de renvoi de la bobine mère", "nature": "marque", "diametre": 80 }
+          ],
+          "panne": { "mesure": "tension", "forme": "oscillation", "cible": 212, "duree": 9, "cause": "Frein de la bobine mère : la tension décroche au même diamètre.", "action": "Frein de la bobine mère nettoyé et réglé." }
+        },
+        "2": {
+          "mesures": [
+            { "cle": "manquantes", "libelle": "Étiquettes manquantes", "type": "taux", "unite": "‰", "nominal": 0.2, "bruit": 0.04, "seuils": { "attentionHaut": 1, "alarmeHaut": 3 } },
+            { "cle": "defauts", "libelle": "Défauts détectés / bobine", "type": "comptage", "unite": "u", "nominal": 1, "bruit": 0.2, "seuils": { "attentionHaut": 8, "alarmeHaut": 15 } }
+          ],
+          "cylindres": [
+            { "nom": "Rouleau tendeur de la table", "nature": "marque", "diametre": 60 }
+          ],
+          "panne": { "mesure": "manquantes", "forme": "saut", "cible": 4.2, "duree": 1, "cause": "Étiquette manquante détectée : arrêt pile sur le défaut grâce au fichier de défauts de la presse. Vérifier l'échenillage de la presse d'origine.", "action": "Bobine reprise sur le défaut ; échenillage de la presse d’origine signalé." }
+        },
+        "3": {
+          "mesures": [
+            { "cle": "usure_lame3", "libelle": "Usure de la lame 3", "type": "usure", "unite": "%", "nominal": 46, "bruit": 0.05, "dynamique": "croit", "seuils": { "attentionHaut": 80, "alarmeHaut": 92 } },
+            { "cle": "position_lames", "libelle": "Écart de position des lames", "type": "reperage", "unite": "mm", "nominal": 0.05, "bruit": 0.01, "seuils": { "attentionHaut": 0.2, "alarmeHaut": 0.4 } }
+          ],
+          "cylindres": [
+            { "nom": "Rouleau contre-lame", "nature": "decoupe", "diametre": 120 }
+          ],
+          "panne": { "mesure": "usure_lame3", "forme": "rampe", "cible": 95, "duree": 10, "cause": "Usure de la lame 3 : métrage au-delà de la durée de vie, bords de bobine pelucheux. Remplacer ou réaffûter la lame 3.", "action": "Lame 3 remplacée ; position des lames recalée." }
+        },
+        "4": {
+          "mesures": [
+            { "cle": "tension", "libelle": "Tension par bobine", "type": "tension", "unite": "N", "nominal": 40, "bruit": 0.6, "seuils": { "alarmeBas": 24, "attentionBas": 30, "attentionHaut": 50, "alarmeHaut": 58 } },
+            { "cle": "ecart_comptage", "libelle": "Écart de comptage", "type": "taux", "unite": "%", "nominal": 0.05, "bruit": 0.02, "seuils": { "attentionHaut": 0.5, "alarmeHaut": 1 } }
+          ],
+          "cylindres": [
+            { "nom": "Rouleau de contact du rembobinage", "nature": "marque", "diametre": 100 }
+          ],
+          "panne": { "mesure": "ecart_comptage", "forme": "rampe", "cible": 1.6, "duree": 9, "cause": "Comptage incohérent : le capteur d'étiquettes en rate (pas trop court ou étiquettes transparentes). Recalibrer le capteur.", "action": "Capteur d’étiquettes recalibré pour le pas de la référence." }
+        },
+        "5": {
+          "mesures": [
+            { "cle": "vitesse", "libelle": "Vitesse machine", "type": "vitesse", "unite": "m/min", "nominal": 250, "bruit": 2, "role": "vitesse", "seuils": {} },
+            { "cle": "alarmes", "libelle": "Alarmes actives automate", "type": "alarme", "unite": "", "nominal": 0, "bruit": 0, "role": "alarmes", "seuils": {} }
+          ]
+        }
+      }
+    },
+    "paravent": {
+      "libelle": "Ligne paravent",
+      "prefixe": "PV",
+      "categorie": "faconnage",
+      "vitesse": { "nominale": 180, "max": 250, "unite": "m/min" },
+      "energie": { "marche": 15, "calage": 6, "panne": 3, "arret": 0.8 },
+      "maintenance": [
+        { "id": "perforateur", "organe": 2, "tache": "Remplacer le cylindre perforateur", "nature": "conditionnelle", "point": "usure_perforateur", "duree": 60 },
+        { "id": "pliage", "organe": 3, "tache": "Régler les lames de pliage", "nature": "systematique", "intervalle": 300, "unite": "h", "duree": 40 }
+      ],
+      "organes": {
+        "1": {
+          "mesures": [
+            { "cle": "tension", "libelle": "Tension de bande", "type": "tension", "unite": "N", "nominal": 110, "bruit": 1.5, "seuils": { "alarmeBas": 70, "attentionBas": 88, "attentionHaut": 132, "alarmeHaut": 150 } },
+            { "cle": "diametre", "libelle": "Diamètre bobine", "type": "diametre", "unite": "mm", "nominal": 600, "bruit": 0.3, "dynamique": "decroit", "seuils": { "attentionBas": 130, "alarmeBas": 85 } }
+          ],
+          "cylindres": [
+            { "nom": "Rouleau de renvoi", "nature": "marque", "diametre": 80 }
+          ],
+          "panne": { "mesure": "tension", "forme": "oscillation", "cible": 158, "duree": 9, "cause": "Frein du dérouleur : décrochage de tension toujours au même diamètre.", "action": "Frein du dérouleur nettoyé et réglé." }
+        },
+        "2": {
+          "mesures": [
+            { "cle": "decalage", "libelle": "Décalage perforation / impression", "type": "reperage", "unite": "mm", "nominal": 0.12, "bruit": 0.02, "seuils": { "attentionHaut": 0.6, "alarmeHaut": 1 } },
+            { "cle": "usure_perforateur", "libelle": "Usure du cylindre perforateur", "type": "usure", "unite": "%", "nominal": 38, "bruit": 0.02, "dynamique": "croit", "seuils": { "attentionHaut": 80, "alarmeHaut": 92 } }
+          ],
+          "cylindres": [
+            { "nom": "Cylindre perforateur", "nature": "decoupe", "developpement": 304.8 },
+            { "nom": "Contre-cylindre de perforation", "nature": "decoupe", "developpement": 304.8 }
+          ],
+          "panne": { "mesure": "decalage", "forme": "rampe", "cible": 1.35, "duree": 12, "cause": "Décalage progressif du repérage de perforation : la cellule de lecture dérive ou le cylindre perforateur s'use. La dérive lente l'annonce avant le défaut.", "action": "Cellule de lecture nettoyée ; repérage de perforation recalé." }
+        },
+        "3": {
+          "mesures": [
+            { "cle": "bourrage", "libelle": "Capteur de bourrage", "type": "alarme", "unite": "", "nominal": 0, "bruit": 0, "seuils": { "alarmeHaut": 0.5 } },
+            { "cle": "plis", "libelle": "Plis par minute", "type": "vitesse", "unite": "plis/min", "nominal": 590, "bruit": 4, "seuils": {} }
+          ],
+          "cylindres": [
+            { "nom": "Rouleaux d’entraînement du pliage", "nature": "marque", "diametre": 60 }
+          ],
+          "panne": { "mesure": "bourrage", "forme": "saut", "cible": 1, "duree": 1, "cause": "Bourrage au pliage : vérifier la tension en entrée et l'humidité du papier ; un bourrage répétitif désigne les lames de pliage.", "action": "Bourrage dégagé ; lames de pliage contrôlées, tension d’entrée ajustée." }
+        },
+        "4": {
+          "mesures": [
+            { "cle": "vitesse", "libelle": "Vitesse machine", "type": "vitesse", "unite": "m/min", "nominal": 180, "bruit": 1.5, "role": "vitesse", "seuils": {} },
+            { "cle": "alarmes", "libelle": "Alarmes actives automate", "type": "alarme", "unite": "", "nominal": 0, "bruit": 0, "role": "alarmes", "seuils": {} }
+          ]
+        }
+      }
+    },
+    "sheeter": {
+      "libelle": "Feuilleteuse",
+      "prefixe": "FE",
+      "categorie": "faconnage",
+      "vitesse": { "nominale": 120, "max": 160, "unite": "feuilles/min" },
+      "energie": { "marche": 11, "calage": 4, "panne": 2.5, "arret": 0.6 },
+      "maintenance": [
+        { "id": "couteau", "organe": 2, "tache": "Changer le couteau de coupe", "nature": "conditionnelle", "point": "usure_couteau", "duree": 45 },
+        { "id": "ioniseur", "organe": 3, "tache": "Nettoyer l’ioniseur", "nature": "systematique", "intervalle": 30, "unite": "j", "duree": 15 }
+      ],
+      "organes": {
+        "1": {
+          "mesures": [
+            { "cle": "tension", "libelle": "Tension de bande", "type": "tension", "unite": "N", "nominal": 90, "bruit": 1.2, "seuils": { "alarmeBas": 55, "attentionBas": 70, "attentionHaut": 110, "alarmeHaut": 125 } },
+            { "cle": "diametre", "libelle": "Diamètre bobine", "type": "diametre", "unite": "mm", "nominal": 480, "bruit": 0.3, "dynamique": "decroit", "seuils": { "attentionBas": 120, "alarmeBas": 80 } }
+          ],
+          "cylindres": [
+            { "nom": "Rouleau de renvoi", "nature": "marque", "diametre": 80 }
+          ],
+          "panne": { "mesure": "tension", "forme": "oscillation", "cible": 132, "duree": 9, "cause": "Frein du dérouleur : décrochage de tension toujours au même diamètre.", "action": "Frein du dérouleur nettoyé et réglé." }
+        },
+        "2": {
+          "mesures": [
+            { "cle": "longueur", "libelle": "Longueur de feuille", "type": "longueur", "unite": "mm", "nominal": 297.0, "bruit": 0.05, "seuils": { "alarmeBas": 296.2, "attentionBas": 296.6, "attentionHaut": 297.4, "alarmeHaut": 297.8 } },
+            { "cle": "usure_couteau", "libelle": "Usure du couteau", "type": "usure", "unite": "%", "nominal": 52, "bruit": 0.02, "dynamique": "croit", "seuils": { "attentionHaut": 80, "alarmeHaut": 92 } }
+          ],
+          "cylindres": [
+            { "nom": "Cylindre porte-couteau (coupe A4)", "nature": "decoupe", "developpement": 297 },
+            { "nom": "Rouleaux d’entraînement", "nature": "marque", "diametre": 70 }
+          ],
+          "panne": { "mesure": "longueur", "forme": "rampe", "cible": 298.1, "duree": 10, "cause": "Longueur de feuille hors tolérance : glissement de bande à l'entraînement ou cellule de repérage encrassée. Si la coupe est aussi bavée, le couteau est usé.", "action": "Rouleaux d’entraînement nettoyés ; cellule de repérage réétalonnée." }
+        },
+        "3": {
+          "mesures": [
+            { "cle": "doubles", "libelle": "Doubles feuilles / heure", "type": "comptage", "unite": "u/h", "nominal": 0.3, "bruit": 0.1, "seuils": { "attentionHaut": 2, "alarmeHaut": 5 } },
+            { "cle": "hauteur_pile", "libelle": "Hauteur de pile", "type": "longueur", "unite": "mm", "nominal": 120, "bruit": 0.2, "dynamique": "croit", "seuils": { "attentionHaut": 480, "alarmeHaut": 520 } }
+          ],
+          "cylindres": [
+            { "nom": "Rouleau du convoyeur", "nature": "marque", "diametre": 50 }
+          ],
+          "panne": { "mesure": "doubles", "forme": "saut", "cible": 7, "duree": 1, "cause": "Double feuille détectée : électricité statique ou couteau émoussé qui ne sépare plus les feuilles. Vérifier l'ioniseur.", "action": "Ioniseur nettoyé ; couteau contrôlé." }
+        },
+        "4": {
+          "mesures": [
+            { "cle": "vitesse", "libelle": "Cadence", "type": "vitesse", "unite": "feuilles/min", "nominal": 120, "bruit": 1, "role": "vitesse", "seuils": {} },
+            { "cle": "alarmes", "libelle": "Alarmes actives automate", "type": "alarme", "unite": "", "nominal": 0, "bruit": 0, "role": "alarmes", "seuils": {} }
+          ]
+        }
+      }
+    },
+    "rfid": {
+      "libelle": "Atelier RFID",
+      "prefixe": "RFID",
+      "categorie": "atelier",
+      "vitesse": { "nominale": 2400, "max": 3000, "unite": "étiq./h" },
+      "energie": { "marche": 4, "calage": 2.5, "panne": 1.5, "arret": 0.4 },
+      "maintenance": [
+        { "id": "tete", "organe": 1, "tache": "Nettoyer la tête thermique", "nature": "systematique", "intervalle": 200, "unite": "h", "duree": 10 },
+        { "id": "rf", "organe": 2, "tache": "Calibrer la puissance RF", "nature": "systematique", "intervalle": 60, "unite": "j", "duree": 20 }
+      ],
+      "organes": {
+        "1": {
+          "mesures": [
+            { "cle": "echecs", "libelle": "Échecs d'encodage", "type": "taux", "unite": "%", "nominal": 0.4, "bruit": 0.05, "seuils": { "attentionHaut": 1.5, "alarmeHaut": 3 } },
+            { "cle": "puissance_rf", "libelle": "Puissance RF", "type": "puissance", "unite": "dBm", "nominal": 24, "bruit": 0.1, "seuils": { "alarmeBas": 19, "attentionBas": 21, "attentionHaut": 27, "alarmeHaut": 29 } },
+            { "cle": "temperature_tete", "libelle": "Température tête thermique", "type": "temperature", "unite": "°C", "nominal": 38, "bruit": 0.3, "seuils": { "attentionHaut": 50, "alarmeHaut": 58 } }
+          ],
+          "cylindres": [
+            { "nom": "Rouleau d’impression de l’imprimante", "nature": "impression", "diametre": 25 }
+          ],
+          "panne": { "mesure": "echecs", "forme": "saut", "cible": 6.2, "duree": 1, "cause": "Taux d'échec qui bondit d'un coup : lot d'inlays défectueux. Isoler le lot et contrôler quelques étiquettes à l'antenne.", "action": "Lot d’inlays isolé et retourné au fournisseur ; contrôle à l’antenne sur échantillon." }
+        },
+        "2": {
+          "mesures": [
+            { "cle": "taux_lecture", "libelle": "Taux de lecture", "type": "taux", "unite": "%", "nominal": 99.6, "bruit": 0.05, "seuils": { "attentionBas": 98, "alarmeBas": 96 } }
+          ],
+          "panne": { "mesure": "taux_lecture", "forme": "rampe", "cible": 94.5, "duree": 12, "cause": "Taux de lecture en baisse progressive : calibration ou antenne déréglée, pas le lot. Recalibrer la puissance RF.", "action": "Puissance RF recalibrée ; antenne de contrôle repositionnée." }
+        },
+        "3": {
+          "mesures": [
+            { "cle": "cadence", "libelle": "Étiquettes encodées / h", "type": "vitesse", "unite": "étiq./h", "nominal": 2400, "bruit": 20, "role": "vitesse", "seuils": {} },
+            { "cle": "erreurs_donnees", "libelle": "Erreurs de données variables", "type": "comptage", "unite": "u", "nominal": 0, "bruit": 0, "seuils": { "attentionHaut": 1, "alarmeHaut": 5 } }
+          ]
+        }
+      }
+    }
+  }
+}

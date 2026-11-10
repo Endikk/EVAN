@@ -1,0 +1,189 @@
+/* ============================================================
+   Compte : connexion, session, membres et passerelles.
+   Même fond que les pages hors des écrans (.hors-route de app.css), une colonne de cartes sobres.
+   ============================================================ */
+
+.cpt {
+  place-items: start center;
+  overflow: auto;
+}
+.cpt-contenu {
+  position: relative;
+  z-index: 1;
+  width: min(640px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.cpt-contenu > .hr-logo {
+  align-self: flex-start;
+  margin-bottom: 12px;
+}
+
+.cpt-carte {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+.cpt-carte h1 {
+  margin: 0;
+  font-size: clamp(24px, 1.2rem + 1.2vw, 32px);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+.cpt-carte h2 {
+  margin: 0;
+  font-size: 18px;
+}
+.cpt-carte h3 {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: var(--text-2);
+}
+.cpt-sur-titre {
+  margin: 0 0 -8px;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--accent-text);
+}
+.cpt-intro,
+.cpt-note {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-2);
+}
+.cpt-note {
+  font-size: 13px;
+  color: var(--text-3);
+}
+
+.cpt-actions,
+.cpt-ligne {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.cpt-ligne {
+  padding: 0 4px;
+}
+
+/* Messages : l'erreur dit quoi faire, le succès confirme. */
+.cpt-erreur,
+.cpt-succes {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: var(--r-sm);
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+.cpt-erreur {
+  color: var(--crit);
+  background: var(--crit-soft);
+}
+.cpt-succes {
+  color: var(--ok);
+  background: var(--ok-soft);
+}
+.cpt-ligne .cpt-succes {
+  padding: 4px 8px;
+}
+.cpt-champ-erreur {
+  font-size: 12.5px;
+  color: var(--crit);
+}
+.cpt-carte .input[aria-invalid='true'] {
+  border-color: var(--crit);
+}
+
+.cpt-fiche {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px 24px;
+  margin: 0;
+}
+.cpt-fiche dt {
+  font-size: 12px;
+  color: var(--text-3);
+}
+.cpt-fiche dd {
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+}
+
+/* Membres : nom, adresse, rôle sur une ligne ; empilés sur téléphone. */
+.cpt-liste,
+.cpt-passerelles {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--border);
+}
+.cpt-liste li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+.cpt-liste li span:not(.chip) {
+  color: var(--text-2);
+  overflow-wrap: anywhere;
+}
+.cpt-formulaire {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Passerelles : l'usine et son identifiant, le téléchargement, puis la commande de l'exploitant. */
+.cpt-passerelles li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.cpt-passerelles li > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.cpt-passerelles .mono {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+.cpt-commande {
+  grid-column: 1 / -1;
+  display: block;
+  padding: 8px;
+  border-radius: var(--r-sm);
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text);
+  background: var(--surface-2);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 520px) {
+  .cpt-carte {
+    padding: 16px;
+  }
+  .cpt-liste li {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .cpt-liste li span:not(.chip) {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}

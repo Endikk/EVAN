@@ -1,0 +1,123 @@
+/* ============================================================
+   Film d'ouverture de l'accueil. Les variables --f-* sont écrites sur .lp-hero à chaque image par film/useFilm.ts,
+   d'après film/geometrie.ts. `.is-film` ne vaut que pendant le film ; `.film-joue` tient toute la vie de la page une
+   fois le film joué, pour que les entrées CSS habituelles ne rejouent pas derrière lui.
+   ============================================================ */
+
+/* Avant la première image (polices et places mesurées), la zone du film reste vide. */
+.lp.is-film:not([data-film-pret]) .lp-hero {
+  opacity: 0;
+}
+
+.lp.film-joue .lp-toile {
+  transform: none;
+  transition: none;
+}
+.lp.film-joue .lp-toile.is-ready {
+  opacity: 1;
+}
+/* La presse est là dès la première image, éteinte : la 3D règle elle-même sa lumière (EclairagePresse). */
+.lp.is-film .lp-toile {
+  opacity: 1;
+}
+
+/* ---------- Titre : chaque ligne monte de sous sa ligne de base, quand la caméra recule ---------- */
+.lp.is-film .lp-surtitre {
+  opacity: var(--f-surtitre);
+  transform: translateY(calc((1 - var(--f-surtitre)) * 8px));
+}
+.lp.is-film .lp-titre .lp-ligne {
+  clip-path: inset(-0.2em -0.5em -0.12em -0.5em);
+}
+.lp.is-film .lp-titre .lp-ligne > span {
+  display: inline-block;
+}
+.lp.is-film .lp-titre .lp-ligne:first-child > span {
+  transform: translateY(calc((1 - var(--f-l1)) * 140%));
+}
+.lp.is-film .lp-ligne-2 > span {
+  transform: translateY(calc((1 - var(--f-l2)) * 140%));
+}
+/* Le point final garde sa place ; sa lumière verte s'en va avec le point d'état et revient avec lui. */
+.lp.is-film .lp-point {
+  background: color-mix(in srgb, var(--ok) calc(var(--f-point-vert) * 100%), var(--text));
+  opacity: var(--f-point-o);
+  transition: none;
+}
+
+/* ---------- Le point d'état, hors du titre ---------- */
+.lp-film-point {
+  display: none;
+}
+.lp.is-film .lp-film-point {
+  --c: color-mix(in srgb, var(--crit) calc(var(--f-rouge) * 100%), var(--ok));
+  display: block;
+  position: absolute;
+  /* Sous le texte et la carte, au-dessus de la presse : sur téléphone, son trajet passe derrière la phrase et la carte
+     au lieu de se poser sur les mots. */
+  z-index: 2;
+  left: var(--f-ox);
+  top: var(--f-oy);
+  width: 0;
+  height: 0;
+  transform: var(--f-point);
+  opacity: var(--f-point-vu);
+  pointer-events: none;
+}
+.lp-film-point i,
+.lp-film-point::before,
+.lp-film-point::after {
+  position: absolute;
+  left: calc(var(--f-point-r) * -1);
+  top: calc(var(--f-point-r) * -1);
+  width: calc(var(--f-point-r) * 2);
+  height: calc(var(--f-point-r) * 2);
+  border-radius: 50%;
+}
+.lp-film-point i {
+  display: block;
+  background: var(--c);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--bg) 70%, transparent);
+}
+/* Halo qui respire tant que le point est posé sur la presse. */
+.lp-film-point::before {
+  content: '';
+  background: var(--c);
+  opacity: calc(var(--f-halo) * 0.28);
+  transform: scale(calc(1.8 + var(--f-halo) * 0.9));
+}
+/* Onde au moment où il se pose : la presse démarre. */
+.lp-film-point::after {
+  content: '';
+  border: 2px solid var(--c);
+  opacity: calc((1 - var(--f-onde) * var(--f-onde)) * 0.85 * min(1, var(--f-onde) * 40));
+  transform: scale(calc(1 + var(--f-onde) * var(--f-onde-s)));
+}
+
+/* ---------- La scène ---------- */
+.lp.is-film .lp-chargement {
+  opacity: 0;
+}
+.lp.is-film .lp-nuage {
+  opacity: var(--f-nuage);
+}
+.lp.is-film .lp-texte::before {
+  opacity: var(--f-voile);
+  transition: none;
+}
+
+/* ---------- L'interface : un seul geste, trois éléments à cinq images d'écart ---------- */
+.lp.is-film .lp-phrase {
+  opacity: var(--f-phrase);
+  transform: translateY(calc((1 - var(--f-phrase)) * 10px));
+}
+.lp.is-film .lp-actions {
+  opacity: var(--f-actions);
+  transform: translateY(calc((1 - var(--f-actions)) * 14px));
+}
+/* Les vues de la presse montent opaques, découvertes par le bas : posées sur le nuage, leur texte ne passe jamais par
+   un fondu à faible contraste. */
+.lp.is-film .lp-vues {
+  clip-path: inset(calc((1 - var(--f-puces)) * 100%) 0 0 0 round var(--lp-r));
+  transform: translateY(calc((1 - var(--f-puces)) * 14px));
+}

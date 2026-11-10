@@ -1,0 +1,821 @@
+/* ============================================================
+   Comprendre chaque écran : verdict, repères, mots expliqués, guide, étapes.
+   Une seule entrée orchestrée par écran (.entree), puis du mouvement seulement quand quelque chose change.
+   ============================================================ */
+
+/* ---------- Nuage de pixels ---------- */
+.pixel-field {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  image-rendering: pixelated;
+  z-index: 0;
+}
+/* Trame et ondes : dessinées à la densité de l'écran, sans agrandissement. */
+.pixel-field.is-lisse {
+  image-rendering: auto;
+}
+
+/* ---------- Entrée de l'écran : un seul mouvement, du haut vers le bas ---------- */
+.entree {
+  animation: entree 520ms var(--ease-out) backwards;
+  animation-delay: calc(var(--i, 0) * 70ms);
+}
+@keyframes entree {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+/* ---------- Ton : forme + couleur, jamais la couleur seule ---------- */
+.ton-glyph {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: var(--text-3);
+}
+.ton-glyph svg {
+  fill: currentColor;
+  stroke: currentColor;
+}
+.ton-glyph.ton-ok {
+  color: var(--ok);
+}
+.ton-glyph.ton-warn {
+  color: var(--warn);
+}
+.ton-glyph.ton-crit {
+  color: var(--crit);
+  animation: ton-pouls 1.4s var(--ease) infinite;
+}
+@keyframes ton-pouls {
+  50% {
+    opacity: 0.45;
+    transform: scale(0.86);
+  }
+}
+
+/* ---------- Tête d'écran ---------- */
+.page-intro {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 8px 4px 24px;
+  isolation: isolate;
+}
+.page-intro .pi-texte {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  max-width: 820px;
+}
+.pi-titre {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-2);
+}
+.pi-titre svg {
+  flex: none;
+  width: var(--icon-lg);
+  height: var(--icon-lg);
+  color: var(--accent-text);
+}
+.pi-titre h1 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--text-2);
+}
+.pi-verdict {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin: 8px 0 0;
+  font-size: clamp(22px, 1.2rem + 0.8vw, 30px);
+  line-height: 1.22;
+  font-weight: 620;
+  letter-spacing: -0.018em;
+  color: var(--text);
+  text-wrap: balance;
+}
+.pi-verdict .ton-glyph {
+  width: 22px;
+  height: 22px;
+  transform: translateY(2px);
+}
+.pi-verdict .ton-glyph svg {
+  width: 18px;
+  height: 18px;
+}
+/* Retrait aligné sur le texte du verdict : pastille de 22 px, puis sa gouttière de 12 px. */
+.pi-suite {
+  margin: 8px 0 0 34px;
+  max-width: 68ch;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+.pi-actions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
+.page-intro > .pixel-field {
+  left: auto;
+  right: 0;
+  top: -24px;
+  width: min(62%, 760px);
+  height: calc(100% + 24px);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 45%);
+  mask-image: linear-gradient(90deg, transparent 0%, #000 45%);
+  opacity: 0.9;
+}
+@media (max-width: 760px) {
+  .page-intro {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  /* Sur téléphone, le texte prend toute la largeur : le nuage descend derrière les actions, sous le verdict. */
+  .page-intro > .pixel-field {
+    top: auto;
+    bottom: 0;
+    right: 0;
+    width: 100%;
+    height: 64px;
+    -webkit-mask-image: linear-gradient(180deg, transparent, #000 60%);
+    mask-image: linear-gradient(180deg, transparent, #000 60%);
+    opacity: 0.6;
+  }
+  .pi-actions {
+    justify-content: flex-start;
+  }
+  .pi-suite {
+    margin-left: 0;
+  }
+}
+
+/* ---------- Repère ---------- */
+.repere {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+  padding: 16px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+  font: inherit;
+}
+.repere.cliquable {
+  cursor: pointer;
+  transition:
+    border-color var(--dur) var(--ease),
+    background var(--dur) var(--ease);
+}
+.repere.cliquable:hover {
+  border-color: var(--border-strong);
+}
+.rp-titre {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  font-size: 13.5px;
+  font-weight: 560;
+  color: var(--text-2);
+}
+.rp-terme {
+  font-size: 12px;
+}
+.rp-valeur {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  line-height: 1.05;
+}
+.rp-valeur b {
+  font-size: 32px;
+  font-weight: 680;
+  letter-spacing: -0.03em;
+}
+.rp-valeur small {
+  font-size: 14px;
+  font-weight: 560;
+  color: var(--text-2);
+}
+.rp-mot {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 620;
+  color: var(--text-2);
+}
+.rp-mot .ton-glyph {
+  width: 14px;
+  height: 14px;
+}
+.rp-mot .ton-glyph svg {
+  width: 12px;
+  height: 12px;
+}
+/* Ce qui va bien reste calme (seul le petit rond est vert) : seul ce qui sort de la normale prend de la couleur
+   (principe des écrans de conduite à haute performance, ISA-101). */
+.rp-mot.ton-ok {
+  color: var(--text-2);
+}
+.rp-mot.ton-ok .ton-glyph {
+  color: var(--ok);
+}
+.rp-mot.ton-warn {
+  color: var(--warn);
+}
+.rp-mot.ton-crit {
+  color: var(--crit);
+}
+.rp-jauge {
+  position: relative;
+  align-self: stretch;
+  height: 6px;
+  margin-top: 4px;
+  border-radius: var(--r-sm);
+  background: var(--surface-3);
+}
+.rp-jauge i {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--accent-2);
+  transform-origin: left center;
+  transition: transform 900ms var(--ease-out);
+  animation: jauge 1100ms var(--ease-out) backwards;
+}
+.rp-jauge.ton-ok i,
+.rp-jauge.ton-neutre i {
+  background: color-mix(in srgb, var(--text-3) 70%, var(--surface-3));
+}
+.rp-jauge.ton-warn i {
+  background: var(--warn);
+}
+.rp-jauge.ton-crit i {
+  background: var(--crit);
+}
+.rp-jauge u {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 2px;
+  background: var(--text);
+  opacity: 0.7;
+}
+@keyframes jauge {
+  from {
+    transform: scaleX(0);
+  }
+}
+.rp-note {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--text-3);
+}
+.reperes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+/* ---------- Détails repliés ---------- */
+.details {
+  border-top: 1px solid var(--border);
+}
+.details-tete {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 4px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  color: var(--text-2);
+  font-size: 13.5px;
+  font-weight: 560;
+}
+.details-tete:hover .details-titre {
+  color: var(--text);
+}
+.details-tete svg {
+  width: var(--icon);
+  height: var(--icon);
+  flex: none;
+  transition: transform 260ms var(--ease-out);
+  transform: rotate(-90deg);
+}
+.details.ouvert .details-tete svg {
+  transform: rotate(0deg);
+}
+.details-apercu {
+  margin-left: auto;
+  font-weight: 450;
+  color: var(--text-3);
+  font-size: 12.5px;
+}
+.details-corps {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 320ms var(--ease-out);
+}
+.details.ouvert .details-corps {
+  grid-template-rows: 1fr;
+}
+.details-interieur {
+  min-height: 0;
+  overflow: hidden;
+}
+.details.ouvert .details-interieur {
+  padding-bottom: 12px;
+}
+
+/* ---------- Liste « À faire ici » des étapes ---------- */
+.step-guide {
+  padding: 16px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  transition: border-color 400ms var(--ease);
+}
+.step-guide.fini {
+  border-color: color-mix(in srgb, var(--ok) 45%, var(--border));
+}
+.sg-tete {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.sg-tete h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 650;
+}
+.sg-compte {
+  font-size: 12.5px;
+  color: var(--text-3);
+}
+.step-guide ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.step-guide li {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  gap: 8px;
+  align-items: start;
+  font-size: 13.5px;
+}
+.sg-label {
+  display: block;
+  color: var(--text);
+  transition: color 300ms var(--ease);
+}
+.sg-label em {
+  font-style: normal;
+  color: var(--text-3);
+}
+.step-guide li.fait .sg-label {
+  color: var(--text-2);
+}
+.sg-aide {
+  display: block;
+  margin-top: 4px;
+  font-size: 12.5px;
+  color: var(--text-3);
+}
+.coche-rond {
+  fill: none;
+  stroke: var(--border-strong);
+  stroke-width: 1.6;
+  transition:
+    fill 300ms var(--ease),
+    stroke 300ms var(--ease);
+}
+.coche-trait {
+  fill: none;
+  stroke: var(--bg);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 14;
+  stroke-dashoffset: 14;
+  transition: stroke-dashoffset 380ms var(--ease-out) 120ms;
+}
+.coche.faite .coche-rond {
+  fill: var(--ok);
+  stroke: var(--ok);
+}
+.coche.faite .coche-trait {
+  stroke-dashoffset: 0;
+}
+.sg-fin {
+  margin: 8px 0 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--ok);
+  animation: entree 420ms var(--ease-out) both;
+}
+
+/* ---------- Mots du métier ---------- */
+.terme {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: help;
+  text-decoration: underline dotted;
+  text-decoration-color: color-mix(in srgb, currentColor 55%, transparent);
+  text-underline-offset: 3px;
+}
+.terme:hover,
+.terme[aria-expanded='true'] {
+  color: var(--accent-text);
+  text-decoration-color: currentColor;
+}
+.bulle-terme {
+  position: fixed;
+  z-index: 220;
+  padding: 12px 16px;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow-2);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-2);
+  pointer-events: none;
+  animation: bulle 160ms var(--ease-out);
+}
+@keyframes bulle {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+.bulle-terme p,
+.guide-terme p {
+  margin: 4px 0 0;
+}
+.terme-mot {
+  color: var(--text);
+  font-weight: 650;
+}
+.terme-long {
+  font-weight: 450;
+  color: var(--text-3);
+}
+.terme-lecture {
+  color: var(--text-3);
+}
+
+/* ---------- Guide de l'écran ---------- */
+.guide-btn {
+  position: relative;
+  border-radius: 999px;
+}
+.guide-btn svg {
+  color: var(--accent-text);
+}
+.guide-pastille {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent-2);
+  box-shadow: 0 0 0 2px var(--bg);
+}
+.guide-fond {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  background: var(--scrim-soft);
+  animation: fond 220ms var(--ease) both;
+}
+@keyframes fond {
+  from {
+    opacity: 0;
+  }
+}
+.guide-volet {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(440px, 100vw);
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-left: 1px solid var(--border-strong);
+  box-shadow: var(--shadow-3);
+  animation: volet 380ms var(--ease-out) both;
+}
+@keyframes volet {
+  from {
+    transform: translateX(40px);
+    opacity: 0;
+  }
+}
+.guide-tete {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 24px 16px 16px 24px;
+  border-bottom: 1px solid var(--border);
+}
+.guide-icone {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--r-md);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  flex: none;
+}
+.guide-icone svg {
+  width: var(--icon-lg);
+  height: var(--icon-lg);
+}
+.guide-sur {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--text-3);
+}
+.guide-tete h2 {
+  margin: 4px 0 0;
+  font-size: 19px;
+  letter-spacing: -0.01em;
+}
+.guide-corps {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 16px 24px 32px;
+}
+.guide-resume {
+  margin: 0 0 16px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text);
+}
+.guide-blocs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  counter-reset: bloc;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.guide-blocs li {
+  position: relative;
+  padding: 12px 0 16px 36px;
+  border-top: 1px solid var(--border);
+  counter-increment: bloc;
+  animation: entree 420ms var(--ease-out) backwards;
+  animation-delay: calc(120ms + var(--i, 0) * 50ms);
+}
+.guide-blocs li::before {
+  content: counter(bloc);
+  position: absolute;
+  left: 0;
+  top: 13px;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--r-sm);
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent-text);
+  background: var(--accent-soft);
+}
+.guide-bloc-tete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.guide-bloc-tete h3 {
+  margin: 0;
+  font-size: 14.5px;
+  font-weight: 650;
+}
+.guide-montrer {
+  color: var(--accent-text);
+  flex: none;
+}
+.guide-texte {
+  margin-top: 4px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text-2);
+}
+.guide-texte p {
+  margin: 0;
+}
+.guide-texte p + p {
+  margin-top: 8px;
+}
+.guide-schema {
+  margin: 8px 0;
+  padding: 12px;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+.guide-termes {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.guide-termes h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+.guide-termes dl {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+
+/* Bloc désigné depuis le guide : un halo qui se resserre puis s'efface. */
+.guide-spot {
+  position: relative;
+  z-index: 2;
+  animation: spot 2.4s var(--ease-out);
+}
+/* Sur un bloc qui a son entrée, les deux animations restent dans la même liste : retirer le halo ne relance pas
+   l'entrée (le bloc disparaissait un instant). */
+.entree.guide-spot {
+  animation:
+    entree 520ms var(--ease-out) backwards,
+    spot 2.4s var(--ease-out);
+  animation-delay: calc(var(--i, 0) * 70ms), 0s;
+}
+@keyframes spot {
+  0%,
+  100% {
+    box-shadow: 0 0 0 2px transparent;
+  }
+  18%,
+  70% {
+    box-shadow: 0 0 0 2px var(--accent-2);
+  }
+}
+
+/* ---------- Chiffres de second rang : une rangée toujours visible ---------- */
+.chiffres-sec {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 0;
+  margin: 0;
+  padding: 8px 4px;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.cs-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 4px 24px 4px 16px;
+  border-left: 1px solid var(--border);
+}
+.cs-item:first-child {
+  border-left: 0;
+  padding-left: 4px;
+}
+.cs-item dt {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12.5px;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+.cs-item dd {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin: 0;
+  font-size: 18px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+.cs-item dd small {
+  font-size: 12.5px;
+  font-weight: 550;
+  color: var(--text-2);
+}
+.cs-item dd .ton-glyph {
+  width: 14px;
+  height: 14px;
+  align-self: center;
+}
+.cs-item dd .ton-glyph svg {
+  width: 12px;
+  height: 12px;
+}
+.cs-item.ton-warn dd {
+  color: var(--warn);
+}
+.cs-item.ton-crit dd {
+  color: var(--crit);
+}
+@media (max-width: 600px) {
+  .chiffres-sec {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 0;
+  }
+  .cs-item,
+  .cs-item:first-child {
+    border-left: 0;
+    padding: 4px;
+  }
+}
+
+/* ---------- Titre de bloc : titre, « ? », une leçon ---------- */
+.titre-carte {
+  margin-bottom: 12px;
+}
+.tc-ligne {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.tc-titre {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  font-size: 15.5px;
+  font-weight: 650;
+  letter-spacing: -0.005em;
+}
+h2.tc-titre {
+  font-size: 17px;
+}
+.tc-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tc-lecon {
+  margin: 4px 0 0;
+  max-width: 72ch;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text-2);
+}
+.tc-lecon b {
+  color: var(--text);
+  font-weight: 620;
+}

@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Adaptateurs du back : persistance PostgreSQL + TimescaleDB (Npgsql, Dapper) ou mémoire, ingestion et bus MQTT,
+    données de référence JSON, historique simulé de la démo, modèle de l'assistant (Claude).
+  -->
+  <ItemGroup>
+    <PackageReference Include="Npgsql" />
+    <PackageReference Include="Dapper" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" />
+    <!-- Assistant : SDK officiel d'Anthropic (Claude) et pipeline Microsoft.Extensions.AI (exécution des outils). -->
+    <PackageReference Include="Anthropic" />
+    <PackageReference Include="Microsoft.Extensions.AI" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\EVAN.Application\EVAN.Application.csproj" />
+    <ProjectReference Include="..\EVAN.Messaging\EVAN.Messaging.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Persistence\Schema.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Données partagées avec le front (data/ à la racine), copiées dans data/ à côté de l'exécutable. -->
+    <Content Include="$(EvanDataDir)catalog.json" Link="data\catalog.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="$(EvanDataDir)demo.json" Link="data\demo.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="$(EvanDataDir)kit\machines.json" Link="data\machines.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

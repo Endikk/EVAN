@@ -1,0 +1,246 @@
+/* Barres : barre du haut, logo et son point d'état, état du flux de données, étapes de configuration. */
+
+/* ---------- Application : grille, barre latérale et barre du haut dans widgets/shell/coquille.css ---------- */
+
+.topbar {
+  grid-area: head;
+  position: relative;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border);
+  /* Rien ne défile sous la barre : un aplat suffit, sans flou d'arrière-plan à recalculer. */
+  background: color-mix(in srgb, var(--surface) 75%, var(--bg));
+  z-index: 20;
+}
+/* Les commandes de la barre gardent leur taille ; seul le sélecteur d'usine se tronque. */
+.topbar > * {
+  flex-shrink: 0;
+}
+.topbar > .usine-menu {
+  flex-shrink: 1;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: var(--text);
+  font-weight: 760;
+  letter-spacing: 0.02em;
+  font-size: 17px;
+}
+/* Logo : « evan » et son point d'état, aux couleurs des états machine (marche, attention, panne). */
+.evan-logo {
+  flex: none;
+  display: block;
+  overflow: visible;
+  --dot: var(--ok);
+}
+.evan-logo.st-warn {
+  --dot: var(--warn);
+}
+.evan-logo.st-crit {
+  --dot: var(--crit);
+}
+.evan-logo-dot,
+.evan-logo-halo {
+  fill: var(--dot);
+}
+.evan-logo-halo {
+  opacity: 0.22;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.evan-logo.is-pulse .evan-logo-halo {
+  animation: evan-halo 1.6s ease-out infinite;
+}
+@keyframes evan-halo {
+  from {
+    opacity: 0.45;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.9);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .evan-logo.is-pulse .evan-logo-halo {
+    animation: none;
+  }
+}
+.brand small {
+  font-weight: 560;
+  font-size: 12px;
+  color: var(--text-3);
+  letter-spacing: 0;
+}
+.topbar .spacer {
+  flex: 1;
+}
+/* État du flux de données : un mot et une forme (rond plein = frais, deux barres = figé, cercle qui tourne = coupé). */
+.conn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 560;
+  color: var(--text-2);
+  padding: 0 12px 0 8px;
+  height: 30px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: default;
+}
+.conn svg {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  overflow: visible;
+}
+.conn-direct svg,
+.conn-simule svg {
+  color: var(--ok);
+}
+.conn-fige {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--warn) 45%, var(--border));
+}
+.conn-fige svg {
+  color: var(--warn);
+}
+.conn-coupe {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--crit) 40%, var(--border));
+}
+.conn-coupe svg {
+  color: var(--crit);
+}
+.conn-arc {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: spin 1.1s linear infinite;
+}
+.clock {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+/* Étapes de configuration (barre latérale) : un fil qui se remplit jusqu'à l'étape en cours. */
+.rail-steps {
+  --fil: 26px;
+  position: relative;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+/* Le fil : gris sur toute la hauteur, rouge EVAN jusqu'à l'étape en cours. */
+.rail-steps::before,
+.rail-steps::after {
+  content: '';
+  position: absolute;
+  left: var(--fil);
+  top: 28px;
+  bottom: 28px;
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 2px;
+  background: var(--border-strong);
+}
+.rail-steps::after {
+  background: var(--accent);
+  transform-origin: top center;
+  transform: scaleY(var(--avance, 0));
+  transition: transform 700ms var(--ease-out);
+}
+.rail-step {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  padding: 8px;
+  min-height: 56px;
+  border-radius: var(--r-md);
+  border: 1px solid transparent;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text-2);
+  transition:
+    background var(--dur) var(--ease),
+    border-color var(--dur) var(--ease);
+}
+.rail-step:hover:not(:disabled) {
+  background: var(--surface-2);
+}
+.rail-step:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.rail-step .n {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  color: var(--text-3);
+  transition:
+    background 400ms var(--ease),
+    color 400ms var(--ease),
+    border-color 400ms var(--ease);
+}
+.rail-step .n svg {
+  width: var(--icon);
+  height: var(--icon);
+}
+.rail-step b {
+  display: block;
+  font-size: 14px;
+  font-weight: 620;
+  color: var(--text);
+}
+.rail-step small {
+  display: block;
+  margin-top: 4px;
+  font-size: 12.5px;
+  color: var(--text-2);
+  line-height: 1.35;
+  animation: entree 360ms var(--ease-out) backwards;
+}
+.rail-step[aria-current='step'] {
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.rail-step[aria-current='step'] .n {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border-color: transparent;
+}
+.rail-step.done .n {
+  background: color-mix(in srgb, var(--ok) 16%, var(--surface));
+  color: var(--ok);
+  border-color: color-mix(in srgb, var(--ok) 45%, transparent);
+}
+.rail-check {
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+  animation: trace 420ms var(--ease-out) 80ms forwards;
+}
+@keyframes trace {
+  to {
+    stroke-dashoffset: 0;
+  }
+}

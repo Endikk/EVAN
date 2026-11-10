@@ -1,0 +1,55 @@
+/**
+ * Identité EVAN : le mot « evan » en Geist italique (graisse 820, approche -0,062 em), suivi d'un point d'état
+ * vert, orange ou rouge selon l'atelier. Tracés figés (aucune police à charger) ; mêmes formes que public/favicon.svg.
+ */
+export type BrandStatus = 'ok' | 'warn' | 'crit';
+
+export const STATUS_COLOR: Record<BrandStatus, string> = { ok: '#2fd07f', warn: '#f6b73c', crit: '#ff3d6e' };
+
+/** « evan », en unités de la police (1000 par em), ligne de base à 0. */
+export const WORD_PATH =
+  'M250.4 12Q140.2 12 84.4 -43.3Q28.6 -98.6 28.6 -188.7Q28.6 -267.9 50.4 -334.3Q72.3 -400.6 115.5 -448.8Q158.7 -497.1 221.5 -523.7Q284.3 -550.4 366 -550.4Q436.5 -550.4 483.6 -528.6Q530.8 -506.7 555.1 -462.6Q579.5 -418.5 579.5 -352.3Q579.5 -316.8 574.6 -282.9Q569.8 -249 561.8 -223H184.2L205.3 -322.2H405.2Q407.2 -330.4 408.2 -340.6Q409.2 -350.7 409.2 -363.5Q409.2 -395.9 392.5 -411.3Q375.8 -426.7 347.7 -426.7Q313.8 -426.7 287.7 -410.8Q261.6 -395 244.3 -364.8Q227.1 -334.6 218 -291.9Q209 -249.2 209 -195.7Q209 -153.9 227.2 -134.5Q245.3 -115 278.3 -115Q311 -115 335.5 -128Q360.1 -141 368.7 -171.3L541.7 -161.8Q508.7 -77.3 437.3 -32.7Q366 12 250.4 12Z M705.7 0 622.2 -538.4H801.5L837.7 -176.7L1019.8 -538.4H1211L907.5 0Z M1484.4 -238 1366.5 -210.6Q1336.2 -203.9 1320.4 -188.6Q1304.7 -173.2 1304.7 -144.5Q1304.7 -123.6 1315.9 -112.9Q1327.1 -102.3 1349.3 -102.3Q1373.6 -102.3 1395.1 -111.3Q1416.6 -120.4 1432.9 -141.7Q1449.1 -163 1456.4 -199.2Q1459.4 -215.8 1464.5 -240.8Q1469.6 -265.7 1474.7 -292.8Q1479.8 -319.8 1483.3 -342.7Q1486.8 -365.5 1486.8 -377.3Q1486.8 -402.2 1475.5 -416.1Q1464.2 -430.1 1434.8 -430.1Q1401.6 -430.1 1381.6 -412.7Q1361.5 -395.3 1349.6 -360.3L1175.9 -366.4Q1207.1 -462.4 1273.2 -506.4Q1339.2 -550.4 1460.5 -550.4Q1562.6 -550.4 1613.3 -510.1Q1664 -469.9 1664 -390.3Q1664 -370.8 1659.3 -342.3Q1654.7 -313.8 1647.9 -282Q1641.2 -250.2 1634 -220.5Q1626.7 -190.8 1622.1 -168.2Q1617.4 -145.5 1617.4 -135.8Q1617.4 -123.3 1624.2 -118.8Q1630.9 -114.3 1642.9 -114.3H1656.4L1632.1 0Q1622.9 2.7 1604.2 4.9Q1585.4 7 1567.9 7Q1515.1 7 1488.7 -15.4Q1462.2 -37.8 1462.2 -74Q1462.2 -85 1463.9 -95.9Q1465.5 -106.8 1469.5 -118.4L1478.7 -108Q1460.5 -71.5 1432.7 -44.5Q1405 -17.5 1366.3 -2.7Q1327.5 12 1275.6 12Q1201.4 12 1161.3 -19.2Q1121.2 -50.3 1121.2 -108.6Q1121.2 -192.8 1175.8 -237.5Q1230.4 -282.2 1325.7 -302.1L1506.3 -339.6Z M1648 0 1762.7 -538.4H1921.2L1893.5 -372.3L1872 -375.4Q1892.9 -440.9 1924.6 -479Q1956.2 -517 1996.4 -533.7Q2036.6 -550.4 2081.4 -550.4Q2151.7 -550.4 2188.8 -514.1Q2225.9 -477.8 2225.9 -411.4Q2225.9 -379.6 2219.3 -341.5Q2212.7 -303.3 2206.8 -275.8L2147.7 0H1971.3L2032.6 -284.2Q2037.4 -303.8 2040.8 -324.4Q2044.1 -345.1 2044.1 -363.8Q2044.1 -388.7 2031 -401Q2017.9 -413.4 1990 -413.4Q1964.6 -413.4 1944.2 -398.4Q1923.7 -383.4 1908.9 -355Q1894.2 -326.5 1885.7 -285.9L1824.4 0Z';
+
+/** Cadre du mot et de son point (halo compris), en unités de la police. */
+export const WORD_VIEWBOX = '20 -566 2468 626';
+export const DOT = { cx: 2333, cy: -95, r: 95, halo: 150 };
+
+/** « e » seul, pour l'icône d'onglet. */
+const E_PATH =
+  'M250.4 12Q140.2 12 84.4 -43.3Q28.6 -98.6 28.6 -188.7Q28.6 -267.9 50.4 -334.3Q72.3 -400.6 115.5 -448.8Q158.7 -497.1 221.5 -523.7Q284.3 -550.4 366 -550.4Q436.5 -550.4 483.6 -528.6Q530.8 -506.7 555.1 -462.6Q579.5 -418.5 579.5 -352.3Q579.5 -316.8 574.6 -282.9Q569.8 -249 561.8 -223H184.2L205.3 -322.2H405.2Q407.2 -330.4 408.2 -340.6Q409.2 -350.7 409.2 -363.5Q409.2 -395.9 392.5 -411.3Q375.8 -426.7 347.7 -426.7Q313.8 -426.7 287.7 -410.8Q261.6 -395 244.3 -364.8Q227.1 -334.6 218 -291.9Q209 -249.2 209 -195.7Q209 -153.9 227.2 -134.5Q245.3 -115 278.3 -115Q311 -115 335.5 -128Q360.1 -141 368.7 -171.3L541.7 -161.8Q508.7 -77.3 437.3 -32.7Q366 12 250.4 12Z';
+
+export function faviconSvg(status: BrandStatus): string {
+  return (
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="15" fill="#040812"/>' +
+    `<path transform="translate(12 45) scale(.046)" fill="#ffffff" d="${E_PATH}"/>` +
+    `<circle cx="46" cy="42" r="5" fill="${STATUS_COLOR[status]}"/></svg>`
+  );
+}
+
+const BASE_TITLE = typeof document !== 'undefined' ? document.title : 'EVAN';
+
+/** Ce que le titre de l'onglet annonce : l'écran ouvert, et la panne en cours avant tout. */
+const onglet: { page?: string; alerte?: string } = {};
+
+function appliquerTitre() {
+  const base = onglet.page ? `${onglet.page} · EVAN` : BASE_TITLE;
+  document.title = onglet.alerte ? `${onglet.alerte} · ${base}` : base;
+}
+
+/**
+ * Onglet du navigateur : le point de l'icône prend la couleur de l'atelier et le titre annonce la panne,
+ * pour qu'on la voie depuis un autre onglet.
+ */
+export function setTabStatus(status: BrandStatus, alert?: string) {
+  // L'icône SVG, que le navigateur préfère au PNG de secours (index.html) quand il sait la lire.
+  const link = document.querySelector<HTMLLinkElement>('link[rel="icon"][type="image/svg+xml"]');
+  if (link) link.href = status === 'ok' ? '/favicon.svg' : `data:image/svg+xml,${encodeURIComponent(faviconSvg(status))}`;
+  onglet.alerte = alert;
+  appliquerTitre();
+}
+
+/** Écran ouvert dans le titre de l'onglet (« Maintenance · EVAN ») ; sans argument, le titre de l'accueil. */
+export function setTabPage(page?: string) {
+  onglet.page = page;
+  appliquerTitre();
+}

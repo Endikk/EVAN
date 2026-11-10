@@ -1,0 +1,605 @@
+<title>Architecture EVAN</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout : un grand schéma de flux pleine largeur (usine → internet → hébergement → utilisateurs),
+   un sélecteur de flux qui allume un chemin, puis trois blocs compacts (contrat, couches, lancement). */
+:root {
+  --font: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', monospace;
+
+  --bg: #f3f5f9;
+  --surface: #ffffff;
+  --surface-2: #eef1f6;
+  --border: #dde2eb;
+  --border-strong: #c3cad8;
+  --text: #111827;
+  --text-2: #475266;
+  --text-3: #7a8599;
+  --accent: #4b4bf0;
+  --accent-soft: rgba(75, 75, 240, 0.10);
+  --ok: #12a35f;
+  --warn: #c97f00;
+  --crit: #e0263a;
+  --z-plant: #f8f3ea;
+  --z-plant-line: #e6d8bd;
+  --z-host: #eceeff;
+  --z-host-line: #c9ccf7;
+  --dot: #d3d9e4;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0a0d13; --surface: #11161f; --surface-2: #171d29; --border: #232c3b; --border-strong: #3a475d;
+    --text: #e8edf6; --text-2: #a7b2c5; --text-3: #6d798e; --accent: #8a8aff; --accent-soft: rgba(138, 138, 255, 0.14);
+    --ok: #26c27e; --warn: #f5a524; --crit: #ff4d5e;
+    --z-plant: #16140f; --z-plant-line: #3a3222; --z-host: #12142c; --z-host-line: #2d3168; --dot: #1d2533;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0a0d13; --surface: #11161f; --surface-2: #171d29; --border: #232c3b; --border-strong: #3a475d;
+  --text: #e8edf6; --text-2: #a7b2c5; --text-3: #6d798e; --accent: #8a8aff; --accent-soft: rgba(138, 138, 255, 0.14);
+  --ok: #26c27e; --warn: #f5a524; --crit: #ff4d5e;
+  --z-plant: #16140f; --z-plant-line: #3a3222; --z-host: #12142c; --z-host-line: #2d3168; --dot: #1d2533;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--text); font: 400 14px/1.5 var(--font); }
+.wrap { max-width: 1480px; margin: 0 auto; padding-inline: 24px; padding-block: 28px 48px; display: grid; gap: 28px; }
+@media (max-width: 600px) { .wrap { padding-inline: 16px; } }
+
+/* En-tête */
+header { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; }
+.brand { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+.logo { font: 700 30px/1 var(--font); letter-spacing: -0.04em; }
+.logo i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--ok); margin-left: 2px; vertical-align: 2px; animation: pulse 2.4s ease-in-out infinite; }
+h1 { margin: 0; font: 600 20px/1.2 var(--font); letter-spacing: -0.01em; text-wrap: balance; }
+.tag { color: var(--text-3); font: 500 12px var(--mono); }
+.stack { display: flex; flex-wrap: wrap; gap: 6px; }
+.stack span { font: 500 11.5px var(--mono); color: var(--text-2); background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 3px 10px; }
+
+/* Sélecteur de flux */
+.flows { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.flows .lbl { font: 600 11px var(--font); text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-3); margin-right: 4px; }
+.chip { position: relative; overflow: hidden; font: 500 13px var(--font); color: var(--text-2); background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 7px 14px; cursor: pointer; transition: border-color .2s, color .2s, background .2s; }
+.chip:hover { border-color: var(--border-strong); color: var(--text); }
+.chip:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--accent-soft); border-color: var(--accent); }
+.chip[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+.chip .bar { position: absolute; left: 0; bottom: 0; height: 2px; width: 0; background: var(--accent); }
+.chip.auto .bar { animation: fill 6s linear forwards; }
+
+/* Carte du schéma */
+.board { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; overflow: hidden; }
+.scroll { overflow-x: auto; }
+#map { display: block; width: 100%; min-width: 980px; height: auto; color: var(--text); }
+.steps { border-top: 1px solid var(--border); padding: 16px 20px 18px; display: grid; gap: 10px; min-height: 104px; }
+.steps h2 { margin: 0; font: 600 14px var(--font); display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.steps h2 small { font: 500 12px var(--mono); color: var(--text-3); }
+.track { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; counter-reset: s; }
+.track li { counter-increment: s; display: flex; gap: 8px; align-items: flex-start; background: var(--surface-2); border-radius: 10px; padding: 8px 12px; max-width: 290px; min-width: 0; animation: rise .35s cubic-bezier(.2,.8,.2,1) both; }
+.track li::before { content: counter(s); flex: none; font: 600 11px/18px var(--mono); width: 18px; height: 18px; text-align: center; border-radius: 50%; background: var(--accent); color: var(--surface); }
+.track.stats li::before { display: none; }
+.track li b { display: block; font-weight: 600; font-size: 13px; }
+.track li span { display: block; font: 400 11.5px/1.45 var(--mono); color: var(--text-2); }
+.track li:nth-child(2) { animation-delay: .05s } .track li:nth-child(3) { animation-delay: .1s } .track li:nth-child(4) { animation-delay: .15s }
+.track li:nth-child(5) { animation-delay: .2s } .track li:nth-child(6) { animation-delay: .25s }
+.track.stats li b { font: 600 20px/1.1 var(--font); letter-spacing: -0.02em; }
+.cmdline { font: 500 12px var(--mono); color: var(--text-2); background: var(--surface-2); border-radius: 8px; padding: 6px 10px; overflow-x: auto; white-space: nowrap; }
+
+/* SVG */
+.dots { fill: var(--dot); }
+.zone-plant { fill: var(--z-plant); stroke: var(--z-plant-line); }
+.zone-host { fill: var(--z-host); stroke: var(--z-host-line); }
+.frame { fill: none; stroke: var(--z-plant-line); stroke-dasharray: 4 4; }
+.zt { font: 700 11px var(--font); letter-spacing: 0.09em; fill: var(--text-2); }
+.zs { font: 500 10.5px var(--mono); fill: var(--text-3); }
+.fw { stroke: var(--warn); stroke-width: 3; stroke-dasharray: 12 5; }
+.fwt { font: 700 10.5px var(--font); letter-spacing: 0.1em; fill: var(--warn); }
+.deny { stroke: var(--crit); stroke-width: 2; }
+.denyt { font: 600 10.5px var(--mono); fill: var(--crit); }
+.port rect { fill: var(--surface); stroke: var(--accent); }
+.port text { font: 600 10px var(--mono); fill: var(--accent); }
+
+.n rect { fill: var(--surface); stroke: var(--border-strong); stroke-width: 1.2; transition: stroke .3s, fill .3s; }
+.n.key rect { stroke: var(--text-2); stroke-width: 1.6; }
+.n.ext rect { stroke-dasharray: 5 4; }
+.n .t { font: 600 13px var(--font); fill: var(--text); }
+.n .s { font: 500 11px var(--mono); fill: var(--text-2); }
+.n .ro { font: 600 10.5px var(--mono); fill: var(--ok); }
+.n .live { fill: var(--ok); }
+.n .halo { fill: var(--ok); opacity: .35; transform-box: fill-box; transform-origin: center; animation: ping 2s ease-out infinite; }
+.n.on rect { stroke: var(--accent); stroke-width: 2; }
+
+.e .b { fill: none; stroke: var(--border-strong); stroke-width: 1.6; marker-end: url(#ar); transition: stroke .3s; }
+.e .f { fill: none; stroke: var(--accent); stroke-width: 4.5; stroke-linecap: round; stroke-dasharray: 0 16; opacity: 0; transition: opacity .3s; animation: flow .9s linear infinite; }
+.e.dash .b { stroke-dasharray: 5 4; }
+.e.on .b { stroke: var(--accent); marker-end: url(#arOn); }
+.e.on .f { opacity: 1; }
+.el { font: 500 10.5px var(--mono); fill: var(--text-2); paint-order: stroke; stroke: var(--surface); stroke-width: 5px; stroke-linejoin: round; }
+.el.in { stroke: var(--z-host); }
+.el.pl { stroke: var(--z-plant); }
+.mk { fill: var(--border-strong); }
+.mkOn { fill: var(--accent); }
+#map .n, #map .e { transition: opacity .35s; }
+#map.focus .n:not(.on) { opacity: .32; }
+#map.focus .e:not(.on) { opacity: .16; }
+
+/* Blocs du bas */
+.grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 20px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 18px 20px; min-width: 0; display: grid; gap: 12px; align-content: start; }
+.card h3 { margin: 0; font: 600 11px var(--font); letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-3); }
+.c5 { grid-column: span 5; } .c7 { grid-column: span 7; } .c12 { grid-column: span 12; }
+@media (max-width: 1000px) { .c5, .c7 { grid-column: span 12; } }
+
+.topics { font: 500 12.5px/1.75 var(--mono); color: var(--text-2); margin: 0; overflow-x: auto; white-space: pre; }
+.topics .k { color: var(--text); font-weight: 600; }
+.topics .a { color: var(--accent); }
+.topics .w { color: var(--warn); }
+.topics .c { color: var(--text-3); }
+
+/* Back .NET : trois étages + branchements, puis embarqué / interdit */
+.lead { margin: 0; max-width: 78ch; color: var(--text-2); font-size: 14px; }
+.lead b { color: var(--text); font-weight: 600; }
+.backgrid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 20px 44px; align-items: center; }
+.backgrid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px 32px; padding-top: 16px; border-top: 1px solid var(--border); }
+@media (max-width: 900px) { .backgrid, .backgrid2 { grid-template-columns: minmax(0, 1fr); } }
+.tower { display: grid; }
+.floor { border: 1px solid var(--border-strong); border-radius: 12px; padding: 12px 14px; display: grid; gap: 6px; background: var(--surface); min-width: 0; }
+.floor.f2 { border-color: var(--accent); box-shadow: inset 4px 0 0 var(--accent); }
+.floor.f3 { background: var(--accent-soft); border-color: var(--accent); }
+.fh, .ph { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.lvl { font: 600 10.5px var(--font); letter-spacing: 0.09em; text-transform: uppercase; color: var(--accent); min-width: 92px; }
+.fh b, .ph b { font: 600 14px var(--mono); }
+.fh em { font: 600 10.5px var(--mono); font-style: normal; color: var(--ok); border: 1px solid currentColor; border-radius: 999px; padding: 1px 8px; margin-left: auto; }
+.floor p, .plugs p { margin: 0; color: var(--text-2); font-size: 13px; }
+.ex { display: flex; flex-wrap: wrap; gap: 5px; }
+.ex span { font: 500 11px var(--mono); color: var(--text-2); background: var(--surface-2); border-radius: 6px; padding: 2px 7px; }
+.down { justify-self: center; font: 600 11px var(--mono); color: var(--text-3); padding-block: 4px; display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
+.down::before { content: ''; width: 1px; height: 8px; background: var(--border-strong); margin-bottom: 3px; }
+.down::after { content: ''; margin-top: 3px; border: 5px solid transparent; border-top: 6px solid var(--border-strong); border-bottom: 0; }
+.plugs { position: relative; border: 1px dashed var(--border-strong); border-radius: 12px; padding: 12px 14px; display: grid; gap: 8px; min-width: 0; }
+.plugs::before { content: ''; position: absolute; left: -45px; top: 50%; width: 44px; border-top: 2px solid var(--accent); }
+.plugs::after { content: ''; position: absolute; left: -46px; top: calc(50% - 5px); border: 6px solid transparent; border-right: 8px solid var(--accent); border-left: 0; }
+@media (max-width: 900px) { .plugs::before, .plugs::after { display: none; } }
+.plugs ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.plugs li { display: grid; grid-template-columns: 10.5em minmax(18px, 1fr) minmax(0, auto); align-items: center; gap: 8px; min-width: 0; }
+.sock { font: 600 11.5px var(--mono); color: var(--accent); border: 1.5px solid var(--accent); border-radius: 6px; padding: 2px 7px; justify-self: start; }
+.plugs li i { position: relative; height: 0; border-top: 1px solid var(--border-strong); }
+.plugs li i::before { content: ''; position: absolute; left: -1px; top: -5px; border: 4.5px solid transparent; border-right: 6px solid var(--border-strong); border-left: 0; }
+.plugs li span { font: 500 11.5px var(--mono); color: var(--text); background: var(--surface-2); border-radius: 6px; padding: 2px 8px; min-width: 0; overflow-wrap: anywhere; }
+.plugs .swap { font: 500 11.5px var(--mono); color: var(--text-3); }
+@media (max-width: 520px) { .plugs li { grid-template-columns: minmax(0, 1fr); gap: 3px; } .plugs li i { display: none; } }
+.card h4 { margin: 0; font: 600 14px var(--font); }
+.ship, .forbid { display: grid; gap: 10px; align-content: start; min-width: 0; }
+.shipwrap { overflow-x: auto; }
+.ship table { border-collapse: separate; border-spacing: 0; font-size: 13px; width: 100%; }
+.ship th, .ship td { padding: 7px 10px; text-align: center; border-bottom: 1px solid var(--border); }
+.ship thead th { font: 600 12px var(--mono); vertical-align: bottom; }
+.ship thead small { display: block; font: 500 10.5px var(--font); color: var(--text-3); }
+.ship tbody th { text-align: left; font: 500 12.5px var(--mono); color: var(--text-2); }
+.ship td { color: var(--accent); font-size: 14px; }
+.ship td.no { color: var(--text-3); }
+.ship .gw { background: var(--z-plant); }
+.ship thead .gw { border-radius: 8px 8px 0 0; }
+.forbid ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.forbid li { display: grid; gap: 2px; }
+.forbid li div { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font: 600 12.5px var(--mono); }
+.forbid li div i { font-style: normal; color: var(--crit); font-weight: 700; }
+.forbid li small { font: 400 12px var(--font); color: var(--text-3); }
+.note { font: 500 11.5px var(--mono); color: var(--text-3); margin: 0; }
+
+.runs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+@media (max-width: 860px) { .runs { grid-template-columns: 1fr; } }
+.run { border: 1px solid var(--border); border-radius: 12px; padding: 14px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.run h4 { margin: 0; font: 600 14px var(--font); }
+.run code { font: 500 11.5px var(--mono); color: var(--text-2); background: var(--surface-2); border-radius: 6px; padding: 3px 7px; justify-self: start; max-width: 100%; overflow-x: auto; white-space: nowrap; }
+.boxes { display: flex; flex-wrap: wrap; gap: 6px; }
+.boxes span { font: 500 11.5px var(--mono); border: 1px solid var(--border-strong); border-radius: 6px; padding: 3px 8px; color: var(--text); }
+.boxes span em { font-style: normal; color: var(--accent); }
+.boxes span.off { border-style: dashed; color: var(--text-3); }
+
+.sec { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+@media (max-width: 1000px) { .sec { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 520px) { .sec { grid-template-columns: 1fr; } }
+.sec div { display: grid; gap: 4px; align-content: start; }
+.sec b { font: 600 14px var(--font); display: flex; gap: 8px; align-items: center; }
+.sec b::before { content: ''; width: 8px; height: 8px; border-radius: 2px; background: var(--ok); flex: none; }
+.sec.two { grid-template-columns: repeat(2, 1fr); }
+@media (max-width: 520px) { .sec.two { grid-template-columns: 1fr; } }
+.sec span { font: 400 12px/1.5 var(--mono); color: var(--text-2); }
+
+footer { font: 500 11.5px var(--mono); color: var(--text-3); }
+
+@keyframes flow { to { stroke-dashoffset: -16; } }
+@keyframes ping { 0% { transform: scale(1); opacity: .45; } 100% { transform: scale(2.6); opacity: 0; } }
+@keyframes pulse { 50% { opacity: .35; } }
+@keyframes fill { to { width: 100%; } }
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } }
+@media (prefers-reduced-motion: reduce) {
+  .e .f, .n .halo, .logo i, .track li { animation: none; }
+  .chip.auto .bar { animation: none; }
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <span class="logo">evan<i></i></span>
+      <div>
+        <h1>Architecture</h1>
+        <div class="tag">de l'automate à l'écran · Valtiq Tours + Crissey</div>
+      </div>
+    </div>
+    <div class="stack">
+      <span>.NET 10</span><span>React 19</span><span>MQTT TLS</span><span>TimescaleDB</span><span>SignalR</span><span>MCP</span><span>Claude</span>
+    </div>
+  </header>
+
+  <section class="board" aria-label="Schéma des flux">
+    <div class="flows" role="group" aria-label="Flux à afficher" style="padding: 14px 20px 0;">
+      <span class="lbl">Flux</span>
+      <button class="chip" id="f-all" data-flow="all" aria-pressed="false">Tout<span class="bar"></span></button>
+      <button class="chip" id="f-tele" data-flow="tele" aria-pressed="false">Télémétrie<span class="bar"></span></button>
+      <button class="chip" id="f-cmd" data-flow="cmd" aria-pressed="false">Test de liaison<span class="bar"></span></button>
+      <button class="chip" id="f-assist" data-flow="assist" aria-pressed="false">Assistant<span class="bar"></span></button>
+      <button class="chip" id="f-mcp" data-flow="mcp" aria-pressed="false">MCP<span class="bar"></span></button>
+      <button class="chip" id="f-geo" data-flow="geo" aria-pressed="false">Carte &amp; emprise<span class="bar"></span></button>
+      <button class="chip" id="f-demo" data-flow="demo" aria-pressed="false">Démo<span class="bar"></span></button>
+    </div>
+    <div class="scroll">
+      <svg id="map" viewBox="0 0 1520 700" role="img" aria-label="Les passerelles d'usine ouvrent une connexion MQTT TLS sortante vers le broker EVAN ; l'API ingère, stocke dans TimescaleDB et pousse l'état aux navigateurs via nginx et SignalR ; l'assistant appelle Claude, les clients MCP passent par /mcp, la carte interroge directement les services géographiques publics.">
+        <defs>
+          <pattern id="dots" width="18" height="18" patternUnits="userSpaceOnUse"><circle cx="1.5" cy="1.5" r="1.1" class="dots"/></pattern>
+          <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mk"/></marker>
+          <marker id="arOn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="mkOn"/></marker>
+        </defs>
+        <rect x="0" y="0" width="1520" height="700" fill="url(#dots)"/>
+        <text x="20" y="40" class="zt">INTERNET</text>
+        <text x="20" y="56" class="zs">services publics</text>
+        <g id="zones"></g>
+        <g id="edges"></g>
+        <g id="nodes"></g>
+        <g id="over"></g>
+      </svg>
+    </div>
+    <div class="steps" id="steps" aria-live="polite"></div>
+  </section>
+
+  <div class="grid">
+    <section class="card c12">
+      <h3>Back .NET · comment c'est rangé</h3>
+      <p class="lead">Trois étages, on ne descend que vers le bas : le <b>domaine</b> ignore la base, MQTT et le web. La technique se branche sur des <b>prises</b> (interfaces) définies par les cas d'usage.</p>
+      <div class="backgrid">
+        <div class="tower">
+          <div class="floor f1">
+            <div class="fh"><span class="lvl">Entrées</span><b>EVAN.Api · EVAN.Mcp</b></div>
+            <p>reçoit les requêtes, pousse le temps réel</p>
+            <div class="ex"><span>REST /api</span><span>SignalR /hubs</span><span>MCP /mcp</span><span>assistant SSE</span></div>
+          </div>
+          <div class="down">appelle</div>
+          <div class="floor f2">
+            <div class="fh"><span class="lvl">Cas d'usage</span><b>EVAN.Application</b></div>
+            <p>ce que fait EVAN : ingérer, détecter, répondre</p>
+            <div class="ex"><span>LiveService</span><span>ExploitationService</span><span>CarnetService</span><span>EvanTools</span></div>
+          </div>
+          <div class="down">utilise</div>
+          <div class="floor f3">
+            <div class="fh"><span class="lvl">Domaine</span><b>EVAN.Core</b><em>0 dépendance</em></div>
+            <p>les règles métier en C# pur, et le contrat MQTT</p>
+            <div class="ex"><span>RulesEngine</span><span>Alarme</span><span>Machine · Organe</span><span>evan/v1</span></div>
+          </div>
+        </div>
+        <div class="plugs">
+          <div class="ph"><span class="lvl">Branchements</span><b>Infrastructure · Messaging</b></div>
+          <p>la technique, branchée sur les prises des cas d'usage</p>
+          <ul>
+            <li><code class="sock">IStore</code><i></i><span>PostgresStore · TimescaleDB</span></li>
+            <li><code class="sock">IMessageBus</code><i></i><span>MqttMessageBus · MQTTnet</span></li>
+            <li><code class="sock">IChatClient</code><i></i><span>SDK Anthropic · Claude</span></li>
+            <li><code class="sock">IHistoryReader</code><i></i><span>historique simulé</span></li>
+            <li><code class="sock">IRealtimeNotifier</code><i></i><span>SignalRNotifier (Api)</span></li>
+          </ul>
+          <p class="swap">Changer de technique = changer la fiche, pas le métier (MemoryStore en dev).</p>
+        </div>
+      </div>
+      <div class="backgrid2">
+        <div class="ship">
+          <h4>Ce que chaque programme embarque</h4>
+          <div class="shipwrap">
+            <table>
+              <thead><tr><th></th><th>Api<small>serveur</small></th><th>Simulator<small>démo</small></th><th class="gw">Gateway<small>en usine</small></th></tr></thead>
+              <tbody>
+                <tr><th>Core</th><td>●</td><td>●</td><td class="gw">●</td></tr>
+                <tr><th>Messaging</th><td>●</td><td>●</td><td class="gw">●</td></tr>
+                <tr><th>Application</th><td>●</td><td>●</td><td class="gw no">—</td></tr>
+                <tr><th>Infrastructure</th><td>●</td><td>●</td><td class="gw no">—</td></tr>
+                <tr><th>Mcp</th><td>●</td><td class="no">—</td><td class="gw no">—</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="note">Chez le client, la passerelle n'a que 2 briques : ni base, ni ASP.NET.</p>
+        </div>
+        <div class="forbid">
+          <h4>Interdit : le build échoue</h4>
+          <ul>
+            <li><div>Application <i>✕</i> Infrastructure</div><small>le métier ne choisit pas sa base</small></li>
+            <li><div>Application <i>✕</i> SDK Claude</div><small>il ne voit que IChatClient</small></li>
+            <li><div>Gateway <i>✕</i> Npgsql</div><small>même par une dépendance indirecte</small></li>
+            <li><div>Mcp <i>✕</i> base · broker · SDK Claude</div><small>il passe par les cas d'usage</small></li>
+          </ul>
+          <p class="note">Vérifié par EVAN.Architecture.Tests sur les assemblages compilés.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="card c5">
+      <h3>Contrat MQTT · evan/v1</h3>
+<pre class="topics"><span class="k">evan/v1/</span><span class="a">{site}</span>/
+├─ <span class="a">{machine}</span>/
+│  ├─ telemetry   <span class="c">lot de mesures · QoS 1</span>
+│  ├─ state       <span class="c">marche · calage · arrêt</span>
+│  └─ alarm       <span class="c">alarme native automate</span>
+├─ gateway/<span class="a">{gw}</span>/
+│  ├─ status      <span class="c">online retenu · LWT offline</span>
+│  ├─ cmd/test    <span class="c">← back</span>
+│  ├─ <span class="w">cmd/write</span>   <span class="c">← back · refusé par défaut</span>
+│  └─ reply/<span class="a">{id}</span>
+└─ sim/cmd/{fault,resolve,reset}</pre>
+      <p class="note">Version dans le sujet et dans le message (schema). Rupture = evan/v2 à côté.</p>
+    </section>
+
+    <section class="card c7">
+      <h3>Sécurité</h3>
+      <div class="sec two">
+        <div><b>Aucun port entrant</b><span>l'usine n'autorise qu'une sortie : TCP 8883</span></div>
+        <div><b>mTLS partout</b><span>un certificat par passerelle, CA EVAN, nom d'hôte vérifié</span></div>
+        <div><b>ACL par identité</b><span>tours-01 ne publie ni ne lit rien pour crissey-01</span></div>
+        <div><b>Lecture seule</b><span>AllowWrites=false · opérateur + raison · ecritures.jsonl</span></div>
+      </div>
+    </section>
+
+
+    <section class="card c12">
+      <h3>Trois façons de lancer</h3>
+      <div class="runs">
+        <div class="run">
+          <h4>Navigateur seul</h4>
+          <code>/demo</code>
+          <div class="boxes"><span>simulateur <em>TS</em></span><span>règles <em>TS</em></span><span class="off">API</span><span class="off">broker</span><span class="off">base</span></div>
+        </div>
+        <div class="run">
+          <h4>Poste de dev, sans Docker</h4>
+          <code>scripts/dev.ps1</code>
+          <div class="boxes"><span>DevBroker <em>:18830</em></span><span>API mémoire <em>:8080</em></span><span>Simulator</span><span>Vite <em>:5173</em></span></div>
+        </div>
+        <div class="run">
+          <h4>Docker compose</h4>
+          <code>docker compose --profile edge up</code>
+          <div class="boxes"><span>mosquitto <em>:8883</em></span><span>timescaledb <em>:5433</em></span><span>api <em>:8080</em></span><span>nginx <em>:8088</em></span><span>simulator</span><span class="off">opc-plc <em>:50000</em></span><span class="off">gateway</span></div>
+        </div>
+      </div>
+      <p class="note">Pointillés : absent, ou ajouté par le profil edge (vrai serveur OPC UA de test + vraie passerelle sur la ligne PV01).</p>
+    </section>
+
+  </div>
+
+  <footer>Sources : docs/ARCHITECTURE.md · docs/COMMUNICATION.md · docker-compose.yml · infra/nginx · infra/mosquitto/acl</footer>
+</div>
+
+<script>
+(function () {
+  var NS = 'http://www.w3.org/2000/svg';
+  function el(tag, attrs, parent, text) {
+    var e = document.createElementNS(NS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (text != null) e.textContent = text;
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+
+  /* ---------- Zones ---------- */
+  var Z = document.getElementById('zones');
+  el('rect', { x: 20, y: 140, width: 380, height: 520, rx: 16, class: 'zone-plant' }, Z);
+  el('text', { x: 40, y: 168, class: 'zt' }, Z, 'USINE · RÉSEAU ATELIER');
+  el('rect', { x: 36, y: 186, width: 348, height: 252, rx: 10, class: 'frame' }, Z);
+  el('text', { x: 52, y: 208, class: 'zs' }, Z, 'Tours · 14 machines');
+  el('rect', { x: 36, y: 456, width: 348, height: 186, rx: 10, class: 'frame' }, Z);
+  el('text', { x: 52, y: 478, class: 'zs' }, Z, 'Crissey · 8 machines');
+
+  el('rect', { x: 600, y: 140, width: 540, height: 520, rx: 16, class: 'zone-host' }, Z);
+  el('text', { x: 620, y: 168, class: 'zt' }, Z, 'HÉBERGEMENT EVAN');
+  el('text', { x: 620, y: 184, class: 'zs' }, Z, 'docker compose · réseau interne');
+  el('text', { x: 620, y: 640, class: 'zs' }, Z, 'volumes  db-data · mqtt-data · certs (CA EVAN)');
+
+  el('text', { x: 1300, y: 168, class: 'zt' }, Z, 'UTILISATEURS');
+
+  /* Pare-feu de l'usine */
+  el('line', { x1: 440, y1: 140, x2: 440, y2: 660, class: 'fw' }, Z);
+  el('text', { x: 431, y: 292, class: 'fwt', transform: 'rotate(-90 431 292)' }, Z, 'PARE-FEU');
+  el('text', { x: 510, y: 168, class: 'zt', 'text-anchor': 'middle' }, Z, 'INTERNET');
+
+  /* ---------- Nœuds ---------- */
+  var N = {
+    plc:    { x: 52,   y: 222, w: 140, h: 66,  t: ['Automates', 'OPC UA · S7-1500', 'TwinCAT · B&R'], live: 1 },
+    press:  { x: 52,   y: 302, w: 140, h: 50,  t: ['Presses Gallus', 'JDF / JMF'] },
+    old:    { x: 52,   y: 366, w: 140, h: 50,  t: ['Anciens automates', 'Modbus TCP · S7'] },
+    gw1:    { x: 262,  y: 270, w: 110, h: 100, t: ['Passerelle', 'EVAN.Gateway', 'tours-01'], ro: 1, key: 1 },
+    plc2:   { x: 52,   y: 503, w: 140, h: 66,  t: ['Automates', 'OPC UA · Modbus', 'ligne PV01'], live: 1 },
+    gw2:    { x: 262,  y: 492, w: 110, h: 88,  t: ['Passerelle', 'crissey-01'], ro: 1, key: 1 },
+    mqtt:   { x: 620,  y: 290, w: 140, h: 100, t: ['Broker MQTT', 'Mosquitto 2', 'mTLS', 'ACL par CN'], key: 1, live: 1 },
+    api:    { x: 840,  y: 270, w: 140, h: 140, t: ['EVAN.Api', 'ASP.NET · :8080', 'règles d\'alarme', 'REST · SignalR', 'assistant · /mcp'], key: 1, live: 1 },
+    web:    { x: 1086, y: 290, w: 108, h: 100, t: ['nginx', ':80 → 8088', 'statique', '+ proxy'], key: 1 },
+    db:     { x: 840,  y: 520, w: 140, h: 80,  t: ['TimescaleDB', 'PostgreSQL 17', ':5432 → 5433'] },
+    sim:    { x: 620,  y: 520, w: 140, h: 80,  t: ['Simulateur', 'EVAN.Simulator', '22 machines'] },
+    anth:   { x: 835,  y: 24,  w: 150, h: 66,  t: ['Claude', 'API Anthropic', 'claude-opus-5-5'], ext: 1 },
+    geo:    { x: 1300, y: 24,  w: 200, h: 66,  t: ['Données géo publiques', 'IGN · RNB · SIRENE', 'OpenStreetMap · Esri'], ext: 1 },
+    browser:{ x: 1300, y: 270, w: 200, h: 110, t: ['Navigateur', 'EVAN.Front · React 19', 'MapLibre · Three.js', 'zustand · Recharts'], key: 1 },
+    mcpc:   { x: 1300, y: 540, w: 200, h: 70,  t: ['Clients MCP', 'Claude Desktop', 'Claude Code'], ext: 1 }
+  };
+
+  /* ---------- Liens (flux : tele, cmd, assist, mcp, geo, demo) ---------- */
+  var E = [
+    { d: 'M192 255 L262 296', f: 'tele cmd' },
+    { d: 'M192 327 L262 322', f: 'tele' },
+    { d: 'M192 391 L262 348', f: 'tele' },
+    { d: 'M192 536 L262 536', f: 'tele' },
+    { d: 'M372 315 H620', f: 'tele cmd', l: [[510, 289, 'MQTT · TLS 1.2+'], [510, 304, 'connexion sortante']] },
+    { d: 'M620 355 H372', f: 'cmd', dash: 1, l: [[510, 373, 'cmd · reply']] },
+    { d: 'M372 536 H540 V380 H620', f: 'tele', l: [[492, 528, 'MQTT · TLS']] },
+    { d: 'M760 315 H840', f: 'tele cmd demo', l: [[800, 305, 'evan/v1/#', 'in']] },
+    { d: 'M840 355 H760', f: 'cmd demo', dash: 1, l: [[800, 373, 'cmd/*', 'in']] },
+    { d: 'M650 520 V390', f: 'demo', l: [[642, 462, 'MQTT', 'in', 'end']] },
+    { d: 'M730 390 V520', f: 'demo', dash: 1, l: [[738, 462, 'sim/cmd', 'in', 'start']] },
+    { d: 'M910 410 V520', f: 'tele assist mcp demo', l: [[918, 462, 'COPY binaire', 'in', 'start'], [918, 476, 'hypertables', 'in', 'start']] },
+    { d: 'M910 270 V90', f: 'assist', l: [[918, 118, 'HTTPS', null, 'start'], [918, 132, 'outils EVAN', null, 'start']] },
+    { d: 'M1086 315 H980', f: 'cmd assist mcp', l: [[1033, 305, '/api /mcp', 'in']] },
+    { d: 'M980 355 H1086', f: 'tele cmd demo', l: [[1033, 373, '/hubs WS', 'in']] },
+    { d: 'M1300 315 H1194', f: 'cmd assist', l: [[1247, 305, 'REST · SSE']] },
+    { d: 'M1194 355 H1300', f: 'tele cmd demo', l: [[1247, 373, 'SignalR 1 Hz']] },
+    { d: 'M1300 575 H1160 V390', f: 'mcp', l: [[1232, 567, '/mcp · HTTP']] },
+    { d: 'M1470 270 V90', f: 'geo', l: [[1462, 124, 'WFS · tuiles', null, 'end'], [1462, 138, 'géocodage', null, 'end']] }
+  ];
+
+  var NF = {
+    tele: 'plc press old plc2 gw1 gw2 mqtt api db web browser',
+    cmd: 'browser web api mqtt gw1 plc',
+    assist: 'browser web api anth db',
+    mcp: 'mcpc web api db',
+    geo: 'browser geo',
+    demo: 'sim mqtt api db web browser'
+  };
+
+  var GE = document.getElementById('edges'), GN = document.getElementById('nodes');
+  var edgeEls = [], nodeEls = {};
+
+  E.forEach(function (e) {
+    var g = el('g', { class: 'e' + (e.dash ? ' dash' : ''), 'data-f': e.f }, GE);
+    el('path', { d: e.d, class: 'b' }, g);
+    el('path', { d: e.d, class: 'f' }, g);
+    (e.l || []).forEach(function (l) {
+      el('text', { x: l[0], y: l[1], class: 'el' + (l[3] ? ' ' + l[3] : ''), 'text-anchor': l[4] || 'middle' }, g, l[2]);
+    });
+    edgeEls.push(g);
+  });
+
+  Object.keys(N).forEach(function (id) {
+    var n = N[id];
+    var g = el('g', { class: 'n' + (n.key ? ' key' : '') + (n.ext ? ' ext' : ''), id: 'n-' + id }, GN);
+    el('rect', { x: n.x, y: n.y, width: n.w, height: n.h, rx: 10 }, g);
+    var y = n.y + 22;
+    n.t.forEach(function (line, i) {
+      el('text', { x: n.x + 12, y: y, class: i ? 's' : 't' }, g, line);
+      y += i ? 15 : 17;
+    });
+    if (n.ro) el('text', { x: n.x + 12, y: n.y + n.h - 12, class: 'ro' }, g, '● lecture seule');
+    if (n.live) {
+      el('circle', { cx: n.x + n.w - 14, cy: n.y + 16, r: 4, class: 'halo' }, g);
+      el('circle', { cx: n.x + n.w - 14, cy: n.y + 16, r: 4, class: 'live' }, g);
+    }
+    nodeEls[id] = g;
+  });
+
+  /* Détails par-dessus : port dans le mur, connexion entrante refusée */
+  var O = document.getElementById('over');
+  var p = el('g', { class: 'port' }, O);
+  el('rect', { x: 580, y: 306, width: 40, height: 18, rx: 9 }, p);
+  el('text', { x: 600, y: 319, 'text-anchor': 'middle' }, p, '8883');
+  el('line', { x1: 560, y1: 612, x2: 452, y2: 612, class: 'deny' }, O);
+  el('line', { x1: 452, y1: 602, x2: 452, y2: 622, class: 'deny' }, O);
+  el('text', { x: 470, y: 600, class: 'denyt' }, O, 'entrant ✕');
+
+  /* ---------- Étapes de chaque flux ---------- */
+  var S = {
+    all: { h: 'Vue d\'ensemble', sub: 'docker compose up --build → http://localhost:8088', stats: [
+      ['1', 'règle pare-feu en usine'], ['1', 'passerelle par usine'], ['22', 'machines · 2 usines'], ['5', 'services Docker'], ['1 Hz', 'rafraîchissement écran']
+    ] },
+    tele: { h: 'Télémétrie', sub: 'automate → écran', s: [
+      ['Automate → passerelle', 'OPC UA abonnement 250 ms, horodaté à la source'],
+      ['Passerelle → broker', 'lot evan.telemetry/1, QoS 1, file 50 000 si coupure'],
+      ['Broker → API', 'abonnement evan/v1/#'],
+      ['Règles', 'seuil · dérive R² > 0,75 · répétitif 3× / 8 h'],
+      ['Stockage', 'COPY binaire → hypertable mesures'],
+      ['Écran', 'SignalR, lot 1 Hz · alarmes immédiates']
+    ] },
+    cmd: { h: 'Test de liaison', sub: 'écran → automate → écran', s: [
+      ['Écran → API', 'POST /api/connections/test'],
+      ['API → broker', '…/gateway/tours-01/cmd/test'],
+      ['ACL', 'seule la passerelle du site lit ses commandes'],
+      ['Passerelle → automate', 'lecture de la variable'],
+      ['Réponse', 'reply/{id} → API → écran']
+    ] },
+    assist: { h: 'Demander à EVAN', sub: 'assistant côté serveur', s: [
+      ['Question', 'POST /api/assistant · réponse en flux SSE'],
+      ['API → Claude', 'clé ANTHROPIC_API_KEY côté serveur, jamais dans le navigateur'],
+      ['Outils EvanTools', 'lecture via ExploitationService'],
+      ['Réponse', 'diffusée mot à mot dans le panneau']
+    ] },
+    mcp: { h: 'Serveur MCP', sub: 'mêmes outils que l\'assistant', cmd: 'claude mcp add --transport http evan http://localhost:8080/mcp', s: [
+      ['Client → /mcp', 'Streamable HTTP, sans état'],
+      ['Outils EvanTools', 'annotés lecture seule'],
+      ['Isolation', 'ni base, ni broker, ni SDK Claude (testé)']
+    ] },
+    geo: { h: 'Carte & emprise', sub: 'directement depuis le navigateur', s: [
+      ['IGN Géoplateforme', 'géocodage · WFS BD TOPO · orthophoto'],
+      ['RNB · recherche-entreprises', 'identifiant bâtiment · SIRET'],
+      ['Replis', 'Photon · Overpass (OSM) · Esri hors de France'],
+      ['Aucun back', 'surface géodésique calculée dans le navigateur']
+    ] },
+    demo: { h: 'Démo', sub: 'même chemin que la production', s: [
+      ['Simulateur → broker', '22 machines, contrat evan/v1'],
+      ['Panne rejouée', 'API → sim/cmd/fault'],
+      ['Détection', 'règles → alarme critique → organe'],
+      ['Sans back', '/demo rejoue tout dans le navigateur']
+    ] }
+  };
+
+  var svg = document.getElementById('map');
+  var stepsEl = document.getElementById('steps');
+  var chips = Array.prototype.slice.call(document.querySelectorAll('.chip'));
+
+  function esc(t) { return String(t).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); }
+
+  function show(flow) {
+    chips.forEach(function (c) { c.setAttribute('aria-pressed', c.dataset.flow === flow ? 'true' : 'false'); });
+    var all = flow === 'all';
+    svg.classList.toggle('focus', !all);
+    edgeEls.forEach(function (g) {
+      g.classList.toggle('on', all || g.getAttribute('data-f').split(' ').indexOf(flow) >= 0);
+    });
+    var on = all ? [] : NF[flow].split(' ');
+    Object.keys(nodeEls).forEach(function (id) { nodeEls[id].classList.toggle('on', on.indexOf(id) >= 0); });
+
+    var d = S[flow], html = '<h2>' + esc(d.h) + ' <small>' + esc(d.sub) + '</small></h2>';
+    if (d.stats) {
+      html += '<ol class="track stats">' + d.stats.map(function (s) { return '<li><div><b>' + esc(s[0]) + '</b><span>' + esc(s[1]) + '</span></div></li>'; }).join('') + '</ol>';
+    } else {
+      html += '<ol class="track">' + d.s.map(function (s) { return '<li><div><b>' + esc(s[0]) + '</b><span>' + esc(s[1]) + '</span></div></li>'; }).join('') + '</ol>';
+    }
+    if (d.cmd) html += '<div class="cmdline">' + esc(d.cmd) + '</div>';
+    stepsEl.innerHTML = html;
+  }
+
+  /* Défilement automatique des flux jusqu'au premier clic */
+  var order = ['all', 'tele', 'cmd', 'assist', 'mcp', 'geo', 'demo'], idx = 0, timer = null;
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function autoStep() {
+    var flow = order[idx % order.length];
+    show(flow);
+    chips.forEach(function (c) { c.classList.remove('auto'); });
+    var c = document.querySelector('.chip[data-flow="' + flow + '"]');
+    void c.offsetWidth; c.classList.add('auto');
+    idx++;
+    timer = setTimeout(autoStep, 6000);
+  }
+  function stopAuto() { clearTimeout(timer); timer = null; chips.forEach(function (c) { c.classList.remove('auto'); }); }
+
+  chips.forEach(function (c) {
+    c.addEventListener('click', function () { stopAuto(); show(c.dataset.flow); });
+  });
+
+  if (reduce) show('all'); else autoStep();
+})();
+</script>

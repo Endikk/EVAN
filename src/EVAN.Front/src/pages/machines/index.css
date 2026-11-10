@@ -1,0 +1,472 @@
+/* ============================================================
+   Étape 3 · Machines : bibliothèque par métier, geste de la pose, machine posée, liste.
+   Tout est préfixé par .ecran-machines (le corps du panneau) pour ne rien changer ailleurs.
+   ============================================================ */
+
+/* Un compte entre parenthèses ne se coupe pas en fin de ligne. */
+.mc-compte {
+  margin-left: 4px;
+  white-space: nowrap;
+}
+/* Un numéro manquant ou en double : la seule aide de la liste qui reste en vue, en ambre. */
+.mc-tache-alerte,
+.mc-aide-alerte {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--warn);
+}
+.mc-tache-alerte .ton-glyph,
+.mc-aide-alerte .ton-glyph {
+  width: 14px;
+  height: 14px;
+}
+.mc-tache-alerte .ton-glyph svg,
+.mc-aide-alerte .ton-glyph svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* ---------- Le geste de la pose (animation explicative) ---------- */
+.geste-depot {
+  display: block;
+  width: 100%;
+  max-width: 360px;
+  height: auto;
+  margin: 0 auto;
+  overflow: visible;
+}
+.gd-carte > rect:first-child {
+  fill: var(--surface-2);
+  stroke: var(--border-strong);
+}
+.gd-ligne-texte {
+  fill: var(--surface-3);
+}
+.gd-glyphe rect {
+  fill: var(--accent-soft);
+  stroke: var(--accent-2);
+  stroke-width: 1.4;
+}
+.gd-glyphe circle {
+  fill: none;
+  stroke: var(--accent-2);
+  stroke-width: 1.2;
+}
+.gd-glyphe-carte {
+  opacity: 0.5;
+}
+.gd-sol {
+  fill: var(--surface);
+  stroke: var(--border-strong);
+}
+.gd-plan line {
+  stroke: var(--border);
+  stroke-width: 0.8;
+}
+.gd-zone {
+  fill: none;
+  stroke: var(--setup);
+  stroke-width: 1.2;
+  stroke-dasharray: 4 3;
+}
+.gd-aimant line {
+  stroke: var(--accent-2);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+.gd-etiquette rect {
+  fill: var(--surface-3);
+  stroke: var(--border-strong);
+}
+.gd-etiquette text {
+  fill: var(--text);
+  font: 650 9.5px var(--font);
+}
+.gd-pointeur {
+  fill: var(--text);
+  stroke: var(--bg);
+  stroke-width: 1.2;
+  stroke-linejoin: round;
+}
+
+/* Une boucle : la carte se soulève, glisse jusqu'au plan, se cale sur la grille, reçoit son numéro. La dernière
+   image (machine posée, numéro visible) est celle qui reste quand les animations sont réduites. */
+.gd-fantome,
+.gd-posee .gd-glyphe,
+.gd-etiquette,
+.gd-aimant {
+  animation-duration: 4.8s;
+  animation-timing-function: var(--ease);
+  animation-iteration-count: var(--boucles, infinite);
+  animation-fill-mode: both;
+}
+.gd-fantome {
+  animation-name: gd-fantome;
+}
+.gd-posee .gd-glyphe {
+  animation-name: gd-pose;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.gd-etiquette {
+  animation-name: gd-etiquette;
+}
+.gd-aimant {
+  animation-name: gd-aimant;
+}
+@keyframes gd-fantome {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0);
+  }
+  8%,
+  14% {
+    opacity: 1;
+    transform: translate(0, -4px);
+  }
+  46% {
+    opacity: 1;
+    transform: translate(180px, -3px);
+  }
+  52% {
+    opacity: 1;
+    transform: translate(180px, 2px);
+  }
+  58%,
+  100% {
+    opacity: 0;
+    transform: translate(180px, 2px);
+  }
+}
+@keyframes gd-pose {
+  0%,
+  50% {
+    opacity: 0;
+    transform: scale(1.08);
+  }
+  56% {
+    opacity: 1;
+    transform: scale(0.94);
+  }
+  62%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes gd-etiquette {
+  0%,
+  60% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  70%,
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes gd-aimant {
+  0%,
+  46% {
+    opacity: 0;
+  }
+  54% {
+    opacity: 0.9;
+  }
+  74%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ---------- Bibliothèque ---------- */
+.mc-biblio-tete {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.mc-biblio-tete .section-title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+}
+.mc-biblio-tete .btn {
+  flex: none;
+}
+.mc-geste {
+  position: relative;
+  margin: 0 0 4px;
+  padding: 12px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.mc-geste figcaption {
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+.mc-geste-fermer {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+.mc-pose-en-cours {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 8px 0 0;
+  padding: 8px 8px 8px 12px;
+  border-radius: var(--r-md);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  background: var(--accent-soft);
+  font-size: 13px;
+  color: var(--text);
+  animation: entree 320ms var(--ease-out) both;
+}
+.mc-famille h4 {
+  margin: 16px 0 8px;
+  font-size: 12.5px;
+  font-weight: 620;
+  color: var(--text-2);
+}
+.mc-lib {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.mc-lib-item {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 52px;
+  padding: 8px 12px 8px 8px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  /* Le doigt fait défiler le panneau ; un toucher bref choisit la machine (pose en deux touchers). */
+  touch-action: manipulation;
+  transition:
+    border-color var(--dur) var(--ease),
+    background var(--dur) var(--ease);
+}
+.mc-lib-item:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-2);
+}
+.mc-lib-item:active {
+  cursor: grabbing;
+}
+.mc-lib-item.actif {
+  border-color: var(--accent-text);
+  background: var(--accent-soft);
+}
+.mc-lib-import {
+  border-style: dashed;
+  cursor: pointer;
+}
+.mc-lib-vignette {
+  display: grid;
+  place-items: center;
+  height: 40px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  color: var(--text-3);
+}
+.mc-lib-vignette > svg:not(.mc-silhouette) {
+  width: var(--icon-lg);
+  height: var(--icon-lg);
+}
+.mc-silhouette rect {
+  fill: var(--accent-soft);
+  stroke: var(--accent-2);
+  stroke-width: 1.2;
+}
+.mc-silhouette circle {
+  fill: none;
+  stroke: var(--accent-2);
+  stroke-width: 1;
+}
+/* Nom, son « ? » juste après, et l'encombrement calé à droite. */
+.mc-lib-nom {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+.mc-lib-nom b {
+  min-width: 0;
+  font-size: 13.5px;
+  font-weight: 620;
+}
+.mc-lib-nom .infotip {
+  flex: none;
+}
+.mc-lib-nom small {
+  flex: none;
+  margin-left: auto;
+  padding-left: 8px;
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+
+/* ---------- La machine posée ou sélectionnée ---------- */
+.mc-posee {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+}
+/* Juste posée : un contour qui s'allume une fois, puis s'efface. */
+.mc-posee::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  border: 2px solid var(--accent-2);
+  opacity: 0;
+  pointer-events: none;
+}
+.mc-posee.vient-d-arriver::after {
+  animation: mc-allume 1.8s var(--ease-out);
+}
+@keyframes mc-allume {
+  12% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.mc-posee-tete {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.mc-posee-sens {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 60px;
+  height: 60px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+/* La silhouette tourne avec la machine : on voit le sens changer. */
+.mc-posee-sens > span {
+  display: grid;
+  place-items: center;
+  transition: transform 420ms var(--ease-out);
+}
+.mc-posee-sur {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 620;
+  color: var(--accent-text);
+}
+.mc-posee h3 {
+  margin: 4px 0 0;
+  font-size: 15.5px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.mc-posee-zone {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  color: var(--text-3);
+}
+.mc-posee-champs {
+  display: flex;
+  gap: 8px;
+}
+.mc-champ-numero {
+  flex: none;
+  width: 96px;
+}
+.ecran-machines .input[aria-invalid='true'] {
+  border-color: var(--warn);
+}
+.mc-aide {
+  margin: -4px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-3);
+}
+.mc-posee-sens-ligne {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.mc-sens-texte {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.mc-sens-boutons {
+  gap: 8px;
+}
+.mc-retirer {
+  align-self: flex-start;
+  color: var(--crit);
+}
+
+/* ---------- Machines posées ---------- */
+.ecran-machines .mc-liste .list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.mc-liste .section-title .chip {
+  height: 20px;
+  padding: 0 8px;
+  font-size: 11.5px;
+}
+.mc-item-numero {
+  flex: none;
+  width: 54px;
+  font-weight: 700;
+}
+.mc-item .s {
+  display: block;
+}
+.mc-item[aria-current='true'] {
+  border-color: var(--accent-text);
+  background: var(--accent-soft);
+}
+.mc-item.vient-d-arriver {
+  animation: mc-arrive 700ms var(--ease-out) both;
+}
+@keyframes mc-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+@media (pointer: coarse) {
+  .mc-lib-item {
+    min-height: 60px;
+  }
+}

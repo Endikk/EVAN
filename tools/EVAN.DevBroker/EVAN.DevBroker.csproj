@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Broker MQTT de développement (sans TLS) pour lancer la chaîne complète sans Docker. Jamais en production. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="MQTTnet.Server" />
+  </ItemGroup>
+</Project>

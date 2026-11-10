@@ -1,0 +1,285 @@
+/* ============================================================
+   Fiche d'alarme : accrochée à l'organe dans la 3D (.organ-card) ou posée dans le panneau (.compact).
+   La gravité se lit par la forme et le mot ; la couleur ne fait que les doubler. Peu de mots : la mesure se lit dans
+   la jauge, les étapes se cochent, le détail est dans les « ? ».
+   ============================================================ */
+
+.alarm-fiche {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text);
+}
+.alarm-fiche.organ-card {
+  width: 330px;
+  max-height: min(540px, 58vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 16px;
+  animation: af-pose 360ms var(--ease-out) both;
+}
+.alarm-fiche.organ-card.warn {
+  border-color: color-mix(in srgb, var(--warn) 55%, var(--border));
+}
+@keyframes af-pose {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+.af-tete {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.af-gravite {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  background: color-mix(in srgb, var(--c) 15%, transparent);
+}
+.af-code {
+  font-size: 12px;
+  color: var(--text-2);
+}
+.af-fois {
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--text);
+}
+.af-depuis {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+.af-titre {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  margin: 4px 0 0;
+  font-size: 15.5px;
+  line-height: 1.3;
+  font-weight: 680;
+  letter-spacing: -0.01em;
+}
+.af-titre .infotip {
+  margin-top: 0;
+}
+.af-ou {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 12.5px;
+}
+.af-ou b {
+  color: var(--text);
+  font-weight: 620;
+}
+
+/* Mesure : son nom, la valeur en couleur, la limite. */
+.af-mesure {
+  margin: 4px 0 0;
+}
+.af-mesure p,
+.af-signal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  margin: 0;
+  font-size: 12.5px;
+}
+.af-mesure-nom {
+  color: var(--text-2);
+}
+.af-valeur {
+  color: var(--crit);
+  font-weight: 700;
+}
+.alarm-fiche.warn .af-valeur {
+  color: var(--warn);
+}
+.af-limite {
+  margin-left: auto;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+/* La mesure face à sa limite : la barre se remplit une fois, le trait marque la limite. */
+.af-jauge {
+  position: relative;
+  display: block;
+  height: 6px;
+  margin-top: 8px;
+  border-radius: var(--r-sm);
+  background: var(--surface-3);
+}
+/* La zone hors limite, hachurée : la barre qui y entre se lit sans mot. */
+.af-jauge em {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: inherit;
+  background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--crit) 32%, transparent) 0 3px, transparent 3px 6px);
+}
+.alarm-fiche.warn .af-jauge em {
+  background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--warn) 32%, transparent) 0 3px, transparent 3px 6px);
+}
+.af-jauge i {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--crit);
+  transform-origin: left center;
+  animation: af-jauge 900ms var(--ease-out) 150ms backwards;
+}
+.alarm-fiche.warn .af-jauge i {
+  background: var(--warn);
+}
+.af-jauge u {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 2px;
+  background: var(--text);
+}
+@keyframes af-jauge {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+.af-faire {
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+.af-faire-titre {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+.af-faire ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+/* Une étape : la coche, le geste en deux ou trois mots, et son bouton sur la même ligne quand la place le permet. */
+.af-faire li {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  gap: 8px;
+  align-items: start;
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+.af-faire li.actuel {
+  color: var(--text);
+}
+.af-faire li > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  min-height: 28px;
+}
+.af-etape {
+  display: inline-flex;
+  align-items: center;
+  font-weight: 560;
+}
+/* La coche s'aligne sur la première ligne de l'étape (28 px), même quand le bouton passe dessous. */
+.af-faire .af-coche {
+  margin-top: 4px;
+}
+.af-faire li > div > .btn,
+.af-fait {
+  margin-left: auto;
+}
+.af-fait {
+  color: var(--text-2);
+  font-weight: 600;
+}
+
+/* Coche qui se trace quand l'étape est faite. */
+.af-coche circle {
+  fill: none;
+  stroke: var(--border-strong);
+  stroke-width: 1.6;
+  transition:
+    fill 300ms var(--ease),
+    stroke 300ms var(--ease);
+}
+.af-faire li.actuel .af-coche circle {
+  stroke: var(--accent-text);
+}
+.af-coche path {
+  fill: none;
+  stroke: var(--bg);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 14;
+  stroke-dashoffset: 14;
+  transition: stroke-dashoffset 380ms var(--ease-out) 120ms;
+}
+.af-coche.faite circle {
+  fill: var(--ok);
+  stroke: var(--ok);
+}
+.af-coche.faite path {
+  stroke-dashoffset: 0;
+}
+.af-close {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--ok);
+  font-weight: 600;
+}
+
+.af-mobile {
+  display: none;
+}
+/* Téléphone : la 3D est petite, la fiche accrochée à l'organe se réduit à l'essentiel ; la fiche complète, avec ses
+   boutons, est dans le panneau juste sous le plan. */
+@media (max-width: 600px) {
+  /* L'ancre est à droite de l'organe : la fiche se recentre dessus pour ne pas sortir de l'écran. */
+  .alarm-fiche.organ-card {
+    width: min(220px, calc(100vw - 120px));
+    padding: 8px 12px;
+    translate: -55% 0;
+  }
+  .alarm-fiche.organ-card .af-mesure,
+  .alarm-fiche.organ-card .af-faire,
+  .alarm-fiche.organ-card .af-close,
+  .alarm-fiche.organ-card .af-titre .infotip {
+    display: none;
+  }
+  .alarm-fiche.organ-card .af-titre {
+    font-size: 14px;
+  }
+  .af-mobile {
+    display: block;
+    margin: 0;
+    font-size: 12px;
+    color: var(--text-2);
+  }
+}
