@@ -5,6 +5,7 @@
  *
  * Les agrégats sont calculés une fois par changement (période, machine, alarmes en direct), jamais à chaque rendu.
  */
+import { niveauDe } from '@/domain/niveaux';
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { History as IconeHistorique } from 'lucide-react';
 import { useProject } from '@/store/project';
@@ -101,7 +102,7 @@ export function HistoryView() {
     setMachineId(id);
     setPointId('');
   }, []);
-  const zoneDe = useCallback((m: Machine) => zones.find((z) => pointInPolygon(m.position, z.polygone))?.nom, [zones]);
+  const zoneDe = useCallback((m: Machine) => zones.find((z) => niveauDe(z) === niveauDe(m) && pointInPolygon(m.position, z.polygone))?.nom, [zones]);
   const organeDe = useCallback((mid: string, oid: string) => modeles.get(mid)?.organes.find((o) => o.id === oid)?.nom, [modeles]);
   const voirCourbe = useCallback((a: Alarme) => {
     setMachineId(a.machineId);

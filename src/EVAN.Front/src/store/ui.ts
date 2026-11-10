@@ -41,6 +41,8 @@ export interface UiState {
   systemReducedMotion: boolean;
   theme: 'light' | 'dark' | 'system';
   placingType?: string;
+  /** Niveau demandé pour la scène (0 = rez-de-chaussée). Lire le niveau affiché dans store/niveau.ts, qui le borne à l'usine. */
+  niveau: number;
   showLabels: boolean;
   /** Type de zone en cours de tracé sur le plan 2D. */
   zoneTool: import('@/domain/types').TypeZone | null;
@@ -71,6 +73,7 @@ export interface UiState {
   setTheme(t: UiState['theme']): void;
   setReducedMotionUser(v: boolean | null): void;
   setPlacingType(t?: string): void;
+  setNiveau(n: number): void;
   setShowLabels(v: boolean): void;
   setZoneTool(t: UiState['zoneTool']): void;
   setAccessRequest(s: Step | null): void;
@@ -112,6 +115,7 @@ export const useUi = create<UiState>()((set, get) => ({
   reducedMotionUser: null,
   systemReducedMotion: mq?.matches ?? false,
   theme: initialTheme(),
+  niveau: 0,
   showLabels: true,
   zoneTool: null,
   accessRequest: null,
@@ -142,6 +146,7 @@ export const useUi = create<UiState>()((set, get) => ({
   },
   setReducedMotionUser: (reducedMotionUser) => set({ reducedMotionUser }),
   setPlacingType: (placingType) => set({ placingType }),
+  setNiveau: (niveau) => set({ niveau }),
   setShowLabels: (showLabels) => set({ showLabels }),
   setZoneTool: (zoneTool) => set({ zoneTool }),
   setAccessRequest: (accessRequest) => set({ accessRequest }),

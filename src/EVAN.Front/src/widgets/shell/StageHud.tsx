@@ -1,13 +1,18 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
-import { Box, CircleHelp, Eye, EyeOff, Image, Map as MapIcon, Maximize, Minus, Pause, Play, Plus, SkipBack, SkipForward, Square, X } from 'lucide-react';
+import { useShallow } from 'zustand/react/shallow';
+import { Box, CircleHelp, Eye, EyeOff, Image, Layers, Map as MapIcon, Maximize, Minus, Pause, Play, Plus, SkipBack, SkipForward, Square, X } from 'lucide-react';
 import { useUi, enPleinePage } from '@/store/ui';
 import { useProject } from '@/store/project';
+import { useLive } from '@/store/live';
+import { choisirNiveau, useNiveauActif, useNiveauxUsine } from '@/store/niveau';
+import { niveauDe, nomNiveau, nomNiveauCourt } from '@/domain/niveaux';
+import { Select } from '@/ui/Select';
 import { switchView, zoomPlan } from '@/widgets/scene/planView';
 import { useMapUi } from '@/widgets/carte/mapState';
 import { useSceneUi } from '@/widgets/scene/sceneState';
 import { formatNumber } from '@/geo/geodesy';
 import { CHAPITRES, pauseTour, startTour, stopTour } from '@/widgets/tour/tour';
-import { StatusIcon, ETAT_FORME, ETAT_LIBELLE, ETAT_SENS } from '@/ui/status';
+import { StatusIcon, ETAT_FORME, ETAT_LIBELLE, ETAT_SENS, etatAffiche } from '@/ui/status';
 import type { EtatMachine } from '@/domain/types';
 
 /** Légende narrée de la visite guidée : chapitres en pastilles (un clic y saute), précédent, pause, suivant. */
@@ -172,6 +177,54 @@ function LegendeEtats() {
   );
 }
 
+/** Au-delà, les niveaux ne tiennent plus en boutons côte à côte : une liste. */
+const NIVEAUX_EN_BOUTONS = 6;
+
+/**
+ * Niveau affiché, dans une usine à étages : la scène montre un niveau à la fois. En exploitation, un point rouge
+ * signale le niveau où une machine est en panne, pour qu'une panne à l'étage ne passe pas inaperçue.
+ */
+function SelecteurNiveau({ etats }: { etats: boolean }) {
+  const niveaux = useNiveauxUsine();
+  const actif = useNiveauActif();
+  const machines = useProject((s) => s.machines);
+  const enPanne = useLive(useShallow((s) => Object.keys(s.machines).filter((id) => etatAffiche(s.machines[id]) === 'panne')));
+  if (niveaux < 2) return null;
+  const liste = Array.from({ length: niveaux }, (_, n) => {
+    const ici = machines.filter((m) => niveauDe(m) === n);
+    return { n, machines: ici.length, panne: etats && ici.some((m) => enPanne.includes(m.id)) };
+  });
+  const detail = (x: (typeof liste)[number]) =>
+    `${x.machines} machine${x.machines > 1 ? 's' : ''}${x.panne ? ', dont une en panne' : ''}`;
+
+  if (niveaux > NIVEAUX_EN_BOUTONS) {
+    return (
+      <div className="hud-niveaux-liste">
+        <Select
+          taille="sm"
+          aria-label="Niveau affiché"
+          value={String(actif)}
+          onChange={(v) => choisirNiveau(Number(v))}
+          options={liste.map((x) => ({ value: String(x.n), label: nomNiveau(x.n), detail: detail(x) }))}
+        />
+      </div>
+    );
+  }
+  return (
+    <div className="seg glass hud-niveaux" role="group" aria-label="Niveau affiché">
+      <span className="hud-niveaux-titre" aria-hidden>
+        <Layers /> <span className="hud-libelle">Niveau</span>
+      </span>
+      {liste.map((x) => (
+        <button key={x.n} aria-pressed={x.n === actif} onClick={() => choisirNiveau(x.n)} title={`${nomNiveau(x.n)} : ${detail(x)}`} aria-label={`${nomNiveau(x.n)}, ${detail(x)}`}>
+          {nomNiveauCourt(x.n)}
+          {x.panne && <i className="hud-niveau-panne" aria-hidden />}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 /** Commandes flottantes de la scène : bascule 3D/2D, fond du plan, étiquettes, légende des états, zoom de la carte. */
 export function StageHud() {
   const step = useUi((s) => s.step);
@@ -231,6 +284,7 @@ export function StageHud() {
         >
           {showLabels ? <Eye aria-hidden /> : <EyeOff aria-hidden />} <span className="hud-libelle">Étiquettes</span>
         </button>
+        <SelecteurNiveau etats={step >= 4} />
       </div>
       {view === '2d' && <PlanHud />}
       {step >= 4 && (

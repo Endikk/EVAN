@@ -470,3 +470,8 @@
     min-height: 60px;
   }
 }
+
+/* Niveau de la machine, dans un bâtiment à étages. */
+.mc-champ-niveau {
+  margin-top: 8px;
+}

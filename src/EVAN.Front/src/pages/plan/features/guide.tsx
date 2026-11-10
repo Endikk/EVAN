@@ -32,7 +32,7 @@ export const GUIDE_PLAN: GuideEcran = {
       ),
     },
     {
-      titre: 'Hauteur des bâtiments',
+      titre: 'Hauteur et niveaux des bâtiments',
       cible: 'hauteurs',
       texte: (
         <>
@@ -41,6 +41,10 @@ export const GUIDE_PLAN: GuideEcran = {
             une valeur par défaut.
           </p>
           <p>Glissez le curseur jusqu’à ce que la 3D ressemble à votre bâtiment, ou confirmez la valeur si elle est juste.</p>
+          <p>
+            Un bâtiment à étages : ajoutez ses niveaux sous le curseur. Le choix « Niveau » apparaît alors au-dessus du plan.
+            Chaque niveau a son plan, avec ses zones et ses machines ; ce que vous tracez ou posez va au niveau affiché.
+          </p>
         </>
       ),
     },

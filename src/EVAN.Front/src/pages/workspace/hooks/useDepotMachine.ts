@@ -4,6 +4,8 @@
  */
 import type { DragEvent } from 'react';
 import { useProject } from '@/store/project';
+import { niveauActif } from '@/store/niveau';
+import { borneNiveaux } from '@/domain/niveaux';
 import { useUi, type Step } from '@/store/ui';
 import { useLive } from '@/store/live';
 import { pointInPolygon, toLocal, type XY } from '@/geo/geodesy';
@@ -19,9 +21,11 @@ function parsePlacing(t: string): { type: string; url?: string; nom?: string } {
   return { type: t };
 }
 
+/** Dans le contour d'un bâtiment qui a le niveau affiché : on ne pose rien à l'étage d'un bâtiment de plain-pied. */
 function dansUnBatiment(pos: XY) {
   const { site, batiments } = useProject.getState();
-  return !!site && batiments.some((b) => pointInPolygon(pos, b.contour.map((p) => toLocal(site.repere, p))));
+  const niveau = niveauActif();
+  return !!site && batiments.some((b) => borneNiveaux(b.niveaux) > niveau && pointInPolygon(pos, b.contour.map((p) => toLocal(site.repere, p))));
 }
 
 /** Gestionnaires du glisser-déposer, à poser sur le calque de la scène. */

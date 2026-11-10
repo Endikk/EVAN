@@ -39,6 +39,7 @@ export interface Batiment {
   /** Écart-type de position de chaque sommet, en mètres (par coordonnée). */
   sigmas: number[];
   hauteur: number;
+  /** Nombre de niveaux, rez-de-chaussée compris : 1 pour un bâtiment de plain-pied. */
   niveaux: number;
   source: SourceEmprise;
   sourceRef?: string;
@@ -57,6 +58,8 @@ export interface Zone {
   type: TypeZone;
   /** Polygone dans le repère local du site (mètres). */
   polygone: XY[];
+  /** Niveau du bâtiment : 0 ou absent, le rez-de-chaussée ; 1, le premier étage. */
+  niveau?: number;
 }
 
 export interface Machine {
@@ -73,6 +76,8 @@ export interface Machine {
   modele: { url: string; personnalise?: boolean };
   /** Date d'ajout (machines placées dans l'assistant) ; absente pour l'usine d'exemple. */
   creeLe?: number;
+  /** Niveau du bâtiment où elle est posée : 0 ou absent, le rez-de-chaussée. */
+  niveau?: number;
 }
 
 export type TypeMesure =

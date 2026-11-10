@@ -85,9 +85,10 @@ public sealed partial class PostgresStore
                 });
             await Run(
                 """
-                INSERT INTO zones (id, batiment_id, nom, type, polygone)
-                SELECT t.id, t.batiment_id, t.nom, t.type, t.polygone::jsonb
-                FROM unnest(@Ids::text[], @Batiments::text[], @Noms::text[], @Types::text[], @Polygones::text[]) AS t(id, batiment_id, nom, type, polygone)
+                INSERT INTO zones (id, batiment_id, nom, type, polygone, niveau)
+                SELECT t.id, t.batiment_id, t.nom, t.type, t.polygone::jsonb, t.niveau
+                FROM unnest(@Ids::text[], @Batiments::text[], @Noms::text[], @Types::text[], @Polygones::text[], @Niveaux::int4[])
+                     AS t(id, batiment_id, nom, type, polygone, niveau)
                 """,
                 new
                 {
@@ -96,14 +97,15 @@ public sealed partial class PostgresStore
                     Noms = c.Zones.Select(z => z.Nom).ToArray(),
                     Types = c.Zones.Select(z => z.Type).ToArray(),
                     Polygones = c.Zones.Select(z => J(z.Polygone)).ToArray(),
+                    Niveaux = c.Zones.Select(z => z.Niveau).ToArray(),
                 });
             await Run(
                 """
-                INSERT INTO machines (id, batiment_id, zone_id, type, nom, numero, x, z, rotation_deg, modele_url, cree_le)
-                SELECT t.id, t.batiment_id, t.zone_id, t.type, t.nom, t.numero, t.x, t.z, t.rotation_deg, t.modele_url, t.cree_le
+                INSERT INTO machines (id, batiment_id, zone_id, type, nom, numero, x, z, rotation_deg, modele_url, cree_le, niveau)
+                SELECT t.id, t.batiment_id, t.zone_id, t.type, t.nom, t.numero, t.x, t.z, t.rotation_deg, t.modele_url, t.cree_le, t.niveau
                 FROM unnest(@Ids::text[], @Batiments::text[], @Zones::text[], @Types::text[], @Noms::text[], @Numeros::text[], @Xs::float8[], @Zs::float8[],
-                            @Rotations::float8[], @Modeles::text[], @CreeLe::int8[])
-                     AS t(id, batiment_id, zone_id, type, nom, numero, x, z, rotation_deg, modele_url, cree_le)
+                            @Rotations::float8[], @Modeles::text[], @CreeLe::int8[], @Niveaux::int4[])
+                     AS t(id, batiment_id, zone_id, type, nom, numero, x, z, rotation_deg, modele_url, cree_le, niveau)
                 """,
                 new
                 {
@@ -118,6 +120,7 @@ public sealed partial class PostgresStore
                     Rotations = c.Machines.Select(m => m.RotationDeg).ToArray(),
                     Modeles = c.Machines.Select(m => m.Modele.Url).ToArray(),
                     CreeLe = c.Machines.Select(m => m.CreeLe).ToArray(),
+                    Niveaux = c.Machines.Select(m => m.Niveau).ToArray(),
                 });
             await Run(
                 """
@@ -207,10 +210,10 @@ public sealed partial class PostgresStore
     private sealed record BatimentRow(string Id, string SiteId, string Nom, string Contour, string? Sigmas, double? Hauteur, int? Niveaux, string? Source, string? SourceRef,
         string? Rnb, string? Usage, double? PrecisionSource);
 
-    private sealed record ZoneRow(string Id, string BatimentId, string Nom, string Type, string Polygone);
+    private sealed record ZoneRow(string Id, string BatimentId, string Nom, string Type, string Polygone, int Niveau);
 
     private sealed record MachineRow(string Id, string BatimentId, string? ZoneId, string Type, string Nom, string Numero, double X, double Z, double RotationDeg,
-        string? ModeleUrl, long? CreeLe);
+        string? ModeleUrl, long? CreeLe, int Niveau);
 
     private sealed record OrganeRow(string Id, string MachineId, int Numero, string Nom, string? Noeud3d, string? Position, string? Methode, string? Capteurs,
         string? PannesTypiques, string? AlarmeCode, string? AlarmeMessage);
@@ -239,11 +242,11 @@ public sealed partial class PostgresStore
                    b.precision_source AS PrecisionSource
             FROM batiments b {Reelles} ORDER BY b.id
             """);
-        var zones = await Q<ZoneRow>($"SELECT z.id, z.batiment_id AS BatimentId, z.nom, z.type, z.polygone::text AS polygone FROM zones z JOIN batiments b ON b.id = z.batiment_id {Reelles} ORDER BY z.id");
+        var zones = await Q<ZoneRow>($"SELECT z.id, z.batiment_id AS BatimentId, z.nom, z.type, z.polygone::text AS polygone, z.niveau FROM zones z JOIN batiments b ON b.id = z.batiment_id {Reelles} ORDER BY z.id");
         var machines = await Q<MachineRow>(
             $"""
             SELECT m.id, m.batiment_id AS BatimentId, m.zone_id AS ZoneId, m.type, m.nom, m.numero, m.x, m.z, m.rotation_deg AS RotationDeg, m.modele_url AS ModeleUrl,
-                   m.cree_le AS CreeLe
+                   m.cree_le AS CreeLe, m.niveau
             FROM machines m JOIN batiments b ON b.id = m.batiment_id {Reelles} ORDER BY m.id
             """);
         var organes = await Q<OrganeRow>(
@@ -273,9 +276,9 @@ public sealed partial class PostgresStore
                 site,
                 batiments.Where(b => b.SiteId == s.Id).Select(b => new Batiment(b.Id, b.SiteId, b.Nom, Lire<double[][]>(b.Contour) ?? [], Lire<double[]>(b.Sigmas) ?? [],
                     b.Hauteur ?? 0, b.Niveaux ?? 0, b.Source ?? "manuel", b.SourceRef, b.Rnb, b.Usage, b.PrecisionSource)).ToList(),
-                zones.Where(z => siteDeBatiment[z.BatimentId] == s.Id).Select(z => new Zone(z.Id, z.BatimentId, z.Nom, z.Type, Lire<double[][]>(z.Polygone) ?? [])).ToList(),
+                zones.Where(z => siteDeBatiment[z.BatimentId] == s.Id).Select(z => new Zone(z.Id, z.BatimentId, z.Nom, z.Type, Lire<double[][]>(z.Polygone) ?? [], z.Niveau)).ToList(),
                 machines.Where(m => siteDeMachine[m.Id] == s.Id).Select(m => new Machine(m.Id, m.BatimentId, m.ZoneId, m.Type, m.Nom, m.Numero, [m.X, m.Z], m.RotationDeg,
-                    new ModeleRef(m.ModeleUrl ?? ""), m.CreeLe)).ToList(),
+                    new ModeleRef(m.ModeleUrl ?? ""), m.CreeLe, m.Niveau)).ToList(),
                 organes.Where(o => siteDeMachine[o.MachineId] == s.Id).Select(o => new OrganeConfig(o.Id, o.MachineId, o.Numero, o.Nom, o.Noeud3d, Lire<double[]>(o.Position),
                     Lire<List<string>>(o.Capteurs), Lire<List<string>>(o.PannesTypiques), o.Methode,
                     o.AlarmeCode is { } code ? new AlarmeOrgane(code, o.AlarmeMessage ?? "") : null)).ToList(),

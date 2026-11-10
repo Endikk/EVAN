@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { Batiment, Machine, Site } from '@/domain/types';
-import { hasSavedAssistant, listUsines, resumeAssistant, useProject } from './project';
+import type { Batiment, Machine, Site, Zone } from '@/domain/types';
+import { batimentSous, hasSavedAssistant, listUsines, resumeAssistant, useProject, zoneSous } from './project';
 
 /** localStorage minimal pour l'environnement node des tests. */
 function memoryStorage(): Storage {
@@ -165,5 +165,104 @@ describe('zone d’une machine déplacée', () => {
     });
     useProject.getState().updateMachine('m1', { position: [50, 5], zoneId: 'impression' });
     expect(useProject.getState().machines[0].zoneId).toBe('impression');
+  });
+});
+
+describe('niveaux d’un bâtiment', () => {
+  const zone = (id: string, niveau?: number): Zone => ({
+    id,
+    batimentId: 'bat-a',
+    nom: id,
+    type: 'atelier',
+    polygone: [
+      [0, 0],
+      [10, 0],
+      [10, 10],
+      [0, 10],
+    ],
+    ...(niveau === undefined ? {} : { niveau }),
+  });
+  const machine = (id: string, patch: Partial<Machine> = {}): Machine => ({
+    id,
+    batimentId: 'bat-a',
+    type: 'flexo',
+    nom: 'Presse',
+    numero: 'R01',
+    position: [5, 5],
+    rotationDeg: 0,
+    modele: { url: '/kit/modeles/flexo.glb' },
+    ...patch,
+  });
+
+  beforeEach(() => {
+    globalThis.localStorage = memoryStorage();
+    useProject.getState().startAssistant();
+    useProject.getState().setSite(site('Usine à étages'));
+    useProject.getState().upsertBatiment({ ...batiment('bat-a'), niveaux: 3 });
+  });
+
+  it('deux zones superposées ne se confondent pas : chacune répond pour son niveau', () => {
+    const zones = [zone('z-rdc'), zone('z-etage', 1)];
+    expect(zoneSous(zones, [5, 5])?.id).toBe('z-rdc');
+    expect(zoneSous(zones, [5, 5], 1)?.id).toBe('z-etage');
+    expect(zoneSous(zones, [5, 5], 2)).toBeUndefined();
+  });
+
+  it('une machine qui change de niveau prend la zone de ce niveau', () => {
+    const p = useProject.getState();
+    p.addZone(zone('z-rdc'));
+    p.addZone(zone('z-etage', 1));
+    p.addMachine(machine('m-1', { zoneId: 'z-rdc' }));
+    p.updateMachine('m-1', { niveau: 1 });
+    expect(useProject.getState().machines[0]).toMatchObject({ niveau: 1, zoneId: 'z-etage' });
+    p.updateMachine('m-1', { niveau: 2 });
+    expect(useProject.getState().machines[0].zoneId).toBeUndefined();
+  });
+
+  it('une zone qui change de niveau emmène ses machines', () => {
+    const p = useProject.getState();
+    p.addZone(zone('z-rdc'));
+    p.addMachine(machine('m-1', { zoneId: 'z-rdc' }));
+    p.addMachine(machine('m-2'));
+    p.updateZone('z-rdc', { niveau: 2 });
+    const [m1, m2] = useProject.getState().machines;
+    expect(m1.niveau).toBe(2);
+    expect(m2.niveau).toBeUndefined();
+  });
+
+  it('on ne retire pas un niveau qui porte une zone ou une machine', () => {
+    const p = useProject.getState();
+    p.addMachine(machine('m-1', { niveau: 1 }));
+    p.setNiveaux('bat-a', 1);
+    expect(useProject.getState().batiments[0].niveaux).toBe(2);
+    p.removeMachine('m-1');
+    p.setNiveaux('bat-a', 1);
+    expect(useProject.getState().batiments[0].niveaux).toBe(1);
+  });
+
+  it('annuler un tracé ne retire pas un étage déjà occupé', () => {
+    const p = useProject.getState();
+    p.setNiveaux('bat-a', 1);
+    p.pushHistory();
+    p.setNiveaux('bat-a', 2);
+    p.addMachine(machine('m-1', { niveau: 1 }));
+    p.undo();
+    expect(useProject.getState().batiments[0].niveaux).toBe(2);
+  });
+
+  it('une machine poussée hors des contours garde son bâtiment', () => {
+    const p = useProject.getState();
+    p.upsertBatiment({ ...batiment('bat-b'), niveaux: 1 });
+    p.addMachine(machine('m-1', { batimentId: 'bat-b' }));
+    p.updateMachine('m-1', { position: [9999, 9999] });
+    expect(useProject.getState().machines[0].batimentId).toBe('bat-b');
+  });
+
+  it('un point à l’étage revient au bâtiment qui a cet étage', () => {
+    const p = useProject.getState();
+    p.upsertBatiment({ ...batiment('bat-b'), niveaux: 1 });
+    const { site: s, batiments } = useProject.getState();
+    expect(batimentSous(s, [batiments[1], batiments[0]], [1, 1], 1)?.id).toBe('bat-a');
+    expect(batimentSous(s, batiments, [9999, 9999], 0)?.id).toBe('bat-a');
   });
 });

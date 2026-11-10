@@ -1,0 +1,14 @@
+/* ---------- Compteur (ui/Compteur.tsx) ---------- */
+.compteur {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+}
+.compteur output {
+  min-width: 28px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 650;
+  color: var(--text);
+}

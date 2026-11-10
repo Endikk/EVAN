@@ -84,8 +84,11 @@ public static partial class ValidationUsine
             return v.Erreurs;
 
         var batiments = Batiments(v, siteId, c.Batiments);
-        var zones = Zones(v, c.Zones, batiments);
-        var machines = Machines(v, c.Machines, batiments, zones, catalogue);
+        // Niveaux de chaque bâtiment, rez-de-chaussée compris : un nombre inconnu (0, source sans étages) vaut 1.
+        var niveaux = new Dictionary<string, int>();
+        foreach (var b in c.Batiments) if (b?.Id is { } id) niveaux.TryAdd(id, Math.Max(1, b.Niveaux));
+        var zones = Zones(v, c.Zones, batiments, niveaux);
+        var machines = Machines(v, c.Machines, batiments, zones, niveaux, catalogue);
         var organes = Organes(v, c.Organes, machines);
         var points = Points(v, c.Points, machines, organes);
         Connexions(v, c.Connexions, machines, points);
@@ -144,7 +147,7 @@ public static partial class ValidationUsine
         return ids;
     }
 
-    private static HashSet<string> Zones(Verificateur v, List<Zone> liste, HashSet<string> batiments)
+    private static HashSet<string> Zones(Verificateur v, List<Zone> liste, HashSet<string> batiments, Dictionary<string, int> niveaux)
     {
         var ids = new HashSet<string>();
         for (var i = 0; i < liste.Count; i++)
@@ -160,11 +163,17 @@ public static partial class ValidationUsine
             if (z.Polygone is not { Length: >= 3 }) v.Ajouter($"{champ}.polygone", $"{nom} : 3 sommets au moins.");
             else if (z.Polygone.Length > SommetsZone) v.Ajouter($"{champ}.polygone", $"{nom} : {SommetsZone} sommets au plus.");
             else if (z.Polygone.Any(p => !v.Plan(p))) v.Ajouter($"{champ}.polygone", $"{nom} : sommets à moins de {PositionMax} m du repère du site.");
+            if (!NiveauExiste(niveaux, z.BatimentId, z.Niveau)) v.Ajouter($"{champ}.niveau", $"{nom} : niveau que son bâtiment n'a pas.");
         }
         return ids;
     }
 
-    private static Dictionary<string, Machine> Machines(Verificateur v, List<Machine> liste, HashSet<string> batiments, HashSet<string> zones, Catalogue catalogue)
+    /// <summary>Le niveau (0 = rez-de-chaussée) existe dans le bâtiment ; un bâtiment inconnu est signalé à part.</summary>
+    private static bool NiveauExiste(Dictionary<string, int> niveaux, string? batimentId, int niveau) =>
+        niveau >= 0 && (!niveaux.TryGetValue(batimentId ?? "", out var n) || niveau < n);
+
+    private static Dictionary<string, Machine> Machines(Verificateur v, List<Machine> liste, HashSet<string> batiments, HashSet<string> zones, Dictionary<string, int> niveaux,
+        Catalogue catalogue)
     {
         var ids = new HashSet<string>();
         var machines = new Dictionary<string, Machine>();
@@ -189,6 +198,7 @@ public static partial class ValidationUsine
             if (m.Modele?.Url is not { } url || !ModeleKit().IsMatch(url))
                 v.Ajouter($"{champ}.modele.url", $"{nom} : modèle 3D hors du kit. Un modèle importé reste dans ce navigateur : remplacez-le par un modèle du kit pour l'enregistrer.");
             if (m.CreeLe is < 0) v.Ajouter($"{champ}.creeLe", $"{nom} : date d'ajout invalide.");
+            if (!NiveauExiste(niveaux, m.BatimentId, m.Niveau)) v.Ajouter($"{champ}.niveau", $"{nom} : niveau que son bâtiment n'a pas.");
         }
         return machines;
     }

@@ -206,3 +206,42 @@
 .zone-hote {
   display: contents;
 }
+
+/* ---------- Niveau affiché (usine à étages, widgets/shell/StageHud.tsx) ---------- */
+.hud-niveaux-titre {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px 0 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-3);
+}
+.hud-niveaux-titre svg {
+  width: var(--icon);
+  height: var(--icon);
+}
+.hud-niveaux button {
+  position: relative;
+  min-width: 36px;
+  justify-content: center;
+  padding: 0 8px;
+}
+/* Le niveau affiché se lit d'un coup d'œil, même posé sur la photo : teinte de l'accent, comme les étiquettes. */
+.hud-niveaux button[aria-pressed='true'] {
+  background: color-mix(in srgb, var(--accent) 22%, var(--surface));
+  color: var(--text);
+}
+/* Une machine en panne à ce niveau : le point reste visible même quand on regarde un autre niveau. */
+.hud-niveau-panne {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--crit);
+}
+.hud-niveaux-liste {
+  width: 190px;
+}

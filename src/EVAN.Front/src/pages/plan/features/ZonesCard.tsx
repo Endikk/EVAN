@@ -1,13 +1,16 @@
 /**
  * Les zones de l'atelier : un bouton par type (sa couleur et son nom ; ce qu'il désigne dans le « ? » du titre), le
  * geste pour tracer pendant qu'un type est choisi, puis la liste des zones dessinées. Une zone qui vient d'être tracée
- * s'éclaire une fois dans la liste : on voit qu'elle est arrivée.
+ * s'éclaire une fois dans la liste : on voit qu'elle est arrivée. Dans une usine à étages, la liste est celle du niveau
+ * affiché, et une zone sélectionnée peut changer de niveau.
  */
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from 'react';
 import { Plus, Trash2, X } from 'lucide-react';
 import type { TypeZone } from '@/domain/types';
+import { borneNiveaux, niveauDe, nomNiveau } from '@/domain/niveaux';
 import { formatArea, signedArea } from '@/geo/geodesy';
 import { useProject } from '@/store/project';
+import { useNiveauActif, useNiveauxUsine } from '@/store/niveau';
 import { isReducedMotion, useUi } from '@/store/ui';
 import { TitreCarte } from '@/ui/explain';
 import { InfoTip } from '@/ui/InfoTip';
@@ -59,7 +62,12 @@ function useZonesNouvelles(ids: string[], liste: RefObject<HTMLUListElement | nu
 }
 
 export function ZonesCard({ style }: { style?: CSSProperties }) {
-  const zones = useProject((s) => s.zones);
+  const toutes = useProject((s) => s.zones);
+  const batiments = useProject((s) => s.batiments);
+  const etages = useNiveauxUsine() > 1;
+  const niveau = useNiveauActif();
+  const zones = useMemo(() => (etages ? toutes.filter((z) => niveauDe(z) === niveau) : toutes), [toutes, etages, niveau]);
+  const ailleurs = toutes.length - zones.length;
   const selectedZoneId = useUi((s) => s.selectedZoneId);
   const outil = useUi((s) => s.zoneTool);
   const ids = useMemo(() => zones.map((z) => z.id), [zones]);
@@ -68,6 +76,7 @@ export function ZonesCard({ style }: { style?: CSSProperties }) {
   const liste = useRef<HTMLUListElement>(null);
   const geste = useRef<HTMLDivElement>(null);
   const neuves = useZonesNouvelles(ids, liste);
+  const niveauxDe = (batimentId: string) => borneNiveaux(batiments.find((b) => b.id === batimentId)?.niveaux ?? 1);
 
   // Un type choisi : le geste à faire vient en vue dans le panneau.
   useEffect(() => {
@@ -81,6 +90,7 @@ export function ZonesCard({ style }: { style?: CSSProperties }) {
         titre="Zones de l’atelier"
         terme="zone"
         aide={ORDRE_ZONES.map((t) => `${ZONE_LIBELLE[t]} : ${ZONE_COURT[t].toLowerCase()}.`).join(' ')}
+        actions={etages ? <span className="chip">{nomNiveau(niveau)}</span> : undefined}
       />
 
       <div className="pln-types" role="group" aria-label="Ajouter une zone : choisissez son type">
@@ -159,13 +169,32 @@ export function ZonesCard({ style }: { style?: CSSProperties }) {
                     <span>Type</span>
                     <Select value={z.type} onChange={(v) => useProject.getState().updateZone(z.id, { type: v as TypeZone })} options={CHOIX_TYPES} />
                   </label>
+                  {niveauxDe(z.batimentId) > 1 && (
+                    <label className="field pln-zone-niveau">
+                      <span>Niveau</span>
+                      <Select
+                        value={String(niveauDe(z))}
+                        onChange={(v) => {
+                          // La zone part avec ses machines ; la scène la suit à son nouveau niveau.
+                          useProject.getState().updateZone(z.id, { niveau: Number(v) });
+                          useUi.getState().setNiveau(Number(v));
+                        }}
+                        options={Array.from({ length: niveauxDe(z.batimentId) }, (_, n) => ({ value: String(n), label: nomNiveau(n) }))}
+                      />
+                    </label>
+                  )}
                 </div>
               )}
             </li>
           );
         })}
-        {!zones.length && <li className="pln-vide">Pas encore de zone.</li>}
+        {!zones.length && <li className="pln-vide">{etages ? `Pas encore de zone à ce niveau (${nomNiveau(niveau).toLowerCase()}).` : 'Pas encore de zone.'}</li>}
       </ul>
+      {ailleurs > 0 && (
+        <p className="pln-autres-niveaux">
+          {ailleurs} autre{ailleurs > 1 ? 's' : ''} zone{ailleurs > 1 ? 's' : ''} sur les autres niveaux.
+        </p>
+      )}
     </section>
   );
 }

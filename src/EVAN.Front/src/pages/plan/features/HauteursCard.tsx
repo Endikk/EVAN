@@ -1,7 +1,7 @@
 /**
  * La hauteur de chaque bâtiment, réglée au curseur en regardant la 3D. D'où vient la valeur proposée (IGN, défaut)
- * est dit en deux mots ; une hauteur réglée ou confirmée est vérifiée. Surface, volume et niveaux suivent sous le
- * curseur et bougent avec lui. Ce qu'est la hauteur sous toiture et comment la régler : dans le « ? » du titre.
+ * est dit en deux mots ; une hauteur réglée ou confirmée est vérifiée. Surface et volume suivent sous le curseur et
+ * bougent avec lui ; le nombre de niveaux se règle juste en dessous, et la 3D trace un plancher par étage. Ce qu'est la hauteur sous toiture et comment la régler : dans le « ? » du titre.
  */
 import { useMemo, type CSSProperties } from 'react';
 import { Check } from 'lucide-react';
@@ -11,6 +11,7 @@ import { formatNumber } from '@/geo/geodesy';
 import { useProject } from '@/store/project';
 import { ChiffresSecondaires, TitreCarte } from '@/ui/explain';
 import { measureBuilding } from '@/widgets/carte/measure';
+import { NiveauxBatiment } from '@/widgets/usines/NiveauxBatiment';
 import { useHauteursVerifiees } from '../lib/hauteurs';
 
 /** Bornes du curseur : d'un local de plain-pied à un grand entrepôt à rayonnages. */
@@ -34,9 +35,9 @@ export function HauteursCard({ estVerifiee, style }: { estVerifiee: (id: string)
     <section className="pln-hauteurs entree" style={style} data-guide="hauteurs" aria-labelledby="pln-hauteurs-titre">
       <TitreCarte
         id="pln-hauteurs-titre"
-        titre="Hauteur des bâtiments"
+        titre="Hauteur et niveaux des bâtiments"
         terme="hauteurSousToiture"
-        aide="L’IGN la donne pour la plupart des bâtiments ; sinon, EVAN met une valeur par défaut. Glissez le curseur jusqu’à ce que la 3D ressemble au bâtiment, ou confirmez la valeur."
+        aide="L’IGN la donne pour la plupart des bâtiments ; sinon, EVAN met une valeur par défaut. Glissez le curseur jusqu’à ce que la 3D ressemble au bâtiment, ou confirmez la valeur. Un bâtiment à étages : ajoutez ses niveaux, chacun aura son plan."
       />
       <div className="stack pln-bats">
         {batiments.map((b) => {
@@ -70,7 +71,6 @@ export function HauteursCard({ estVerifiee, style }: { estVerifiee: (id: string)
                   items={[
                     { label: 'Au sol', valeur: formatNumber(Math.round(surface)), unite: 'm²' },
                     { label: 'Volume', valeur: formatNumber(Math.round(surface * b.hauteur)), unite: 'm³' },
-                    { label: 'Niveaux', valeur: b.niveaux },
                   ]}
                 />
                 {ok ? (
@@ -85,6 +85,9 @@ export function HauteursCard({ estVerifiee, style }: { estVerifiee: (id: string)
                     </button>
                   </span>
                 )}
+              </div>
+              <div className="pln-niveaux">
+                <NiveauxBatiment b={b} />
               </div>
             </div>
           );

@@ -1,7 +1,8 @@
 /**
  * Pose d'une machine sur le plan : depuis la bibliothèque (glisser-déposer ou clic), et depuis la visite guidée.
  */
-import { useProject, zoneSous } from '@/store/project';
+import { batimentSous, useProject, zoneSous } from '@/store/project';
+import { niveauActif } from '@/store/niveau';
 import { useUi } from '@/store/ui';
 import { MACHINE_TYPES } from '@/domain/catalog';
 import type { Machine } from '@/domain/types';
@@ -24,11 +25,13 @@ export function nextNumero(prefix: string): string {
 
 export function placeMachine(type: string, pos: XY, url?: string, nom?: string): Machine {
   const def = MACHINE_TYPES[type];
-  const { batiments, zones } = useProject.getState();
-  const zone = zoneSous(zones, pos);
+  const { site, batiments, zones } = useProject.getState();
+  // La machine se pose au niveau affiché. Le rez-de-chaussée ne s'écrit pas.
+  const niveau = niveauActif();
+  const zone = zoneSous(zones, pos, niveau);
   const m: Machine = {
     id: uid('m'),
-    batimentId: zone?.batimentId ?? batiments[0]?.id ?? '',
+    batimentId: zone?.batimentId ?? batimentSous(site, batiments, pos, niveau)?.id ?? '',
     zoneId: zone?.id,
     type: def ? type : 'custom',
     nom: nom ?? def?.libelle ?? 'Machine',
@@ -37,6 +40,7 @@ export function placeMachine(type: string, pos: XY, url?: string, nom?: string):
     rotationDeg: 0,
     modele: { url: url ?? def?.modele ?? '', personnalise: !def },
     creeLe: Date.now(),
+    ...(niveau > 0 ? { niveau } : {}),
   };
   useProject.getState().addMachine(m);
   useUi.getState().selectMachine(m.id);

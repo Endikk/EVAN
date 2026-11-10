@@ -100,6 +100,9 @@ ALTER TABLE sites ADD COLUMN IF NOT EXISTS configuree boolean NOT NULL DEFAULT f
 ALTER TABLE sites ADD COLUMN IF NOT EXISTS maj timestamptz;
 CREATE INDEX IF NOT EXISTS sites_organisation ON sites (organisation_id);
 ALTER TABLE machines ADD COLUMN IF NOT EXISTS cree_le bigint;              -- ms epoch, machines placées dans l'assistant
+-- Étages : 0 pour le rez-de-chaussée, valeur de tout ce qui a été relevé avant.
+ALTER TABLE zones ADD COLUMN IF NOT EXISTS niveau integer NOT NULL DEFAULT 0;
+ALTER TABLE machines ADD COLUMN IF NOT EXISTS niveau integer NOT NULL DEFAULT 0;
 ALTER TABLE organes ADD COLUMN IF NOT EXISTS methode text;
 ALTER TABLE organes ADD COLUMN IF NOT EXISTS capteurs jsonb;
 ALTER TABLE organes ADD COLUMN IF NOT EXISTS pannes_typiques jsonb;

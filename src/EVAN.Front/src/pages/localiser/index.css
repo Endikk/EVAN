@@ -813,3 +813,9 @@
     margin: 8px 0 0;
   }
 }
+
+/* Niveaux du bâtiment, sous ses mesures : le plancher et le volume au-dessus suivent le réglage. */
+.loc-niveaux {
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}

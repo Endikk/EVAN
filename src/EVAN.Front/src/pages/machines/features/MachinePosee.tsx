@@ -5,10 +5,12 @@
  */
 import { useEffect, useRef } from 'react';
 import { RotateCcw, RotateCw, Trash2 } from 'lucide-react';
-import { useProject } from '@/store/project';
+import { batimentContenant, useProject } from '@/store/project';
 import { useUi, isReducedMotion } from '@/store/ui';
 import { MACHINE_TYPES } from '@/domain/catalog';
 import type { Machine } from '@/domain/types';
+import { borneNiveaux, niveauDe, nomNiveau } from '@/domain/niveaux';
+import { Select } from '@/ui/Select';
 import { TonGlyph } from '@/ui/explain';
 import { InfoTip } from '@/ui/InfoTip';
 import { SilhouetteMachine } from './Bibliotheque';
@@ -21,6 +23,11 @@ function tourner(m: Machine, delta: number) {
 
 export function MachinePosee({ machine, nouvelle, numeroEnDouble }: { machine: Machine; nouvelle: boolean; numeroEnDouble: boolean }) {
   const zone = useProject((s) => s.zones.find((z) => z.id === machine.zoneId));
+  // Niveaux du bâtiment où la machine est posée : à partir de deux, elle peut changer de niveau.
+  const niveaux = useProject((s) =>
+    borneNiveaux((batimentContenant(s.site, s.batiments, machine.position) ?? s.batiments.find((b) => b.id === machine.batimentId))?.niveaux ?? 1),
+  );
+  const niveau = niveauDe(machine);
   const carte = useRef<HTMLElement>(null);
   const def = MACHINE_TYPES[machine.type];
   const organes = def?.organes.length;
@@ -63,6 +70,7 @@ export function MachinePosee({ machine, nouvelle, numeroEnDouble }: { machine: M
           </h3>
           <p className="mc-posee-zone">
             {zone ? `Zone ${zone.nom}` : 'Hors des zones dessinées'}
+            {niveaux > 1 || niveau > 0 ? ` · ${nomNiveau(niveau)}` : null}
             {organes ? <span className="num"> · {organes} organes</span> : null}
           </p>
         </div>
@@ -89,6 +97,20 @@ export function MachinePosee({ machine, nouvelle, numeroEnDouble }: { machine: M
           <TonGlyph ton="warn" />
           {probleme}
         </p>
+      )}
+      {niveaux > 1 && (
+        <label className="field mc-champ-niveau">
+          <span>Niveau</span>
+          <Select
+            value={String(niveau)}
+            onChange={(v) => {
+              // La machine garde sa place sur le plan et prend la zone de son nouveau niveau ; la scène la suit.
+              maj({ niveau: Number(v) });
+              useUi.getState().setNiveau(Number(v));
+            }}
+            options={Array.from({ length: Math.max(niveaux, niveau + 1) }, (_, n) => ({ value: String(n), label: nomNiveau(n) }))}
+          />
+        </label>
       )}
 
       <div className="mc-posee-sens-ligne">

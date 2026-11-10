@@ -61,6 +61,31 @@ public class UsinesEnregistreesTests
     }
 
     [Fact]
+    public void Une_zone_et_une_machine_a_l_etage_sont_recevables_dans_un_batiment_a_etages()
+    {
+        var c = Usine();
+        var bat = c.Batiments[0] with { Niveaux = 2 };
+        var zone = new Zone("zone-dp-1", bat.Id, "Bureaux", "bureaux", [[0, 0], [10, 0], [10, 10]], Niveau: 1);
+
+        var erreurs = ValidationUsine.Verifier("site-dupont", c with { Batiments = [bat], Zones = [zone], Machines = [c.Machines[0] with { ZoneId = zone.Id, Niveau = 1 }] }, Data.Catalogue);
+
+        Assert.Empty(erreurs);
+    }
+
+    [Fact]
+    public void Un_niveau_que_le_batiment_n_a_pas_est_refuse()
+    {
+        // Bâtiment de plain-pied : seul le rez-de-chaussée existe. Un nombre de niveaux inconnu (0, source IGN) vaut 1.
+        var c = Usine();
+        var zone = new Zone("zone-dp-1", c.Batiments[0].Id, "Bureaux", "bureaux", [[0, 0], [10, 0], [10, 10]], Niveau: 1);
+
+        var erreurs = ValidationUsine.Verifier("site-dupont",
+            c with { Batiments = [c.Batiments[0] with { Niveaux = 0 }], Zones = [zone], Machines = [c.Machines[0] with { Niveau = -1 }] }, Data.Catalogue);
+
+        Assert.Equal(["zones[0].niveau", "machines[0].niveau"], erreurs.Select(e => e.Champ));
+    }
+
+    [Fact]
     public void Un_point_rattache_a_un_organe_d_une_autre_machine_est_refuse()
     {
         var c = Usine();

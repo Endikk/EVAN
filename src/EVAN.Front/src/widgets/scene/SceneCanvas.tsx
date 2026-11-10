@@ -9,6 +9,8 @@ import { useShallow } from 'zustand/react/shallow';
 import { Canvas, useThree } from '@react-three/fiber';
 import { Environment, Grid, Lightformer, OrthographicCamera, useGLTF } from '@react-three/drei';
 import { useProject, siteBounds } from '@/store/project';
+import { useNiveauActif, useNiveauxUsine } from '@/store/niveau';
+import { borneNiveaux, niveauDe } from '@/domain/niveaux';
 import { useUi, useIsDark, useReducedMotion } from '@/store/ui';
 import { useLive } from '@/store/live';
 import { machineModel, MODEL_FOOTPRINT } from '@/domain/catalog';
@@ -91,11 +93,15 @@ function CanvasHandle() {
 // Branche le calcul du point au sol sur sceneHandle (glisser-déposer de la bibliothèque) dès que la scène est là.
 export { groundPointFromClient } from './sol';
 
-/** Une position est valide si la machine est dans un bâtiment. */
+/** Une position est valide si la machine est dans un bâtiment qui a le niveau affiché. */
 export function useInsideBuilding() {
   const site = useProject((s) => s.site);
   const batiments = useProject((s) => s.batiments);
-  const rings = useMemo(() => (site ? batiments.map((b) => b.contour.map((p) => toLocal(site.repere, p))) : []), [site, batiments]);
+  const niveau = useNiveauActif();
+  const rings = useMemo(
+    () => (site ? batiments.filter((b) => borneNiveaux(b.niveaux) > niveau).map((b) => b.contour.map((p) => toLocal(site.repere, p))) : []),
+    [site, batiments, niveau],
+  );
   return useCallback((pos: XY) => rings.some((r) => pointInPolygon(pos, r)), [rings]);
 }
 
@@ -149,8 +155,13 @@ export function SceneCanvas(props: SceneProps) {
 function SceneContent({ step, organFocus, organCard, onMachineSelect, onFloorClick, dark, plan, planFond }: SceneProps & { dark: boolean; plan: boolean; planFond: 'plan' | 'satellite' }) {
   const site = useProject((s) => s.site);
   const batiments = useProject((s) => s.batiments);
-  const zones = useProject((s) => s.zones);
-  const machines = useProject((s) => s.machines);
+  const toutesZones = useProject((s) => s.zones);
+  const toutesMachines = useProject((s) => s.machines);
+  // Usine à étages : la scène montre un niveau à la fois (store/niveau.ts).
+  const etages = useNiveauxUsine() > 1;
+  const niveau = useNiveauActif();
+  const zones = useMemo(() => (etages ? toutesZones.filter((z) => niveauDe(z) === niveau) : toutesZones), [toutesZones, etages, niveau]);
+  const machines = useMemo(() => (etages ? toutesMachines.filter((m) => niveauDe(m) === niveau) : toutesMachines), [toutesMachines, etages, niveau]);
   const perso = useProject((s) => s.perso);
   const selectedMachineId = useUi((s) => s.selectedMachineId);
   const selectedZoneId = useUi((s) => s.selectedZoneId);
@@ -229,6 +240,7 @@ function SceneContent({ step, organFocus, organCard, onMachineSelect, onFloorCli
           satellite={planFond === 'satellite'}
           cotes={showLabels && step <= 3}
           detail={detail}
+          niveau={etages ? niveau : undefined}
           others={rings.filter((_, j) => j !== i)}
         />
       ))}

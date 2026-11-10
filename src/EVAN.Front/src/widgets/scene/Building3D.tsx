@@ -2,12 +2,15 @@
  * Plan 3D généré : extrusion du contour (sol, murs, hauteur réglable) avec murs « en coupe » :
  * les murs tournés vers la caméra s'effacent pour laisser voir l'intérieur.
  * Sur le plan 2D (vue de dessus), le bâtiment devient une dalle claire cernée d'un trait de mur net, avec ses cotes.
+ * Un bâtiment à étages porte un trait à chaque plancher ; celui du niveau affiché ressort. Un bâtiment qui n'a pas le
+ * niveau affiché s'efface : on n'y pose rien.
  */
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 import { Html, Line } from '@react-three/drei';
 import type { Batiment } from '@/domain/types';
+import { borneNiveaux } from '@/domain/niveaux';
 import { formatNumber, pointInPolygon, polygonCentroid, toLocal, type Frame, type XY } from '@/geo/geodesy';
 import { isReducedMotion } from '@/store/ui';
 import { useDispose } from './useDispose';
@@ -31,11 +34,16 @@ interface Props {
   cotes?: boolean;
   /** Plan zoomé : cotes des murs courts aussi. */
   detail?: boolean;
+  /** Niveau affiché (usine à étages seulement). */
+  niveau?: number;
   /** Contours des autres bâtiments : pas de cote sur un mur mitoyen (elle tomberait chez le voisin). */
   others?: XY[][];
 }
 
-export function Building3D({ b, frame, dark, highlight, plan = false, satellite = false, cotes = false, detail = false, others = [] }: Props) {
+export function Building3D({ b, frame, dark, highlight, plan = false, satellite = false, cotes = false, detail = false, niveau, others = [] }: Props) {
+  const niveaux = borneNiveaux(b.niveaux);
+  // Le bâtiment s'arrête sous le niveau affiché.
+  const absent = niveau !== undefined && niveau >= niveaux;
   const pts = useLocalRing(b, frame);
   const rise = useRef(isReducedMotion() ? 1 : 0);
   const group = useRef<THREE.Group>(null);
@@ -84,13 +92,13 @@ export function Building3D({ b, frame, dark, highlight, plan = false, satellite 
   );
   const wallMats = useMemo(() => walls.map(() => wallMat.clone()), [walls, wallMat]);
   const floorMat = useMemo(
-    () => new THREE.MeshStandardMaterial({ color: dark ? '#232a35' : '#b9c0c9', roughness: 0.95, metalness: 0, transparent: true, opacity: 0.94 }),
-    [dark],
+    () => new THREE.MeshStandardMaterial({ color: dark ? '#232a35' : '#b9c0c9', roughness: 0.95, metalness: 0, transparent: true, opacity: absent ? 0.3 : 0.94 }),
+    [dark, absent],
   );
   // Dalle du plan : couleur unie non éclairée (aplat net), translucide sur l'orthophoto.
   const planMat = useMemo(
-    () => new THREE.MeshBasicMaterial({ color: dark ? '#18202c' : '#ffffff', transparent: true, opacity: satellite ? 0.5 : 1, depthWrite: false }),
-    [dark, satellite],
+    () => new THREE.MeshBasicMaterial({ color: dark ? '#18202c' : '#ffffff', transparent: true, opacity: absent ? 0.25 : satellite ? 0.5 : 1, depthWrite: false }),
+    [dark, satellite, absent],
   );
 
   useDispose(floorGeom);
@@ -175,6 +183,21 @@ export function Building3D({ b, frame, dark, highlight, plan = false, satellite 
         opacity={0.6}
         visible={!plan}
       />
+      {/* Planchers des étages, sur les murs ; le premier trait est celui du premier étage. */}
+      {Array.from({ length: niveaux - 1 }, (_, i) => {
+        const actif = niveau === i + 1;
+        return (
+          <Line
+            key={`plancher${i}`}
+            points={[...pts, pts[0]].map(([x, z]) => [x, ((i + 1) * b.hauteur) / niveaux, z] as [number, number, number])}
+            color={actif ? '#ff7a3d' : dark ? '#5b6679' : '#9aa5b5'}
+            lineWidth={actif ? 2.2 : 1}
+            transparent
+            opacity={actif ? 1 : 0.6}
+            visible={!plan}
+          />
+        );
+      })}
       {cotesEls}
     </group>
   );

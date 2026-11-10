@@ -12,17 +12,41 @@
 import { create } from 'zustand';
 import demoJson from '@data/demo.json';
 import type { Batiment, Connexion, Id, Machine, Organe, Organisation, PointDeMesure, Site, Zone } from '@/domain/types';
-import { computeFrame, type LngLat, type XY } from '@/geo/geodesy';
+import { borneNiveaux, niveauDe, niveauOccupeMax } from '@/domain/niveaux';
+import { computeFrame, pointInPolygon, toLocal, type LngLat, type XY } from '@/geo/geodesy';
 import { uid } from '@/sim/random';
 
 export type ProjectMode = 'demo' | 'assistant';
 
-/** Zone qui contient un point du plan : rectangle englobant de son polygone, le même test qu'à la pose. */
-export function zoneSous(zones: readonly Zone[], pos: XY): Zone | undefined {
+/** Zone d'un niveau qui contient un point du plan : rectangle englobant de son polygone, le même test qu'à la pose. */
+export function zoneSous(zones: readonly Zone[], pos: XY, niveau = 0): Zone | undefined {
   return zones.find((z) => {
+    if (niveauDe(z) !== niveau) return false;
     const xs = z.polygone.map((p) => p[0]);
     const ys = z.polygone.map((p) => p[1]);
     return pos[0] >= Math.min(...xs) && pos[0] <= Math.max(...xs) && pos[1] >= Math.min(...ys) && pos[1] <= Math.max(...ys);
+  });
+}
+
+/**
+ * Bâtiment qui contient un point du plan et qui a ce niveau ; à défaut, le premier qui a ce niveau, puis le premier
+ * tout court (une machine ou une zone appartient toujours à un bâtiment).
+ */
+export function batimentSous(site: Site | null, batiments: readonly Batiment[], pos: XY, niveau = 0): Batiment | undefined {
+  return batimentContenant(site, batiments, pos, niveau) ?? batiments.find((b) => borneNiveaux(b.niveaux) > niveau) ?? batiments[0];
+}
+
+/** Bâtiment dont le contour contient vraiment le point et qui a ce niveau ; rien si le point est dehors. */
+export function batimentContenant(site: Site | null, batiments: readonly Batiment[], pos: XY, niveau = 0): Batiment | undefined {
+  if (!site) return undefined;
+  return batiments.find((b) => borneNiveaux(b.niveaux) > niveau && pointInPolygon(pos, b.contour.map((p) => toLocal(site.repere, p))));
+}
+
+/** Après une annulation : un bâtiment garde au moins les niveaux que ses zones et ses machines occupent. */
+function tenirNiveaux(batiments: Batiment[], zones: readonly Zone[], machines: readonly Machine[]): Batiment[] {
+  return batiments.map((b) => {
+    const min = niveauOccupeMax(b.id, zones, machines) + 1;
+    return borneNiveaux(b.niveaux) < min ? { ...b, niveaux: min } : b;
   });
 }
 
@@ -83,6 +107,8 @@ export interface ProjectState extends Omit<Usine, 'id'> {
   undo(): void;
   redo(): void;
   setHauteur(id: string, hauteur: number): void;
+  /** Nombre de niveaux d'un bâtiment, jamais sous le dernier niveau qui porte une zone ou une machine. */
+  setNiveaux(id: string, niveaux: number): void;
   addZone(z: Zone): void;
   updateZone(id: string, patch: Partial<Zone>): void;
   removeZone(id: string): void;
@@ -300,24 +326,43 @@ export const useProject = create<ProjectState>()((set, get) => ({
     const past = get().past;
     if (!past.length) return;
     const prev = past[past.length - 1];
-    set({ past: past.slice(0, -1), future: [{ batiments: structuredClone(get().batiments) }, ...get().future], batiments: prev.batiments });
+    // L'historique ne porte que les bâtiments : un étage ajouté depuis, et déjà occupé, n'est pas repris.
+    set({ past: past.slice(0, -1), future: [{ batiments: structuredClone(get().batiments) }, ...get().future], batiments: tenirNiveaux(prev.batiments, get().zones, get().machines) });
   },
   redo: () => {
     const [next, ...rest] = get().future;
     if (!next) return;
-    set({ future: rest, past: [...get().past, { batiments: structuredClone(get().batiments) }], batiments: next.batiments });
+    set({ future: rest, past: [...get().past, { batiments: structuredClone(get().batiments) }], batiments: tenirNiveaux(next.batiments, get().zones, get().machines) });
   },
   setHauteur: (id, hauteur) => set({ batiments: get().batiments.map((b) => (b.id === id ? { ...b, hauteur } : b)) }),
+  setNiveaux: (id, niveaux) => {
+    const { batiments, zones, machines } = get();
+    const n = Math.max(borneNiveaux(niveaux), niveauOccupeMax(id, zones, machines) + 1);
+    set({ batiments: batiments.map((b) => (b.id === id ? { ...b, niveaux: n } : b)) });
+  },
   addZone: (z) => set({ zones: [...get().zones, z] }),
-  updateZone: (id, patch) => set({ zones: get().zones.map((z) => (z.id === id ? { ...z, ...patch } : z)) }),
+  updateZone: (id, patch) => {
+    set({ zones: get().zones.map((z) => (z.id === id ? { ...z, ...patch } : z)) });
+    // Une zone qui change de niveau emmène ses machines.
+    if (patch.niveau !== undefined) set({ machines: get().machines.map((m) => (m.zoneId === id ? { ...m, niveau: patch.niveau } : m)) });
+  },
   removeZone: (id) => set({ zones: get().zones.filter((z) => z.id !== id) }),
   addMachine: (m) => set({ machines: [...get().machines, m] }),
   updateMachine: (id, patch) => {
-    // Une machine déplacée prend la zone où elle arrive (et son bâtiment), sauf si le changement la donne lui-même.
-    const { zones } = get();
-    const zone = patch.position && !('zoneId' in patch) ? zoneSous(zones, patch.position) : undefined;
-    const suite = patch.position && !('zoneId' in patch) ? { zoneId: zone?.id, ...(zone ? { batimentId: zone.batimentId } : {}) } : {};
-    set({ machines: get().machines.map((m) => (m.id === id ? { ...m, ...patch, ...suite } : m)) });
+    // Une machine déplacée, ou changée de niveau, prend la zone où elle arrive (et son bâtiment), sauf si le
+    // changement la donne lui-même.
+    const { zones, machines, site, batiments } = get();
+    const avant = machines.find((m) => m.id === id);
+    if (!avant) return;
+    const bouge = (patch.position !== undefined || patch.niveau !== undefined) && !('zoneId' in patch);
+    const pos = patch.position ?? avant.position;
+    const niveau = patch.niveau ?? niveauDe(avant);
+    const zone = bouge ? zoneSous(zones, pos, niveau) : undefined;
+    // Sans zone : le bâtiment où elle se trouve ; dehors, elle garde le sien tant qu'il a ce niveau.
+    const sien = batiments.find((b) => b.id === avant.batimentId && borneNiveaux(b.niveaux) > niveau);
+    const batimentId = zone?.batimentId ?? batimentContenant(site, batiments, pos, niveau)?.id ?? sien?.id ?? batimentSous(site, batiments, pos, niveau)?.id ?? avant.batimentId;
+    const suite = bouge ? { zoneId: zone?.id, batimentId } : {};
+    set({ machines: machines.map((m) => (m.id === id ? { ...m, ...patch, ...suite } : m)) });
   },
   removeMachine: (id) => set({ machines: get().machines.filter((m) => m.id !== id) }),
   setConnexion: (c) => set({ connexions: { ...get().connexions, [c.machineId]: c } }),

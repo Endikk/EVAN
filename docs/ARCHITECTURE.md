@@ -228,8 +228,8 @@ répétitif : des cas de test communs (`data/tests/`) vérifient, des deux côt�
 | Compte | identifiant (adresse e-mail), nom, rôle (`admin` ou `membre`), empreinte du mot de passe | rattaché à une seule organisation ; identifiant unique dans toute l'installation |
 | Site (usine) | adresse, coordonnées, **repère local** (origine + angle), SIRET, **passerelle**, surface annoncée, configurée | le repère aligne x sur le grand côté du bâtiment ; une passerelle edge par usine (attribuée par le serveur si le front n'en donne pas) |
 | Bâtiment | contour lon/lat, **précision de chaque sommet**, hauteur, niveaux, source (`bdtopo`/`osm`/`manuel`), cleabs, **identifiant RNB** | |
-| Zone | type (atelier, stock, expédition, prépresse, façonnage, bureaux), polygone en mètres | |
-| Machine | type du catalogue, nom, numéro, position, rotation, modèle 3D | |
+| Zone | type (atelier, stock, expédition, prépresse, façonnage, bureaux), polygone en mètres, niveau (0 = rez-de-chaussée) | |
+| Machine | type du catalogue, nom, numéro, position, rotation, modèle 3D, niveau (0 = rez-de-chaussée) | |
 | Organe | numéro, nom, nœud 3D (`diag_N_nom`), position dans le modèle, capteurs, pannes typiques, méthode, alarme de l'automate | |
 | PointDeMesure | type (tension, température, vitesse, pression, alarme…), unité, nominale, **seuils** (attention/alarme bas/haut), protocole, adresse | |
 | Connexion | protocole, paramètres, état, associations variable → point, **lecture seule** | |

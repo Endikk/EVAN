@@ -1,7 +1,9 @@
 using Dapper;
 using EVAN.Application.Abstractions;
 using EVAN.Application.Comptes;
+using EVAN.Application.Usines;
 using EVAN.Core.Domain.Alarms;
+using EVAN.Core.Domain.Machines;
 using EVAN.Core.Domain.Sites;
 using EVAN.Infrastructure.Persistence;
 using Microsoft.Extensions.Logging;
@@ -104,11 +106,13 @@ public class PostgresStoreTests(TimescaleFixture fixture)
     {
         var (premier, cs) = await fixture.StockagePretAsync();
         await premier.DisposeAsync();
-        // Base créée avant le multi-usines et la reprise des alarmes, avec une compression à 7 jours.
+        // Base créée avant le multi-usines, la reprise des alarmes et les étages, avec une compression à 7 jours.
         await Executer(cs,
             """
             ALTER TABLE sites DROP COLUMN passerelle;
             ALTER TABLE alarmes DROP COLUMN acquittee_le;
+            ALTER TABLE zones DROP COLUMN niveau;
+            ALTER TABLE machines DROP COLUMN niveau;
             SELECT alter_job(job_id, config => jsonb_set(config, '{compress_after}', '"7 days"'))
             FROM timescaledb_information.jobs WHERE hypertable_name = 'mesures' AND proc_name = 'policy_compression';
             """);
@@ -118,8 +122,40 @@ public class PostgresStoreTests(TimescaleFixture fixture)
         await second.InitializeAsync(TimescaleFixture.Data, CancellationToken.None);
 
         Assert.Equal(TimeSpan.FromDays(1), await CompressionDesMesures(cs));
-        Assert.Equal(2, await Lire<long>(cs,
-            "SELECT count(*) FROM information_schema.columns WHERE (table_name, column_name) IN (('sites', 'passerelle'), ('alarmes', 'acquittee_le'))"));
+        Assert.Equal(4, await Lire<long>(cs,
+            """
+            SELECT count(*) FROM information_schema.columns
+            WHERE (table_name, column_name) IN (('sites', 'passerelle'), ('alarmes', 'acquittee_le'), ('zones', 'niveau'), ('machines', 'niveau'))
+            """));
+        // Ce qui était là avant les étages est au rez-de-chaussée.
+        Assert.Equal(0, await Lire<long>(cs, "SELECT count(*) FROM machines WHERE niveau <> 0"));
+    }
+
+    [Timescale]
+    public async Task Une_usine_a_etages_est_relue_avec_le_niveau_de_ses_zones_et_de_ses_machines()
+    {
+        var (store, cs) = await fixture.StockagePretAsync();
+        await using var _ = store;
+        await Executer(cs, "INSERT INTO organisations (id, nom) VALUES ('org-etages', 'Imprimerie à étages')");
+        var site = new Site("site-etages", "org-etages", "Usine à étages", "Tours", [0.68, 47.39], new Repere([0.68, 47.39], 0));
+        var bat = new Batiment("bat-etages-1", site.Id, "Bâtiment A", [[0.68, 47.39], [0.681, 47.39], [0.681, 47.391]], [1, 1, 1], 9, 3, "manuel");
+        Zone[] zones =
+        [
+            new("zone-etages-rdc", bat.Id, "Atelier", "atelier", [[0, 0], [20, 0], [20, 10]]),
+            new("zone-etages-2", bat.Id, "Bureaux", "bureaux", [[0, 0], [20, 0], [20, 10]], Niveau: 2),
+        ];
+        Machine[] machines =
+        [
+            new("m-etages-1", bat.Id, zones[0].Id, "flexo", "Presse", "R01", [5, 5], 0, new ModeleRef("/kit/modeles/flexo.glb")),
+            new("m-etages-2", bat.Id, zones[1].Id, "ctp", "CTP", "C01", [5, 5], 0, new ModeleRef("/kit/modeles/ctp.glb"), Niveau: 2),
+        ];
+
+        await store.EnregistrerUsineAsync(new UsineEnregistree("org-etages", new ConfigurationUsine(site, [bat], [.. zones], [.. machines], [], [], [], Configure: true)));
+
+        var relue = Assert.Single(await store.UsinesAsync(), u => u.Configuration.Site.Id == site.Id).Configuration;
+        Assert.Equal(3, Assert.Single(relue.Batiments).Niveaux);
+        Assert.Equal([("zone-etages-2", 2), ("zone-etages-rdc", 0)], relue.Zones.Select(z => (z.Id, z.Niveau)));
+        Assert.Equal([("m-etages-1", 0), ("m-etages-2", 2)], relue.Machines.Select(m => (m.Id, m.Niveau)));
     }
 
     [Timescale]

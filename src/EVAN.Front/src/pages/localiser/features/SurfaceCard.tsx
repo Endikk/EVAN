@@ -11,6 +11,7 @@ import { AnimatedNumber } from '@/ui/anim';
 import { ChiffresSecondaires, TitreCarte, TonGlyph, type ChiffreSecondaire } from '@/ui/explain';
 import { InfoTip } from '@/ui/InfoTip';
 import { precisionLabel, type BuildingMeasure } from '@/widgets/carte/measure';
+import { NiveauxBatiment } from '@/widgets/usines/NiveauxBatiment';
 import { lirePrecision } from '../lib/verdicts';
 
 const SOURCE: Record<Batiment['source'], string> = {
@@ -117,6 +118,9 @@ export function SurfaceCard({ b, m, direct = false, style }: { b: Batiment; m: B
         <i style={{ transform: `scaleX(${prec.score})` }} />
       </div>
       <ChiffresSecondaires items={mesures(b, m)} label="Autres mesures du bâtiment" className="loc-mesures" />
+      <div className="loc-niveaux">
+        <NiveauxBatiment b={b} />
+      </div>
     </section>
   );
 }

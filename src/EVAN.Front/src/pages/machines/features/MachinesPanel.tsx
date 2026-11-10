@@ -4,6 +4,8 @@
  * liste des machines de l'usine.
  */
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { niveauDe, nomNiveau } from '@/domain/niveaux';
+import { useNiveauxUsine } from '@/store/niveau';
 import { useProject } from '@/store/project';
 import { useUi } from '@/store/ui';
 import type { Machine } from '@/domain/types';
@@ -92,6 +94,7 @@ function taches(e: EtatPose): Tache[] {
 
 function ListeMachines({ machines, selectedId, derniere, enDouble }: { machines: Machine[]; selectedId?: string; derniere?: string; enDouble: Set<string> }) {
   const zones = useProject((s) => s.zones);
+  const etages = useNiveauxUsine() > 1;
   if (!machines.length) return null;
   return (
     <section className="mc-liste" aria-labelledby="mc-liste-titre" data-guide="machines-liste">
@@ -113,7 +116,10 @@ function ListeMachines({ machines, selectedId, derniere, enDouble }: { machines:
               <span className="mono mc-item-numero">{m.numero || '?'}</span>
               <span className="grow truncate">
                 <span className="t">{m.nom}</span>
-                <span className="s">{zones.find((z) => z.id === m.zoneId)?.nom ?? 'Hors des zones dessinées'}</span>
+                <span className="s">
+                  {zones.find((z) => z.id === m.zoneId)?.nom ?? 'Hors des zones dessinées'}
+                  {etages ? ` · ${nomNiveau(niveauDe(m))}` : null}
+                </span>
               </span>
               {enDouble.has(m.numero.trim()) && <span className="chip warn">Numéro en double</span>}
             </button>
