@@ -17,7 +17,7 @@ import { Link } from 'react-router';
 import { Moon, Sun } from 'lucide-react';
 import { EvanLogo } from '@/ui/EvanLogo';
 import { setTabStatus } from '@/ui/brand';
-import { PixelField, type PixelMotif } from '@/ui/PixelField';
+import { PixelField } from '@/ui/PixelField';
 import { useIsDark, useReducedMotion, useUi } from '@/store/ui';
 import { hasSavedAssistant } from '@/store/project';
 import { useSession } from '@/store/session';
@@ -25,7 +25,6 @@ import { CODE_PANNE, type VueId } from './lib/sections';
 import { Actions } from './features/Actions';
 import { Vues } from './features/Vues';
 import { VoletParcours } from './features/VoletParcours';
-import { CHOIX_FOND, ChoixFond } from './features/ChoixFond';
 import { useMedia } from './hooks/useMedia';
 import { useCadre } from './hooks/useCadre';
 import { useFilm } from './film/useFilm';
@@ -40,21 +39,6 @@ const EMPILE = '(max-width: 860px), (max-aspect-ratio: 1/1)';
 const TELEPHONE = '(max-width: 520px)';
 
 const cascade = (i: number) => ({ '--i': i }) as CSSProperties;
-
-/**
- * Motif du nuage de l'accueil, au choix pour comparer : ?fond=… le choisit et fait apparaître le sélecteur. À figer
- * une fois le motif choisi.
- */
-function motifFond(): PixelMotif {
-  const voulu = typeof location === 'undefined' ? null : new URLSearchParams(location.search).get('fond');
-  return CHOIX_FOND.find((c) => c.motif === voulu)?.motif ?? 'trame';
-}
-const voirChoixFond = () => new URLSearchParams(location.search).has('fond');
-function noterFond(m: PixelMotif) {
-  const u = new URL(location.href);
-  u.searchParams.set('fond', m);
-  history.replaceState(history.state, '', u);
-}
 
 /** Sans WebGL, la page reste lisible : seul le modèle 3D disparaît (et le film d'ouverture rend la main). */
 class StageBoundary extends Component<{ children: ReactNode; fallback: ReactNode; onError?(): void }, { failed: boolean }> {
@@ -85,12 +69,6 @@ export function Landing() {
   const sansCarte = useRef<HTMLElement>(null);
   const reduit = useReducedMotion();
   const nuit = useIsDark();
-  const [fond, setFond] = useState<PixelMotif>(motifFond);
-  const [choixFond] = useState(voirChoixFond);
-  const choisirFond = useCallback((m: PixelMotif) => {
-    setFond(m);
-    noterFond(m);
-  }, []);
   const empile = useMedia(EMPILE);
   const telephone = useMedia(TELEPHONE);
   const saved = hasSavedAssistant();
@@ -164,7 +142,7 @@ export function Landing() {
 
       <main ref={heroRef} className="lp-hero" aria-labelledby="lp-titre">
         <div className="lp-nuage" aria-hidden="true">
-          <PixelField placement="hero" intensite={1.25} cellule={fond === 'pixels' ? 5 : 7} motif={fond} />
+          <PixelField placement="hero" intensite={1.25} motif="spires" />
         </div>
 
         <div className="lp-scene" ref={sceneRef}>
@@ -221,7 +199,6 @@ export function Landing() {
       </main>
 
       {parcours && <VoletParcours fermer={fermerParcours} assistantTo={assistantTo} saved={saved} />}
-      {choixFond && <ChoixFond valeur={fond} onChange={choisirFond} />}
     </div>
   );
 }

@@ -3,7 +3,7 @@
  * shader, qui dérive lentement depuis un coin. Pure décoration : il ne capte aucun clic et n'est pas lu.
  *
  * Coût maîtrisé : toile à 1 pixel CSS par pixel pour les carrés (gros, `image-rendering: pixelated` les garde nets), à
- * la densité de l'écran pour la trame et les ondes (motifs lissés), 24 images par seconde au plus, arrêt hors écran,
+ * la densité de l'écran pour les spires (traits fins, lissés), 24 images par seconde au plus, arrêt hors écran,
  * onglet caché ou animations réduites (une seule image figée).
  * Sans WebGL, rien ne s'affiche.
  */
@@ -32,60 +32,20 @@ const FPS = 24;
 const VERTEX = `attribute vec2 p; void main(){ gl_Position = vec4(p, 0.0, 1.0); }`;
 
 /**
- * Plusieurs motifs pour un même ruban :
- * - `pixels` : les carrés tramés de la marque ;
- * - `trame` : la trame de demi-teinte d'une impression flexo, des points à 45° plus gros là où le ruban est dense ;
- * - `lignes` : une trame en lignes, dont le trait s'épaissit avec la densité, comme une gravure ;
- * - `rosette` : deux trames de points à 15° et 75°, en deux encres, qui forment la rosette d'une impression couleur ;
- * - `stochastique` : la trame aléatoire des presses récentes, des points fins semés d'autant plus serrés que c'est dense ;
- * - `ondes` : des lignes fines qui suivent le ruban, s'écartent et se resserrent avec lui ;
- * - `vagues` : des vagues pleines, en plis doux, sans trame ;
- * - `anilox` : les alvéoles hexagonales du rouleau anilox, qui dose l'encre d'un groupe flexo, plus pleines où c'est dense ;
- * - `croix` : des croix de repérage, plus grandes là où le ruban passe ;
- * - `codebarres` : des barres verticales de largeurs variées, découpées par le ruban ;
- * - `spires` : les spires d'une bobine vue de côté, centrées sur le coin d'où part le ruban ;
- * - `etiquettes` : des étiquettes sur leur support, contour seul au bord du ruban, pleines au cœur ;
- * - `moire` : deux trames de lignes presque parallèles, dont la superposition fait naître des franges.
+ * Deux motifs pour un même ruban :
+ * - `pixels` : les carrés tramés de la marque, dans l'application ;
+ * - `spires` : les spires d'une bobine vue de côté, centrées sur le coin d'où part le ruban, sur l'accueil.
  */
-export type PixelMotif =
-  | 'pixels'
-  | 'trame'
-  | 'lignes'
-  | 'rosette'
-  | 'stochastique'
-  | 'ondes'
-  | 'vagues'
-  | 'anilox'
-  | 'croix'
-  | 'codebarres'
-  | 'spires'
-  | 'etiquettes'
-  | 'moire';
-const MOTIFS: Record<PixelMotif, number> = {
-  pixels: 0,
-  trame: 1,
-  ondes: 2,
-  lignes: 3,
-  rosette: 4,
-  stochastique: 5,
-  vagues: 6,
-  anilox: 7,
-  croix: 8,
-  codebarres: 9,
-  spires: 10,
-  etiquettes: 11,
-  moire: 12,
-};
+export type PixelMotif = 'pixels' | 'spires';
 
 function fragment(motif: PixelMotif) {
-  return `${motif === 'ondes' ? '#extension GL_OES_standard_derivatives : enable\n' : ''}precision ${motif === 'pixels' ? 'mediump' : 'highp'} float;
-#define MOTIF ${MOTIFS[motif]}
-// Les motifs lissés calculent leur champ à chaque pixel : trois octaves suffisent, les carrés en gardent cinq.
+  return `precision ${motif === 'pixels' ? 'mediump' : 'highp'} float;
+#define SPIRES ${motif === 'spires' ? 1 : 0}
+// Les spires calculent leur champ à chaque pixel : trois octaves suffisent, les carrés en gardent cinq.
 #define OCTAVES ${motif === 'pixels' ? 5 : 3}
 uniform vec2 uRes;
 uniform float uTime;
 uniform float uCell;
-uniform float uDpr;
 uniform vec2 uAncre;
 uniform float uLongueur;
 uniform float uEpaisseur;
@@ -131,29 +91,12 @@ float densite(vec3 r, vec2 p){
   return clamp(pow(r.z * travers, 0.8) * grain * uIntensite * 1.4, 0.0, 1.0);
 }
 
-// Repère d'une trame tournée : de l'écran vers la grille, et retour.
-mat2 versGrille(float a){ float c = cos(a); float s = sin(a); return mat2(c, -s, s, c); }
-mat2 versEcran(float a){ float c = cos(a); float s = sin(a); return mat2(c, s, -s, c); }
-
-// Couverture d'un point de trame (pas s en pixels d'écran, grille tournée de a) ; la densité est lue au centre du
-// point, et son rayon suit la racine de la densité (la surface encrée) : au-delà de 0,5, les points se touchent.
 // Trait de 1 pixel environ autour de 0 pour une valeur v dont on connaît la pente en pixels (px).
 float trait(float ecart, float px){ return 1.0 - smoothstep(0.0, px * 1.2, ecart); }
 
-float pointDeTrame(float a, float s, float gain, out float d){
-  vec2 q = versGrille(a) * gl_FragCoord.xy / s;
-  vec2 c = floor(q) + 0.5;
-  vec2 p;
-  vec3 r = ruban((versEcran(a) * c) * s / uRes, p);
-  d = densite(r, p) * gain;
-  float rayon = 0.58 * sqrt(d);
-  float px = 1.0 / s;
-  return (1.0 - smoothstep(rayon - px, rayon + px, length(q - c))) * step(0.02, d);
-}
-
 void main(){
   vec2 p;
-#if MOTIF == 0
+#if SPIRES == 0
   vec2 cell = floor(gl_FragCoord.xy / uCell);
   vec2 dans = fract(gl_FragCoord.xy / uCell);
   vec2 uv = (cell + 0.5) * uCell / uRes;
@@ -167,95 +110,7 @@ void main(){
   float carre = step(dans.x, 0.78) * step(dans.y, 0.78);
   float alpha = allume * carre * (0.35 + 0.65 * d);
   vec3 col = rampe(d);
-#elif MOTIF == 1
-  // Grille tournée à 45°, comme la trame du noir en flexo.
-  float d;
-  float alpha = pointDeTrame(0.78539816, uCell * uDpr, 1.0, d) * (0.55 + 0.45 * d);
-  vec3 col = rampe(d);
-#elif MOTIF == 3
-  // Trame en lignes à 30° : le trait, lu au milieu de sa bande, s'épaissit avec la densité.
-  float s = uCell * uDpr * 1.3;
-  float a = 0.52359878;
-  vec2 q = versGrille(a) * gl_FragCoord.xy / s;
-  float milieu = floor(q.y) + 0.5;
-  vec3 r = ruban((versEcran(a) * vec2(q.x, milieu)) * s / uRes, p);
-  float d = densite(r, p);
-  float demi = 0.5 * d;
-  float px = 1.0 / s;
-  float alpha = (1.0 - smoothstep(demi - px, demi + px, abs(q.y - milieu))) * step(0.02, d) * (0.55 + 0.45 * d);
-  vec3 col = rampe(d);
-#elif MOTIF == 4
-  // Rosette : deux encres, l'une à 15°, l'autre à 75°, qui se superposent comme sur une épreuve couleur.
-  float s = uCell * uDpr;
-  float d1;
-  float d2;
-  float a1 = pointDeTrame(0.26179939, s, 1.0, d1);
-  float a2 = pointDeTrame(1.30899694, s * 1.06, 0.8, d2);
-  float alpha = (a1 + a2 - a1 * a2) * 0.92;
-  vec3 col = (a1 * (1.0 - a2) * c2 + a2 * (1.0 - a1) * c3 + a1 * a2 * mix(c2, c1, 0.5)) / max(a1 + a2 - a1 * a2, 1e-4);
-#elif MOTIF == 5
-  // Trame stochastique : des points fins, tous de la même taille, allumés au hasard selon la densité.
-  float s = 2.4 * uDpr;
-  vec2 cell = floor(gl_FragCoord.xy / s);
-  vec3 r = ruban((cell + 0.5) * s / uRes, p);
-  float d = densite(r, p);
-  float allume = step(hash(cell * 1.37 + 0.5), d * 0.95);
-  float rond = 1.0 - smoothstep(0.32, 0.5, length(fract(gl_FragCoord.xy / s) - 0.5));
-  float alpha = allume * rond * (0.5 + 0.5 * d);
-  vec3 col = rampe(d);
-#elif MOTIF == 6
-  // Vagues pleines : le ruban en plis doux, du sombre au clair, sans trame.
-  vec2 uv = gl_FragCoord.xy / uRes;
-  vec3 r = ruban(uv, p);
-  float d = densite(r, p);
-  float enveloppe = r.z * exp(-pow(r.x / (r.y * 1.8), 2.0));
-  float plis = 0.5 + 0.5 * cos(r.x / r.y * 6.2831853 * 0.55);
-  float alpha = clamp(enveloppe * uIntensite * 1.1, 0.0, 1.0) * (0.3 + 0.55 * plis);
-  vec3 col = rampe(clamp(enveloppe * (0.45 + 0.55 * plis) + d * 0.25, 0.0, 1.0));
-#elif MOTIF == 7
-  // Alvéoles hexagonales d'un anilox : la plus proche est trouvée parmi deux grilles décalées.
-  float s = uCell * uDpr * 1.15;
-  vec2 q = gl_FragCoord.xy / s;
-  const vec2 pas = vec2(1.0, 1.7320508);
-  vec2 ga = mod(q, pas) - pas * 0.5;
-  vec2 gb = mod(q - pas * 0.5, pas) - pas * 0.5;
-  vec2 g = dot(ga, ga) < dot(gb, gb) ? ga : gb;
-  vec3 r = ruban((q - g) * s / uRes, p);
-  float d = densite(r, p);
-  vec2 ag = abs(g);
-  float hex = max(dot(ag, vec2(0.5, 0.8660254)), ag.x);
-  float taille = 0.47 * sqrt(d);
-  float px = 1.0 / s;
-  float alpha = (1.0 - smoothstep(taille - px, taille + px, hex)) * step(0.02, d) * (0.55 + 0.45 * d);
-  vec3 col = rampe(d);
-#elif MOTIF == 8
-  // Croix de repérage : bras plus longs et plus épais là où le ruban est dense.
-  float s = uCell * uDpr * 2.0;
-  vec2 q = gl_FragCoord.xy / s;
-  vec2 c = floor(q) + 0.5;
-  vec2 f = abs(q - c);
-  vec3 r = ruban(c * s / uRes, p);
-  float d = densite(r, p);
-  float px = 1.0 / s;
-  float bras = 0.46 * sqrt(d);
-  float epais = 0.035 + 0.05 * d;
-  float h = (1.0 - smoothstep(epais - px, epais + px, f.y)) * (1.0 - smoothstep(bras - px, bras + px, f.x));
-  float v = (1.0 - smoothstep(epais - px, epais + px, f.x)) * (1.0 - smoothstep(bras - px, bras + px, f.y));
-  float alpha = max(h, v) * step(0.04, d) * (0.6 + 0.4 * d);
-  vec3 col = rampe(d);
-#elif MOTIF == 9
-  // Code-barres : des barres verticales de largeur variable (une à trois unités), découpées par le ruban.
-  vec2 uv = gl_FragCoord.xy / uRes;
-  vec3 r = ruban(uv, p);
-  float d = densite(r, p);
-  float unite = 2.0 * uDpr;
-  float colonne = floor(gl_FragCoord.x / unite);
-  float groupe = floor(colonne / 3.0);
-  float largeur = 1.0 + floor(hash(vec2(groupe, 3.1)) * 3.0);
-  float barre = step(mod(colonne, 3.0), largeur - 1.0) * step(0.35, hash(vec2(groupe, 7.7)));
-  float alpha = barre * smoothstep(0.18, 0.4, d) * (0.4 + 0.6 * d);
-  vec3 col = rampe(d);
-#elif MOTIF == 10
+#else
   // Spires d'une bobine : des cercles fins autour du coin d'ancrage, allumés là où passe le ruban.
   vec2 uv = gl_FragCoord.xy / uRes;
   vec3 r = ruban(uv, p);
@@ -269,50 +124,6 @@ void main(){
   float spire = trait(ecart, px * 2.0) * (0.55 + 0.45 * hash(vec2(floor(v + 0.5), 1.3)));
   float alpha = spire * clamp(d * 1.9 + 0.3 * exp(-rho * 1.2), 0.0, 1.0);
   vec3 col = rampe(max(d, 0.3));
-#elif MOTIF == 11
-  // Étiquettes sur leur support, dans le sens du ruban : contour seul au bord, pleines au cœur.
-  float s = uCell * uDpr * 2.2;
-  float a = atan(uPente);
-  vec2 q = versGrille(a) * gl_FragCoord.xy / s;
-  vec2 cellule = vec2(1.6, 1.0);
-  vec2 c = (floor(q / cellule) + 0.5) * cellule;
-  vec2 f = q - c;
-  vec3 r = ruban((versEcran(a) * c) * s / uRes, p);
-  float d = densite(r, p);
-  vec2 demi = cellule * 0.5 - 0.14;
-  float rayon = 0.16;
-  vec2 b = abs(f) - demi + rayon;
-  float dist = length(max(b, 0.0)) + min(max(b.x, b.y), 0.0) - rayon;
-  float px = 1.0 / s;
-  float plein = 1.0 - smoothstep(-px, px, dist);
-  float bord = 1.0 - smoothstep(0.0, px * 1.5, abs(dist));
-  float alpha = mix(bord, plein, smoothstep(0.45, 0.65, d)) * step(0.06, d) * (0.5 + 0.5 * d);
-  vec3 col = rampe(d);
-#elif MOTIF == 12
-  // Moiré : deux trames de lignes fines, à 2° l'une de l'autre ; leurs franges dérivent avec le ruban.
-  vec2 uv = gl_FragCoord.xy / uRes;
-  vec3 r = ruban(uv, p);
-  float d = densite(r, p);
-  float s = 3.4 * uDpr;
-  float y1 = (versGrille(0.785) * gl_FragCoord.xy).y / s;
-  float y2 = (versGrille(0.82 + 0.01 * sin(uTime * 0.2)) * gl_FragCoord.xy).y / s;
-  float e = 0.18 + 0.3 * d;
-  float l1 = 1.0 - smoothstep(e - 0.25, e + 0.25, abs(fract(y1) - 0.5) * 2.0 - (1.0 - e * 2.0));
-  float l2 = 1.0 - smoothstep(e - 0.25, e + 0.25, abs(fract(y2) - 0.5) * 2.0 - (1.0 - e * 2.0));
-  float alpha = (l1 + l2 - l1 * l2) * smoothstep(0.04, 0.25, d) * (0.45 + 0.55 * d);
-  vec3 col = rampe(d);
-#else
-  vec2 uv = gl_FragCoord.xy / uRes;
-  vec3 r = ruban(uv, p);
-  float d = densite(r, p);
-  // Lignes de niveau de l'écart au ruban, rapporté à sa largeur : elles s'écartent quand il gonfle.
-  float v = r.x / r.y * 4.0;
-  float w = fwidth(v);
-  float ecart = abs(fract(v + 0.5) - 0.5);
-  float trait = clamp(1.0 - ecart / max(w * 1.15, 1e-4), 0.0, 1.0);
-  float enveloppe = r.z * exp(-pow(r.x / (r.y * 2.2), 2.0));
-  float alpha = trait * clamp(enveloppe * uIntensite * 1.3, 0.0, 1.0) * (0.4 + 0.6 * d);
-  vec3 col = rampe(max(d, enveloppe * 0.6));
 #endif
   gl_FragColor = vec4(col * alpha, alpha);
 }`;
@@ -335,7 +146,7 @@ interface Props {
   placement?: PixelPlacement;
   /** 0 à 1,5 : densité du nuage. 1 pour l'accueil, autour de 0,6 derrière un tableau de bord. */
   intensite?: number;
-  /** Côté d'un carré (ou pas de la trame), en pixels CSS. */
+  /** Côté d'un carré, en pixels CSS. Sans effet sur les spires. */
   cellule?: number;
   motif?: PixelMotif;
   className?: string;
@@ -373,7 +184,7 @@ interface ToileProps extends Required<Props> {
 }
 
 /** La toile et son contexte, créés une fois au montage et rendus au démontage. */
-function Toile({ placement, intensite, cellule, motif: voulu, className, nuit, reduit, onRendu }: ToileProps) {
+function Toile({ placement, intensite, cellule, motif, className, nuit, reduit, onRendu }: ToileProps) {
   const ref = useRef<HTMLCanvasElement>(null);
   const onRenduRef = useRef(onRendu);
   onRenduRef.current = onRendu;
@@ -384,9 +195,7 @@ function Toile({ placement, intensite, cellule, motif: voulu, className, nuit, r
     const gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: true, antialias: false, depth: false, powerPreference: 'low-power' });
     if (!gl) return;
 
-    // Les ondes ont besoin des dérivées écran pour garder un trait d'un pixel : sans elles, retour aux carrés.
-    const motif: PixelMotif = voulu === 'ondes' && !gl.getExtension('OES_standard_derivatives') ? 'pixels' : voulu;
-    // Les carrés sont dessinés à 1 pixel CSS (agrandis nets) ; points et traits, à la densité de l'écran.
+    // Les carrés sont dessinés à 1 pixel CSS (agrandis nets) ; les spires, à la densité de l'écran.
     const dpr = motif === 'pixels' ? 1 : Math.min(2, window.devicePixelRatio || 1);
     canvas.classList.toggle('is-lisse', motif !== 'pixels');
     const vs = compiler(gl, gl.VERTEX_SHADER, VERTEX);
@@ -409,7 +218,6 @@ function Toile({ placement, intensite, cellule, motif: voulu, className, nuit, r
     const u = (n: string) => gl.getUniformLocation(prog, n);
     const { ancre, longueur, epaisseur, pente } = ANCRES[placement];
     gl.uniform1f(u('uCell'), cellule);
-    gl.uniform1f(u('uDpr'), dpr);
     gl.uniform2f(u('uAncre'), ancre[0], ancre[1]);
     gl.uniform1f(u('uLongueur'), longueur);
     gl.uniform1f(u('uEpaisseur'), epaisseur);
