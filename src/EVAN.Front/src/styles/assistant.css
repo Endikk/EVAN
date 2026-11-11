@@ -1,6 +1,7 @@
-/* Assistant « Demander à EVAN », puis suivi et diagnostic dans la fiche machine. */
+/* Assistant « Demander à EVAN », puis diagnostic dans la fiche machine. */
 
-/* Assistant « Demander à EVAN » */
+/* Assistant « Demander à EVAN » : un volet qui flotte à droite, sous la barre du haut. Tout y reste neutre ; l'ivoire
+   ne marque que le bouton d'envoi. */
 .assistant {
   position: fixed;
   top: calc(var(--header-h) + 8px);
@@ -10,11 +11,11 @@
   width: min(460px, calc(100vw - 16px));
   display: flex;
   flex-direction: column;
-  border-radius: var(--r-lg);
+  border-radius: var(--r-xl);
   background: var(--surface);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-3);
-  animation: slidein 280ms var(--ease);
+  animation: slidein var(--dur-entree) var(--ease);
   overflow: hidden;
 }
 .assistant-head {
@@ -26,25 +27,12 @@
 }
 .assistant-head b {
   display: block;
-  font-size: 15px;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-medium);
 }
 .assistant-head .faint {
   display: block;
-  font-size: 12px;
-}
-.assistant-mark {
-  flex: none;
-  width: 34px;
-  height: 34px;
-  border-radius: var(--r-md);
-  display: grid;
-  place-items: center;
-  color: var(--accent-contrast);
-  background: var(--accent);
-}
-.assistant-mark svg {
-  width: var(--icon-lg);
-  height: var(--icon-lg);
+  font-size: var(--fs-sm);
 }
 .assistant-fil {
   flex: 1;
@@ -56,91 +44,96 @@
   gap: 16px;
   overscroll-behavior: contain;
 }
-/* Accueil : ce qu'on peut demander, en exemples rangés par sujet. */
+
+/* Accueil : ce qu'on peut demander, en exemples rangés par sujet. Une question par ligne, alignées en colonne. */
 .assistant-intro > p {
-  margin: 0 0 16px;
-  font-size: 13.5px;
+  margin: 0 0 24px;
+  font-size: var(--fs-base);
   line-height: 1.55;
   color: var(--text-2);
 }
 .assistant-intro h3 {
-  margin: 0 0 8px;
-  font-size: 13px;
-  font-weight: 650;
+  margin: 0 0 12px;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
 }
-.assistant-theme {
-  margin-bottom: 12px;
-  animation: entree 360ms var(--ease-out) backwards;
-  animation-delay: calc(var(--i, 0) * 60ms);
+.assistant-theme + .assistant-theme {
+  margin-top: 16px;
 }
 .assistant-theme h4 {
   display: flex;
   align-items: center;
   gap: 8px;
   margin: 0 0 8px;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-regular);
   color: var(--text-3);
 }
 .assistant-theme h4 svg {
-  width: var(--icon-sm);
-  height: var(--icon-sm);
+  flex: none;
+  width: var(--icon);
+  height: var(--icon);
 }
 .assistant-puces {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex-direction: column;
+  gap: 4px;
 }
 .assistant-puce {
-  min-height: 34px;
+  min-height: 36px;
   padding: 8px 12px;
-  border-radius: 999px;
+  border-radius: var(--r-md);
   border: 1px solid var(--border);
   background: var(--surface-2);
   color: var(--text);
-  font-size: 12.5px;
-  font-weight: 540;
+  font-size: var(--fs-md);
+  line-height: 1.4;
   text-align: left;
   cursor: pointer;
   transition:
-    background var(--dur) var(--ease),
+    background-color var(--dur) var(--ease),
     border-color var(--dur) var(--ease);
 }
 .assistant-puce:not(:disabled):hover {
-  background: var(--accent-soft);
-  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  background: var(--surface-3);
+  border-color: var(--border-strong);
 }
+.assistant-puce:not(:disabled):active {
+  transform: scale(0.98);
+}
+/* Hors ligne, les exemples restent lisibles pour dire à quoi sert l'assistant, sans avoir l'air d'un bouton. */
 .assistant-puce:disabled {
-  cursor: not-allowed;
+  cursor: default;
   color: var(--text-2);
   background: transparent;
-  border-style: dashed;
 }
 @media (pointer: coarse) {
   .assistant-puce {
-    min-height: 40px;
+    min-height: 44px;
   }
 }
-/* Vérification de l'assistant, puis réponse en préparation : trois points qui s'allument tour à tour. */
+
+/* Vérification de l'assistant, puis réponse en préparation : trois points qui s'allument tour à tour, seulement le
+   temps de l'attente réelle (1,5 s au plus pour la vérification, jusqu'au premier mot pour une réponse). */
 .assistant-verif {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
+  font-size: var(--fs-md);
   color: var(--text-2);
 }
 .assistant-squelette {
   flex-basis: 100%;
   display: grid;
-  gap: 8px;
-  margin-top: 8px;
+  gap: 4px;
+  margin-top: 16px;
 }
 .assistant-squelette i {
   display: block;
-  height: 30px;
-  border-radius: 999px;
-  background: var(--surface-3);
+  height: 36px;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
   animation: blink 1.4s var(--ease) infinite;
 }
 .assistant-points {
@@ -148,10 +141,11 @@
   gap: 4px;
 }
 .assistant-points i {
-  width: 5px;
-  height: 5px;
+  width: 4px;
+  height: 4px;
   border-radius: 50%;
-  background: var(--accent-text);
+  background: var(--text-2);
+  opacity: 0.3;
   animation: point 1.2s var(--ease) infinite;
 }
 .assistant-points i:nth-child(2) {
@@ -161,28 +155,23 @@
   animation-delay: 320ms;
 }
 @keyframes point {
-  0%,
-  80%,
-  100% {
-    opacity: 0.25;
-    transform: scale(0.8);
-  }
   40% {
     opacity: 1;
-    transform: scale(1);
   }
 }
+
+/* Le fil : la question posée sur un palier de surface, la réponse à pleine largeur. */
 .bulle {
   max-width: 92%;
-  font-size: 13.5px;
+  font-size: var(--fs-base);
   line-height: 1.5;
 }
 .bulle.user {
   align-self: flex-end;
   padding: 8px 12px;
   border-radius: var(--r-md) var(--r-md) var(--r-xs) var(--r-md);
-  background: var(--accent);
-  color: var(--accent-contrast);
+  background: var(--surface-3);
+  color: var(--text);
   white-space: pre-wrap;
 }
 .bulle.evan {
@@ -190,11 +179,11 @@
   max-width: 100%;
 }
 .assistant-outils {
-  margin-bottom: 8px;
-  padding: 8px;
-  border-radius: var(--r-sm);
-  background: var(--surface-2);
-  font-size: 12px;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  font-size: var(--fs-sm);
 }
 .assistant-outils summary {
   display: flex;
@@ -202,42 +191,52 @@
   gap: 8px;
   cursor: pointer;
   color: var(--text-2);
-  font-weight: 600;
+}
+.assistant-outils summary svg {
+  flex: none;
+  width: var(--icon);
+  height: var(--icon);
+  color: var(--text-3);
 }
 .assistant-outils ul {
   margin: 8px 0 4px;
-  padding-left: 16px;
+  padding-left: 24px;
 }
 .assistant-outils li {
   margin: 4px 0;
-  animation: entree 280ms var(--ease-out) backwards;
+  animation: entree 280ms var(--ease) backwards;
+}
+.assistant-outils li b {
+  font-weight: var(--fw-medium);
 }
 .assistant-outils .mono {
-  font-size: 11px;
+  font-size: var(--fs-xs);
 }
 .assistant-attente {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
+  font-size: var(--fs-md);
   color: var(--text-2);
 }
+/* Erreur de l'assistant (réseau, quota) : une phrase et de quoi reposer la question. Ce n'est pas un état de machine,
+   elle reste neutre. */
 .assistant-erreur {
   display: flex;
   gap: 8px;
   margin: 8px 0 0;
-  padding: 8px 12px;
+  padding: 12px;
   border-radius: var(--r-md);
-  border: 1px solid color-mix(in srgb, var(--warn) 40%, var(--border));
-  background: var(--warn-soft);
-  font-size: 13px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-2);
+  font-size: var(--fs-md);
 }
 .assistant-erreur > svg {
   flex: none;
   width: var(--icon);
   height: var(--icon);
-  margin-top: 1px;
-  color: var(--warn);
+  margin-top: 2px;
+  color: var(--text-2);
 }
 .assistant-erreur p {
   margin: 0;
@@ -259,8 +258,12 @@
   margin: 4px 0;
 }
 .riche h4 {
-  margin: 8px 0 4px;
-  font-size: 13.5px;
+  margin: 12px 0 4px;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
+}
+.riche b {
+  font-weight: var(--fw-strong);
 }
 .riche code {
   font-family: var(--mono);
@@ -269,31 +272,38 @@
   border-radius: var(--r-xs);
   background: var(--surface-2);
 }
+/* Machine ou alarme citée : un lien vers l'application, souligné, sans couleur (une alarme citée peut être résolue
+   depuis longtemps, le rouge mentirait). */
 .lien-evan {
   display: inline;
   padding: 0 4px;
   border: 0;
-  border-radius: var(--r-sm);
+  border-radius: var(--r-xs);
   font: inherit;
-  font-weight: 650;
-  color: var(--accent-text);
-  background: var(--accent-soft);
+  font-weight: var(--fw-medium);
+  color: var(--text);
+  background: var(--surface-2);
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 3px;
   cursor: pointer;
+  transition:
+    background-color var(--dur) var(--ease),
+    text-decoration-color var(--dur) var(--ease);
 }
 .lien-evan.alarme {
-  color: var(--crit);
-  background: var(--crit-soft);
   font-family: var(--mono);
   font-size: 0.92em;
 }
 .lien-evan:hover {
-  text-decoration: underline;
+  background: var(--surface-3);
+  text-decoration-color: currentColor;
 }
 .assistant-form {
   display: flex;
   align-items: flex-end;
   gap: 8px;
-  padding: 8px 12px 4px;
+  padding: 12px 12px 8px;
   border-top: 1px solid var(--border);
 }
 .assistant-form textarea {
@@ -304,10 +314,21 @@
 }
 .assistant-pied {
   margin: 0;
-  padding: 4px 16px 8px;
-  font-size: 11.5px;
+  padding: 0 16px 12px;
+  font-size: var(--fs-sm);
+  line-height: 20px;
 }
-/* Assistant hors ligne ou code demandé : une phrase claire, le détail technique replié. */
+.assistant-pied .kbd {
+  height: 18px;
+  vertical-align: 0;
+}
+/* Une touche et ce qu'elle fait restent sur la même ligne. */
+.assistant-touches {
+  white-space: nowrap;
+}
+
+/* Assistant hors ligne ou code demandé : une phrase claire, le détail technique replié. L'icône tient sur la ligne
+   du titre, sans pavé. */
 .assistant-etat {
   display: flex;
   gap: 12px;
@@ -315,33 +336,27 @@
   border-radius: var(--r-md);
   border: 1px solid var(--border);
   background: var(--surface-2);
-  animation: entree 320ms var(--ease-out) backwards;
-}
-.assistant-etat.hors-ligne {
-  border-style: dashed;
-  border-color: var(--border-strong);
 }
 .assistant-etat-icone {
   flex: none;
-  width: 34px;
-  height: 34px;
-  border-radius: var(--r-sm);
+  height: 20px;
   display: grid;
   place-items: center;
   color: var(--text-2);
-  background: var(--surface-3);
 }
 .assistant-etat-icone svg {
-  width: var(--icon-lg);
-  height: var(--icon-lg);
+  width: var(--icon);
+  height: var(--icon);
 }
 .assistant-etat b {
   display: block;
-  font-size: 14px;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
+  line-height: 20px;
 }
 .assistant-etat p {
   margin: 4px 0 0;
-  font-size: 13px;
+  font-size: var(--fs-md);
   line-height: 1.5;
   color: var(--text-2);
 }
@@ -349,24 +364,26 @@
   display: flex;
   gap: 8px;
   width: 100%;
-  margin-top: 8px;
+  margin-top: 12px;
 }
 .assistant-code .input {
   flex: 1;
   min-width: 0;
 }
 .assistant-off-details {
-  margin-top: 8px;
-  font-size: 12px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  font-size: var(--fs-sm);
   color: var(--text-3);
 }
 .assistant-off-details summary {
-  cursor: pointer;
   color: var(--text-2);
 }
 .assistant-off-details p {
   margin: 8px 0 0;
-  font-size: 12px;
+  font-size: var(--fs-sm);
+  color: var(--text-2);
 }
 @media (max-width: 600px) {
   .assistant {
@@ -375,13 +392,11 @@
     bottom: 0;
     width: 100vw;
     border-radius: 0;
+    border-width: 1px 0 0;
   }
 }
 
-/* Supervision : suivi de maintenance et diagnostic dans la fiche machine */
-.crit-txt {
-  color: var(--crit);
-}
+/* Supervision : diagnostic dans la fiche machine */
 .diag-card {
   padding: 0;
 }
@@ -391,8 +406,8 @@
   gap: 8px;
   padding: 12px 16px;
   cursor: pointer;
-  font-weight: 650;
-  font-size: 13.5px;
+  font-weight: var(--fw-medium);
+  font-size: var(--fs-base);
   list-style: none;
 }
 /* Ici le chevron se range à droite, après l'icône de la carte. */
@@ -408,37 +423,18 @@
   background: var(--text-3);
   -webkit-mask: var(--chevron) center / contain no-repeat;
   mask: var(--chevron) center / contain no-repeat;
-  transition: transform 260ms var(--ease-out);
+  transition: transform var(--dur) var(--ease);
 }
 .diag-card[open] summary::after {
   transform: rotate(180deg);
 }
 .diag-card summary > svg {
   flex: none;
+  color: var(--text-2);
 }
 .diag-card[open] summary {
   border-bottom: 1px solid var(--border);
 }
 .diag-card .pitch {
   padding: 12px 16px 16px;
-}
-
-/* Téléphone : chaque échéance passe sur deux lignes (machine et bouton, puis la tâche). */
-@media (max-width: 600px) {
-  .ech-row {
-    flex-wrap: wrap;
-    align-items: flex-start;
-  }
-  .ech-row .ech-machine {
-    width: auto;
-    padding-top: 8px;
-  }
-  .ech-row > .grow {
-    flex: 1 1 100%;
-    order: 2;
-  }
-  .ech-row > .btn {
-    order: 1;
-    margin-left: auto;
-  }
 }

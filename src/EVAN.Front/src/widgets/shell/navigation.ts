@@ -4,7 +4,7 @@
  */
 import { useProject } from '@/store/project';
 import { useEnregistrement } from '@/store/enregistrement';
-import { useUi, isReducedMotion, espaceOf, type Step } from '@/store/ui';
+import { useUi, isReducedMotion, espaceOf, type CameraFocus, type Step } from '@/store/ui';
 import { useLive } from '@/store/live';
 import { computeFrame } from '@/geo/geodesy';
 import { handoff, mapHandle, snapshotMapCamera, useMapUi } from '@/widgets/carte/mapState';
@@ -13,6 +13,7 @@ import { getSource } from '@/realtime/source';
 import { switchView } from '@/widgets/scene/planView';
 import type { Alarme } from '@/domain/types';
 import type { Ecran } from './ecrans';
+import { bilanFinConfiguration } from './finConfiguration';
 // Dépendance circulaire sans risque : chacun n'appelle les fonctions de l'autre qu'à l'exécution.
 import { openUsine } from '@/widgets/usines/usines';
 
@@ -139,21 +140,35 @@ export function requestConfiguration(step: Step = 1) {
   useUi.getState().setAccessRequest(step);
 }
 
-/** Accès accordé : passage en configuration, tracé dans le journal. */
-export async function unlockConfiguration() {
+/** Accès accordé : passage en configuration, tracé dans le journal. `etape` : une autre étape que celle demandée. */
+export async function unlockConfiguration(etape?: Step) {
   const ui = useUi.getState();
-  const step = ui.accessRequest ?? 1;
+  const step = etape ?? ui.accessRequest ?? 1;
   ui.setAccessRequest(null);
   getSource()?.logEvent({ type: 'action', horodatage: Date.now(), message: 'Configuration de l’usine ouverte', auteur: 'Superviseur' });
   ui.selectMachine(undefined);
   await goToStep(step, { force: true });
 }
 
-/** Fin de configuration : l'usine est prête, on bascule sur la supervision. */
-export async function finishConfiguration() {
-  const { batiments, machines } = useProject.getState();
+/**
+ * Fin de configuration : l'usine est prête, on bascule sur la supervision. Sans machine posée, ou avec des machines
+ * non branchées, un avis le dit d'abord et propose « Terminer quand même » (`confirme`) : la supervision serait vide
+ * ou muette sans qu'on sache pourquoi.
+ */
+export async function finishConfiguration(opts: { confirme?: boolean } = {}) {
+  const { batiments, machines, connexions } = useProject.getState();
   if (!batiments.length) {
     useLive.getState().pushToast({ gravite: 'info', titre: 'Il manque le bâtiment', texte: 'Relevez au moins une emprise avant de terminer.' });
+    return;
+  }
+  const bilan = opts.confirme ? undefined : bilanFinConfiguration(machines, connexions);
+  if (bilan) {
+    useLive.getState().pushToast({
+      gravite: 'attention',
+      titre: bilan.titre,
+      texte: bilan.texte,
+      action: { libelle: 'Terminer quand même', faire: () => void finishConfiguration({ confirme: true }) },
+    });
     return;
   }
   useProject.getState().setConfigure(true);
@@ -193,12 +208,21 @@ export async function simulateFault(machineId?: string, organeNumero?: number) {
     useLive.getState().pushToast({ gravite: 'info', titre: 'Aucune machine disponible', texte: 'Toutes les machines en production sont déjà en défaut, ou le simulateur ne répond pas.' });
     return null;
   }
-  useUi.getState().selectMachine(undefined);
-  useUi.getState().setFocus({ kind: 'site' });
+  // Une machine déjà suivie ou choisie (une première panne, une fiche ouverte) : la nouvelle panne ne l'en arrache pas.
+  // Elle s'annonce par son avis et la pastille de la barre du haut ; la caméra ne plonge que depuis la vue d'ensemble.
+  const ui = useUi.getState();
+  if (!panneASuivre(ui.selectedMachineId, ui.focus)) return res;
+  ui.selectMachine(undefined);
+  ui.setFocus({ kind: 'site' });
   followFault.current = { ...res, since: debut };
   // L'alarme est peut-être déjà là : la suivre tout de suite plutôt qu'attendre une alarme suivante.
   suivrePanne(useLive.getState().alarms);
   return res;
+}
+
+/** La caméra suit la panne simulée seulement si l'on regardait toute l'usine (ni machine choisie, ni pièce suivie). */
+export function panneASuivre(machineChoisie: string | undefined, focus: CameraFocus): boolean {
+  return !machineChoisie && focus.kind === 'site';
 }
 
 /** Panne à suivre : dès que l'alarme critique tombe, la caméra plonge jusqu'à l'organe. */

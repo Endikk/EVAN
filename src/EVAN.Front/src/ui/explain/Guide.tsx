@@ -9,6 +9,7 @@ import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 
 import { createPortal } from 'react-dom';
 import { BookOpen, Crosshair, X } from 'lucide-react';
 import { isReducedMotion } from '@/store/ui';
+import { usePiegeFocus } from '@/ui/usePiegeFocus';
 import { GLOSSAIRE, type TermeCle } from './glossaire';
 import { DefinitionTerme } from './Term';
 
@@ -32,11 +33,44 @@ export interface GuideEcran {
 
 const DUREE_SPOT_MS = 2400;
 
-/** Désigne un bloc de l'écran : il défile jusqu'à lui et s'entoure un instant d'un halo. */
+/** Ce qu'on lit d'un bloc candidat : de quoi choisir le bon sans navigateur. */
+export interface CandidatBloc {
+  /** Dans une couche masquée (inert, aria-hidden) ou sans boîte à l'écran. */
+  cache: boolean;
+}
+
+/**
+ * Le bloc à désigner parmi ceux qui portent la même clé : le premier qui se voit. La carte satellite reste montée
+ * sous les écrans en pleine page ; un bloc qui porte la même clé qu'elle ne doit pas la désigner.
+ */
+export function choisirBloc<T extends CandidatBloc>(candidats: T[]): T | undefined {
+  return candidats.find((c) => !c.cache);
+}
+
+function estCache(el: HTMLElement): boolean {
+  if (el.closest('[inert], [aria-hidden="true"], .stage-layer.hidden')) return true;
+  return el.getClientRects().length === 0;
+}
+
+/** Ouvre le bloc replié (« Voir les chiffres détaillés ») qui porte ou contient la cible. */
+function deplier(el: HTMLElement) {
+  const ferme = el.closest<HTMLElement>('.details:not(.ouvert)') ?? el.querySelector<HTMLElement>(':scope > .details:not(.ouvert)');
+  ferme?.querySelector<HTMLButtonElement>(':scope > .details-tete')?.click();
+}
+
+/**
+ * Désigne un bloc de l'écran : il s'ouvre s'il était replié, défile jusqu'à lui, prend le focus (le clavier repart
+ * de là) et s'entoure un instant d'un halo. Un bloc plus haut que l'écran se cale par son haut, pas par son milieu.
+ */
 export function montrerBloc(cible: string) {
-  const el = document.querySelector<HTMLElement>(`[data-guide="${CSS.escape(cible)}"]`);
+  const tous = [...document.querySelectorAll<HTMLElement>(`[data-guide="${CSS.escape(cible)}"]`)];
+  const el = choisirBloc(tous.map((x) => ({ x, cache: estCache(x) })))?.x;
   if (!el) return;
-  el.scrollIntoView({ behavior: isReducedMotion() ? 'auto' : 'smooth', block: 'center' });
+  deplier(el);
+  const haut = el.getBoundingClientRect().height;
+  el.scrollIntoView({ behavior: isReducedMotion() ? 'auto' : 'smooth', block: haut > window.innerHeight * 0.8 ? 'start' : 'center' });
+  if (!el.matches('a[href], button, input, select, textarea, [tabindex]')) el.setAttribute('tabindex', '-1');
+  el.focus({ preventScroll: true });
   el.classList.remove('guide-spot');
   // Relance l'animation si le même bloc est désigné deux fois de suite.
   void el.offsetWidth;
@@ -60,20 +94,16 @@ function marquerVu(id: string) {
   }
 }
 
-function Volet({ guide, fermer }: { guide: GuideEcran; fermer: () => void }) {
+function Volet({ guide, fermer, montrer }: { guide: GuideEcran; fermer: () => void; montrer: (cible: string) => void }) {
   const titreId = useId();
-  const fermerRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    fermerRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && fermer();
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [fermer]);
+  const volet = useRef<HTMLElement>(null);
+  // Piège de focus : Tab reste dans le volet, Échap le ferme (sauf si une bulle de mot ouverte l'a déjà consommé),
+  // le focus revient au bouton « Comment lire cet écran ».
+  usePiegeFocus(volet, true, fermer);
 
   return createPortal(
     <div className="guide-fond" onMouseDown={fermer}>
-      <aside className="guide-volet" role="dialog" aria-modal="true" aria-labelledby={titreId} onMouseDown={(e) => e.stopPropagation()}>
+      <aside ref={volet} className="guide-volet" role="dialog" aria-modal="true" aria-labelledby={titreId} onMouseDown={(e) => e.stopPropagation()}>
         <header className="guide-tete">
           <span className="guide-icone" aria-hidden>
             <BookOpen />
@@ -82,7 +112,7 @@ function Volet({ guide, fermer }: { guide: GuideEcran; fermer: () => void }) {
             <p className="guide-sur">Comment lire cet écran</p>
             <h2 id={titreId}>{guide.titre}</h2>
           </div>
-          <button ref={fermerRef} className="btn sm icon ghost" onClick={fermer} aria-label="Fermer l’explication" title="Fermer (Échap)">
+          <button data-autofocus className="btn sm icon ghost" onClick={fermer} aria-label="Fermer l’explication" title="Fermer (Échap)">
             <X />
           </button>
         </header>
@@ -96,10 +126,7 @@ function Volet({ guide, fermer }: { guide: GuideEcran; fermer: () => void }) {
                   {b.cible && (
                     <button
                       className="btn sm ghost guide-montrer"
-                      onClick={() => {
-                        fermer();
-                        window.setTimeout(() => montrerBloc(b.cible!), 120);
-                      }}
+                      onClick={() => montrer(b.cible!)}
                     >
                       <Crosshair /> Montrer
                     </button>
@@ -133,6 +160,8 @@ export function GuideButton({ guide, compact = false }: { guide: GuideEcran; com
   const [ouvert, setOuvert] = useState(false);
   const [nouveau, setNouveau] = useState(() => !dejaVu(guide.id));
   const bouton = useRef<HTMLButtonElement>(null);
+  // Bloc à désigner une fois le volet fermé : le focus rendu au bouton par le piège passe ensuite au bloc.
+  const aMontrer = useRef<string | null>(null);
 
   const ouvrir = () => {
     setOuvert(true);
@@ -141,10 +170,19 @@ export function GuideButton({ guide, compact = false }: { guide: GuideEcran; com
       setNouveau(false);
     }
   };
-  const fermer = useCallback(() => {
+  const fermer = useCallback(() => setOuvert(false), []);
+  const montrer = useCallback((cible: string) => {
+    aMontrer.current = cible;
     setOuvert(false);
-    bouton.current?.focus();
   }, []);
+
+  useEffect(() => {
+    if (ouvert || !aMontrer.current) return;
+    const cible = aMontrer.current;
+    aMontrer.current = null;
+    const t = window.setTimeout(() => montrerBloc(cible), 120);
+    return () => window.clearTimeout(t);
+  }, [ouvert]);
 
   return (
     <>
@@ -161,7 +199,7 @@ export function GuideButton({ guide, compact = false }: { guide: GuideEcran; com
         {!compact && <span>Comment lire cet écran</span>}
         {nouveau && <i className="guide-pastille" aria-hidden />}
       </button>
-      {ouvert && <Volet guide={guide} fermer={fermer} />}
+      {ouvert && <Volet guide={guide} fermer={fermer} montrer={montrer} />}
     </>
   );
 }

@@ -1,15 +1,38 @@
-/* ---------- Graphiques (palette de référence validée : bleu / orange, clair et sombre) ---------- */
+/* ---------- Graphiques : encre et ivoire, les états machine pour seules teintes ---------- */
 :root {
-  /* Séries : les couleurs de l'interface, rien d'autre (rouge EVAN, puis le bleu, le vert et l'ambre des états).
-     Une panne ou un calage gardent la couleur de leur état (--crit, --setup). Elles suivent le thème avec leurs jetons. */
+  /* Séries : la première est au vermillon EVAN, elle mène ; les suivantes descendent en paliers de neutre. Une panne
+     ou un calage gardent la couleur de leur état (--crit, --setup). Tout suit le thème avec ses jetons. */
   --series-1: var(--accent-2);
-  --series-2: var(--setup);
-  --series-3: var(--ok);
-  --series-4: var(--warn);
-  --grid: #18223a;
+  --series-2: var(--text-2);
+  --series-3: var(--text-3);
+  --series-4: color-mix(in srgb, var(--text-3) 55%, var(--surface));
+  /* Paliers de neutre pour les séries qui accompagnent celle qui mène : du plus présent au plus discret. */
+  --serie-neutre-1: var(--text-2);
+  --serie-neutre-2: var(--text-3);
+  --serie-neutre-3: color-mix(in srgb, var(--text-3) 55%, var(--surface));
+  /* Teinte posée : part de la couleur d'état dans une marque de graphique, le reste étant la surface de la carte.
+     La nuit, les états vifs sont tirés vers l'encre ; le jour, ils sont déjà sombres et restent presque purs. */
+  --ton-pose: 70%;
+  /* Grille : un filet à peine plus clair que la carte, sans teinte. */
+  --grid: var(--border);
+  /* Bande de fond (plage normale, creux de la courbe de charge) : un voile neutre, pas une couleur. */
+  --bande: color-mix(in srgb, var(--text) 5%, transparent);
+  --bande-bord: color-mix(in srgb, var(--text) 16%, transparent);
+  /* Paliers du plan des pannes (HeatPlan et sa légende) : gris sans panne, puis le rouge de panne de plus en plus
+     couvrant. Parts choisies avec le validateur de palette (dataviz) : le premier palier se détache du fond (2:1) et
+     deux paliers voisins restent distincts. Le jour, le rouge est déjà sombre : les parts s'écartent davantage. */
+  --panne-palier-0: color-mix(in srgb, var(--text-3) 30%, var(--surface-2));
+  --panne-palier-1: color-mix(in srgb, var(--crit) 48%, var(--surface-2));
+  --panne-palier-2: color-mix(in srgb, var(--crit) 62%, var(--surface-2));
+  --panne-palier-3: color-mix(in srgb, var(--crit) 76%, var(--surface-2));
+  --panne-palier-4: color-mix(in srgb, var(--crit) 90%, var(--surface-2));
 }
 :root[data-theme='light'] {
-  --grid: #e8e4de;
+  --ton-pose: 88%;
+  --panne-palier-1: color-mix(in srgb, var(--crit) 42%, var(--surface-2));
+  --panne-palier-2: color-mix(in srgb, var(--crit) 56%, var(--surface-2));
+  --panne-palier-3: color-mix(in srgb, var(--crit) 72%, var(--surface-2));
+  --panne-palier-4: var(--crit);
 }
 .chart {
   position: relative;
@@ -21,50 +44,35 @@
 .chart .recharts-legend-item-text {
   color: var(--text-2) !important;
 }
-.chart .axis {
-  font-size: 11px;
+/* Le graphique se parcourt au clavier (couche d'accessibilité de Recharts) : son focus suit la palette, et un clic de
+   souris n'y laisse pas d'anneau. */
+.recharts-surface:focus {
+  outline: none;
+}
+.recharts-surface:focus-visible {
+  outline: 2px solid var(--text-3);
+  outline-offset: 4px;
+  border-radius: var(--r-xs);
+}
+/* Les calques internes de Recharts (tabindex -1) prennent le focus au clic sur un libellé : hors d'atteinte du
+   clavier, ils n'ont pas à dessiner l'anneau bleu du navigateur. */
+.recharts-wrapper:focus,
+.recharts-wrapper:focus-visible,
+.recharts-surface [tabindex='-1']:focus {
+  outline: none;
+}
+/* Graduations de tous les graphiques : chiffres en mono 11 px, encre la plus discrète. La règle CSS passe devant les
+   attributs que Recharts pose sur le texte, si bien qu'un graphique ne peut pas s'en écarter par mégarde. */
+.recharts-cartesian-axis-tick-value {
+  font-family: var(--mono);
+  font-size: var(--fs-xs);
   fill: var(--text-3);
   font-variant-numeric: tabular-nums;
 }
-.chart .lbl {
-  font-size: 11.5px;
-  fill: var(--text-2);
-}
-.chart .val {
-  font-size: 11.5px;
-  font-weight: 650;
-  fill: var(--text);
-  font-variant-numeric: tabular-nums;
-}
-.chart .mark {
-  transition: opacity 160ms var(--ease);
-}
-.chart .mark:hover,
-.chart .mark:focus-visible {
-  opacity: 0.8;
-  outline: none;
-}
-.legend {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-  font-size: 12px;
-  color: var(--text-2);
-  margin-bottom: 8px;
-}
-.legend span {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-.legend i {
-  width: 10px;
-  height: 10px;
-  border-radius: var(--r-xs);
-  display: inline-block;
-}
 .chart-tip b {
-  font-size: 13px;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
+  font-variant-numeric: tabular-nums;
 }
 .chart-tip .k {
   display: inline-block;
@@ -74,22 +82,106 @@
   vertical-align: middle;
   margin-right: 8px;
 }
-.filters {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  align-items: center;
-  margin-bottom: 16px;
-}
-.filters .input {
-  width: auto;
-  height: 36px;
-}
 .spin {
   animation: spin 1s linear infinite;
 }
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* ---------- Ce que montre un écran d'analyse : période et machine (widgets/charts/Filtres.tsx) ---------- */
+.hist-filtres {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 32px;
+  margin: 0 0 16px;
+}
+.hf-groupe {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.hf-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
+  color: var(--text-2);
+}
+.hf-label svg {
+  width: var(--icon);
+  height: var(--icon);
+  color: var(--text-3);
+}
+/* La liste de la machine : même hauteur que le choix de la période (40 px), assez large pour le nom le plus long
+   de la démo, pour que la barre ne bouge pas quand on change de machine. */
+.hist-filtres .choix {
+  width: auto;
+  min-width: 260px;
+}
+.hf-retirer {
+  color: var(--text-2);
+}
+/* Le lien vers le même regard sur un autre écran (« Voir son énergie ») : discret, à côté du retrait du filtre. */
+.hf-lien {
+  color: var(--text-2);
+}
+/* Pastille du filtre en cours, collée en haut quand la barre est sortie de la vue. Le conteneur n'a pas de hauteur :
+   elle paraît sans pousser le contenu. Le filet vermillon dit la sélection, comme la barre choisie dans un graphique. */
+.filtre-colle {
+  position: sticky;
+  top: 8px;
+  z-index: 6;
+  height: 0;
+  display: flex;
+  justify-content: center;
+}
+.filtre-colle[hidden] {
+  display: none;
+}
+.filtre-colle-pastille {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  margin: 0;
+  padding: 0 4px 0 12px;
+  border: 1px solid var(--accent);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-2);
+  font-size: var(--fs-md);
+  color: var(--text-2);
+}
+.filtre-colle-pastille > svg {
+  width: var(--icon);
+  height: var(--icon);
+  color: var(--accent-2);
+}
+.filtre-colle-pastille b {
+  color: var(--text);
+  font-weight: var(--fw-medium);
+}
+@media (max-width: 760px) {
+  .hf-groupe {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+  .hist-filtres .choix {
+    flex: 1;
+    min-width: 0;
+  }
+}
+@media (pointer: coarse) {
+  .filtre-colle-pastille {
+    height: 48px;
+  }
+  .filtre-colle-pastille .btn {
+    min-height: 44px;
   }
 }

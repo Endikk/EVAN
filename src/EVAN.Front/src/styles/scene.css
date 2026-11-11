@@ -56,16 +56,17 @@
 /* Indication d'échelle de la carte satellite (étape 1). */
 .hud-echelle {
   padding: 8px;
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--text-2);
 }
 .hud-echelle b {
   color: var(--text);
-  font-weight: 620;
+  font-weight: var(--fw-medium);
 }
 
-/* Légende des états posée sur la scène : la forme et le nom de chaque état ; le survol ou un clic ouvre un petit
-   volet qui dit ce que chacun veut dire pour l'atelier. */
+/* Légende des états posée sur la scène : la forme et le nom de chaque état, en texte secondaire pour ne pas rivaliser
+   avec l'atelier. Toute la barre ouvre, au survol ou au clic, un petit volet qui dit ce que chacun veut dire : pas de
+   « ? » en plus (il ne suit que les titres). Les formes gardent leur couleur, le texte reste neutre. */
 .legende-etats {
   position: relative;
 }
@@ -73,17 +74,25 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  height: 36px;
-  padding: 0 8px 0 12px;
+  height: 32px;
+  padding: 0 12px;
   border-radius: var(--r-md);
-  font-size: 12px;
-  font-weight: 560;
-  color: var(--text);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-regular);
+  color: var(--text-2);
   cursor: pointer;
+  transition:
+    border-color var(--dur) var(--ease),
+    color var(--dur) var(--ease);
 }
 .legende-barre:hover,
 .legende-barre[aria-expanded='true'] {
   border-color: var(--border-strong);
+  color: var(--text);
+}
+.legende-barre:focus-visible {
+  outline: 2px solid var(--accent-text);
+  outline-offset: 2px;
 }
 .legende-item {
   display: inline-flex;
@@ -91,17 +100,9 @@
   gap: 4px;
   white-space: nowrap;
 }
-.legende-aide {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding-left: 8px;
-  border-left: 1px solid var(--border);
-  color: var(--text-2);
-}
+/* Le « ? » de la barre ne s'affiche pas ; son libellé reste lu par les lecteurs d'écran. */
 .legende-aide svg {
-  width: var(--icon);
-  height: var(--icon);
+  display: none;
 }
 .legende-volet {
   position: absolute;
@@ -114,15 +115,15 @@
   border: 1px solid var(--border-strong);
   box-shadow: var(--shadow-3);
   transform-origin: bottom left;
-  animation: volet-haut 240ms var(--ease-out);
+  animation: volet-haut var(--dur-entree) var(--ease-out);
 }
 .legende-volet h3 {
   margin: 0 0 4px;
-  font-size: 14px;
+  font-size: var(--fs-base);
 }
 .legende-volet > p {
   margin: 0 0 12px;
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   color: var(--text-2);
 }
 .legende-volet dl {
@@ -134,8 +135,6 @@
   display: grid;
   grid-template-columns: 18px minmax(0, 1fr);
   gap: 4px 8px;
-  animation: entree 320ms var(--ease-out) backwards;
-  animation-delay: calc(var(--i, 0) * 40ms);
 }
 .legende-ligne dt {
   display: contents;
@@ -145,25 +144,25 @@
   margin-top: 4px;
 }
 .legende-ligne b {
-  font-size: 13px;
+  font-size: var(--fs-md);
 }
 .legende-ligne b small {
   margin-left: 8px;
-  font-size: 11.5px;
-  font-weight: 500;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-regular);
   color: var(--text-3);
 }
 .legende-ligne dd {
   grid-column: 2;
   margin: 0;
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   line-height: 1.45;
   color: var(--text-2);
 }
 @keyframes volet-haut {
   from {
     opacity: 0;
-    transform: translateY(6px) scale(0.98);
+    transform: translateY(4px);
   }
 }
 @media (max-width: 900px) {
@@ -181,12 +180,17 @@
 .app:has(.caption) .stage .hud.bl {
   transform: translateY(-100px);
 }
+/* Bouton « Étiquettes » : même verre et même état enfoncé que le segment 3D/2D voisin, en palier de gris (aucune
+   teinte). Sans son verre, le libellé se posait à nu sur la photo. */
 .hud .hud-etiquettes {
-  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  border: 1px solid var(--border);
 }
-/* Enfoncé, il garde son verre sous la teinte de l'accent : sans lui, le libellé se posait à nu sur la photo. */
 .hud .hud-etiquettes[aria-pressed='true'] {
-  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+  background: var(--surface-3);
+  color: var(--text);
+}
+.hud .hud-etiquettes[aria-pressed='false'] {
+  color: var(--text-2);
 }
 @media (max-width: 600px) {
   /* Téléphone : la barre garde les formes, le nom des états passe dans le volet ; les commandes gardent leur icône. */
@@ -213,8 +217,8 @@
   align-items: center;
   gap: 8px;
   padding: 0 4px 0 8px;
-  font-size: 12.5px;
-  font-weight: 600;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
   color: var(--text-3);
 }
 .hud-niveaux-titre svg {
@@ -227,9 +231,9 @@
   justify-content: center;
   padding: 0 8px;
 }
-/* Le niveau affiché se lit d'un coup d'œil, même posé sur la photo : teinte de l'accent, comme les étiquettes. */
+/* Le niveau affiché : le même palier enfoncé que les autres segments de la scène. */
 .hud-niveaux button[aria-pressed='true'] {
-  background: color-mix(in srgb, var(--accent) 22%, var(--surface));
+  background: var(--surface-3);
   color: var(--text);
 }
 /* Une machine en panne à ce niveau : le point reste visible même quand on regarde un autre niveau. */

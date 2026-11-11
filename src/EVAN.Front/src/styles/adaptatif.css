@@ -31,17 +31,21 @@
     bottom: 12px;
     width: auto;
   }
-  .toast:not(:first-child) {
+  .toasts.sur-scene,
+  .app:has(.assistant) .toasts.sur-scene {
+    top: auto;
+    right: 12px;
+    bottom: 12px;
+    flex-direction: column-reverse;
+  }
+  .avis:not(:first-child) {
     display: none;
   }
-  .toast p {
+  .avis p {
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-  }
-  .topbar .hide-sm {
-    display: none;
   }
   .span-8,
   .span-7,
@@ -58,21 +62,60 @@
   }
 }
 
-/* ---------- Animations réduites ---------- */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
-    scroll-behavior: auto !important;
-  }
-}
+/* ---------- Animations réduites ----------
+   Une seule marque, data-motion sur la racine (store/ui.ts) : la préférence du système la pose, le bouton « Réduire
+   les animations » la remplace dans les deux sens et son choix est gardé. Pas de règle @media ici : elle empêchait
+   le bouton de remettre les animations quand le système les réduisait. */
+:root[data-motion='reduce'],
 :root[data-motion='reduce'] *,
 :root[data-motion='reduce'] *::before,
 :root[data-motion='reduce'] *::after {
   animation-duration: 0.001ms !important;
   animation-iteration-count: 1 !important;
   transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
 }
+
+/* ---------- Cibles tactiles ----------
+   Au doigt, tout ce qui se touche fait au moins 44 px de haut (--touch). Les déclencheurs trop petits pour grandir sans
+   bousculer la mise en page (« ? », mot souligné, pastille de chapitre) gardent leur dessin : une zone invisible
+   autour d'eux reçoit le toucher. */
+@media (pointer: coarse) {
+  .btn.sm {
+    --h: var(--touch);
+  }
+  .seg button {
+    height: var(--touch);
+  }
+  .side-item,
+  .app.replie .side-item {
+    min-height: var(--touch);
+  }
+  .infotip,
+  .infotip-texte,
+  .terme,
+  .tour-dots button {
+    position: relative;
+  }
+  .infotip::after,
+  .infotip-texte::after,
+  .terme::after,
+  .tour-dots button::after {
+    content: '';
+    position: absolute;
+  }
+  /* « ? » de 20 px : zone de 44 × 44. */
+  .infotip::after {
+    inset: -12px;
+  }
+  /* Mot souligné, sur une ligne de 19 px : la zone déborde de 13 px au-dessus et au-dessous. */
+  .infotip-texte::after,
+  .terme::after {
+    inset: -13px 0;
+  }
+  /* Pastille de chapitre de 20 × 8 : zone de 44 px de haut, sur toute la largeur de la pastille et de son écart. */
+  .tour-dots button::after {
+    inset: -18px -2px;
+  }
+}
+

@@ -9,8 +9,9 @@
  */
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { create } from 'zustand';
-import { AlertTriangle, ArrowUp, Database, Factory, KeyRound, MessageCircleQuestion, OctagonAlert, PlugZap, RotateCcw, Square, Wrench, X, Zap } from 'lucide-react';
+import { AlertTriangle, ArrowUp, Database, Factory, KeyRound, OctagonAlert, PlugZap, RotateCcw, Square, Wrench, X, Zap } from 'lucide-react';
 import { useUi } from '@/store/ui';
+import { usePiegeFocus } from '@/ui/usePiegeFocus';
 import { useProject } from '@/store/project';
 import { useLive } from '@/store/live';
 import { getHistory } from '@/sim/history';
@@ -101,7 +102,10 @@ function useThemes(): Theme[] {
     {
       titre: 'Maintenance',
       icone: Wrench,
-      suggestions: [{ court: 'Les entretiens à prévoir cette semaine', question: 'Que faut-il planifier en maintenance cette semaine ?' }],
+      suggestions: [
+        { court: 'Les interventions prévues cette semaine', question: 'Qu’est-ce qui est prévu cette semaine en maintenance ?' },
+        { court: 'Les entretiens restant à planifier', question: 'Que faut-il encore planifier en maintenance cette semaine ?' },
+      ],
     },
     {
       titre: 'Énergie',
@@ -121,10 +125,18 @@ function Panel() {
   const themes = useThemes();
   const [question, setQuestion] = useState('');
   const fil = useRef<HTMLDivElement>(null);
+  const panneau = useRef<HTMLElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
+  const fermerBtn = useRef<HTMLButtonElement>(null);
   const abort = useRef<AbortController | null>(null);
   const close = () => useUi.getState().setAssistantOuvert(false);
   const enCours = messages.some((m) => m.enCours);
+  const verification = dispo === undefined;
+  const pret = !!dispo?.disponible && !codeRequis;
+  // Piège de focus : le panneau couvre le côté de l'écran, Tab y reste, Échap le ferme et rend le focus au bouton
+  // « Demander à EVAN ». Le focus entre par le champ s'il est prêt, sinon par « Fermer » : hors ligne, le champ est
+  // grisé et il fallait vingt Tab pour rejoindre le panneau.
+  usePiegeFocus(panneau, true, close);
 
   useEffect(() => {
     // Revérifiée à chaque ouverture tant qu'il est hors ligne : le serveur a pu démarrer entre-temps.
@@ -134,13 +146,12 @@ function Panel() {
         useConversation.getState().set({ dispo: d, codeRequis: d?.acces === 'code' && !codeAcces() ? 'Code d’accès requis.' : null }),
       );
     }
-    input.current?.focus();
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') close();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
   }, []);
+
+  // L'assistant devient prêt après l'ouverture (vérification faite, code saisi) : le focus passe de « Fermer » au champ.
+  useEffect(() => {
+    if (pret && (document.activeElement === fermerBtn.current || document.activeElement === document.body)) input.current?.focus();
+  }, [pret]);
 
   useEffect(() => {
     fil.current?.scrollTo({ top: fil.current.scrollHeight, behavior: 'smooth' });
@@ -197,9 +208,6 @@ function Panel() {
     if (aReposer) void poser(aReposer);
     else input.current?.focus();
   };
-  const verification = dispo === undefined;
-  const pret = !!dispo?.disponible && !codeRequis;
-
   // Visite guidée : une question posée comme si on cliquait une suggestion.
   const poserRef = useRef(poser);
   poserRef.current = poser;
@@ -215,11 +223,8 @@ function Panel() {
   };
 
   return (
-    <aside className="assistant" role="dialog" aria-label="Demander à EVAN">
+    <aside ref={panneau} className="assistant" role="dialog" aria-modal="true" aria-label="Demander à EVAN">
       <header className="assistant-head">
-        <span className="assistant-mark" aria-hidden>
-          <MessageCircleQuestion />
-        </span>
         <div className="grow" style={{ minWidth: 0 }}>
           <b>Demander à EVAN</b>
           <span className="faint truncate">{usine ? `Questions sur ${usine}` : 'Questions sur l’usine'}</span>
@@ -229,7 +234,7 @@ function Panel() {
             <RotateCcw />
           </button>
         )}
-        <button className="btn sm icon ghost" onClick={close} aria-label="Fermer l’assistant" title="Fermer (Échap)">
+        <button ref={fermerBtn} data-autofocus={pret ? undefined : true} className="btn sm icon ghost" onClick={close} aria-label="Fermer l’assistant" title="Fermer (Échap)">
           <X />
         </button>
       </header>
@@ -250,7 +255,7 @@ function Panel() {
               {!!m.outils?.length && (
                 <details className="assistant-outils" open={m.enCours}>
                   <summary>
-                    <Database size={14} aria-hidden /> {m.enCours ? 'EVAN lit' : 'EVAN a lu'} {m.outils.length} source{m.outils.length > 1 ? 's' : ''} de données
+                    <Database aria-hidden /> {m.enCours ? 'EVAN lit' : 'EVAN a lu'} {m.outils.length} source{m.outils.length > 1 ? 's' : ''} de données
                   </summary>
                   <ul>
                     {m.outils.map((o, k) => (
@@ -283,6 +288,7 @@ function Panel() {
       <form className="assistant-form" onSubmit={submit}>
         <textarea
           ref={input}
+          data-autofocus={pret ? true : undefined}
           className="input"
           rows={2}
           value={question}
@@ -309,9 +315,19 @@ function Panel() {
         )}
       </form>
       <p className="assistant-pied faint">
-        {dispo?.disponible
-          ? `Réponses de ${dispo.modele ?? 'Claude'}, tirées des données d’EVAN. Entrée pour envoyer, Maj + Entrée pour aller à la ligne.`
-          : 'Les réponses viennent des données d’EVAN : historique, maintenance, énergie et direct.'}
+        {dispo?.disponible ? (
+          <>
+            Réponses de {dispo.modele ?? 'Claude'}, tirées des données d’EVAN.{' '}
+            <span className="assistant-touches">
+              <kbd className="kbd">Entrée</kbd> pour envoyer,
+            </span>{' '}
+            <span className="assistant-touches">
+              <kbd className="kbd">Maj</kbd> + <kbd className="kbd">Entrée</kbd> pour aller à la ligne
+            </span>
+          </>
+        ) : (
+          'Les réponses viennent des données d’EVAN : historique, maintenance, énergie et direct.'
+        )}
       </p>
     </aside>
   );
@@ -322,9 +338,11 @@ function Panel() {
 function Accueil({ themes, pret, poser }: { themes: Theme[]; pret: boolean; poser(q: string): void }) {
   return (
     <div className="assistant-intro">
+      {/* Hors ligne, on ne peut rien poser : la phrase dit ce qu'il fera une fois branché. */}
       <p>
-        Posez une question en français sur l’usine. EVAN cherche la réponse dans ses données et cite ses sources : un clic sur une machine ou une alarme
-        citée l’ouvre dans l’application.
+        {pret
+          ? 'Posez une question en français sur l’usine. EVAN cherche la réponse dans ses données et cite ses sources : un clic sur une machine ou une alarme citée l’ouvre dans l’application.'
+          : 'Une fois branché, l’assistant répond en français aux questions sur l’usine. Il cherche dans les données d’EVAN et cite ses sources : un clic sur une machine ou une alarme citée l’ouvre dans l’application.'}
       </p>
       <h3>{pret ? 'Par exemple' : 'Ce qu’il saura vous dire une fois branché'}</h3>
       {themes.map((t, i) => (

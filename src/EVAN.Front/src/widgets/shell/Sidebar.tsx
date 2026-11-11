@@ -6,13 +6,15 @@
  * Grand écran : repliable en icônes seules (choix gardé). Tablette : icônes seules. Téléphone : menu qui glisse
  * par-dessus l'écran, ouvert depuis la barre du haut.
  */
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router';
-import { ArrowLeft, LogIn, Moon, MonitorPlay, PanelLeftClose, PanelLeftOpen, Pause, Play, Rocket, Settings2, Sun, UserRound, Waves, X } from 'lucide-react';
+import { Factory, LogIn, Moon, MonitorPlay, PanelLeftClose, PanelLeftOpen, Pause, Play, Settings2, Sun, UserRound, Waves, X } from 'lucide-react';
 import { useProject } from '@/store/project';
 import { useSession } from '@/store/session';
+import { useLive } from '@/store/live';
 import { useEspace, useIsDark, useReducedMotion, useUi } from '@/store/ui';
-import { PixelField } from '@/ui/PixelField';
+import { StatusIcon } from '@/ui/status';
+import { usePiegeFocus } from '@/ui/usePiegeFocus';
 import { UsineMenu } from '@/widgets/usines/UsineMenu';
 import { UsinesListe } from '@/widgets/usines/UsinesListe';
 import { CHAPITRES, pauseTour, startTour, stopTour } from '@/widgets/tour/tour';
@@ -21,14 +23,21 @@ import { EtapesConfig } from './StepRail';
 import { EXPLOIT_TABS } from './steps';
 import { goToStep, requestConfiguration } from './navigation';
 import { useCoquille } from './coquille';
+import { panneOuverte } from './panneOuverte';
 
 const minuscule = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 
-/** Les écrans de l'usine ouverte, chacun avec ce qu'on y fait, puis l'entrée de la configuration. */
+/**
+ * Les écrans de l'usine ouverte, chacun avec ce qu'on y fait, puis l'entrée de la configuration. L'entrée Supervision
+ * porte une marque tant qu'une panne reste ouverte, pour qu'elle ne s'oublie pas depuis un autre écran.
+ */
 function Ecrans({ apres }: { apres: () => void }) {
   const step = useUi((s) => s.step);
   const vueOrganisation = useUi((s) => s.vueOrganisation);
   const demo = useProject((s) => s.mode === 'demo');
+  const alarms = useLive((s) => s.alarms);
+  const machines = useProject((s) => s.machines);
+  const panne = useMemo(() => panneOuverte(alarms, machines), [alarms, machines]);
   return (
     <section className="side-section side-ecrans" aria-labelledby="side-ecrans-titre">
       <div className="side-section-tete">
@@ -44,15 +53,20 @@ function Ecrans({ apres }: { apres: () => void }) {
                 apres();
                 void goToStep(t.n);
               }}
-              title={`${t.titre} : ${minuscule(t.action)}`}
+              title={`${t.titre} : ${minuscule(t.action)}${t.n === 6 && panne ? `. ${panne.libelle}` : ''}`}
             >
               <span className="side-icone" aria-hidden>
                 <t.icon />
               </span>
               <span className="side-txt">
                 <b>{t.titre}</b>
-                <small>{t.action}</small>
               </span>
+              {t.n === 6 && panne && (
+                <span className={`side-marque ${panne.exercice ? 'exercice' : ''}`}>
+                  <StatusIcon etat="panne" size={10} animate={false} />
+                  <span className="sr-only">, {panne.libelle.toLowerCase()}</span>
+                </span>
+              )}
             </button>
           </li>
         ))}
@@ -74,9 +88,9 @@ function Ecrans({ apres }: { apres: () => void }) {
             <span className="side-icone" aria-hidden>
               <Settings2 />
             </span>
+            {/* Un seul nom pour entrer en configuration, en démonstration comme sur son usine. */}
             <span className="side-txt">
-              <b>{demo ? 'Modifier cette usine' : 'Configurer l’usine'}</b>
-              <small>{demo ? 'L’exemple, pour essayer' : 'Carte, plan, machines, branchements'}</small>
+              <b>Modifier l’usine</b>
             </span>
           </button>
         </li>
@@ -85,32 +99,13 @@ function Ecrans({ apres }: { apres: () => void }) {
   );
 }
 
-/** Configuration ouverte : ses étapes, et le retour à la supervision si l'usine est déjà en service. */
+/**
+ * Configuration ouverte : ses étapes. Une seule sortie, « Terminer la configuration » (barre du haut, bas du panneau à
+ * la dernière étape) : elle enregistre et l'inscrit au journal. L'ancien « Revenir à la supervision » sortait sans
+ * l'un ni l'autre.
+ */
 function Configuration({ apres }: { apres: () => void }) {
-  const configure = useProject((s) => s.configure);
-  return (
-    <>
-      <EtapesConfig apres={apres} />
-      {configure && (
-        <button
-          className="side-item side-retour"
-          onClick={() => {
-            apres();
-            stopTour();
-            void goToStep(6);
-          }}
-          title="Quitter la configuration sans rien changer d’autre : les modifications déjà faites sont gardées."
-        >
-          <span className="side-icone" aria-hidden>
-            <ArrowLeft />
-          </span>
-          <span className="side-txt">
-            <b>Revenir à la supervision</b>
-          </span>
-        </button>
-      )}
-    </>
-  );
+  return <EtapesConfig apres={apres} />;
 }
 
 /**
@@ -155,11 +150,11 @@ function Pied({ apres }: { apres: () => void }) {
   const navigate = useNavigate();
   return (
     <div className="side-pied">
-      <PixelField placement="bas-droite" intensite={0.75} />
       <div className="side-pied-actions">
         {mode === 'demo' && (
           <button
             className="side-item"
+            data-visite
             onClick={() => {
               apres();
               if (tour.playing) pauseTour();
@@ -190,11 +185,10 @@ function Pied({ apres }: { apres: () => void }) {
           }
         >
           <span className="side-icone" aria-hidden>
-            {mode === 'demo' ? <Rocket /> : <Play />}
+            {mode === 'demo' ? <Factory /> : <Play />}
           </span>
           <span className="side-txt">
             <b>{mode === 'demo' ? 'Créer mon usine' : 'Revoir la démo'}</b>
-            {mode === 'demo' && <small>Quitter la démo</small>}
           </span>
         </button>
         <Compte apres={apres} />
@@ -228,21 +222,16 @@ export function Sidebar() {
   const replie = useCoquille((s) => s.replie);
   const menuOuvert = useCoquille((s) => s.menuOuvert);
   const logoEnHaut = useLogoEnHaut();
-  const fermerBtn = useRef<HTMLButtonElement>(null);
+  const nav = useRef<HTMLElement>(null);
   const fermer = () => useCoquille.getState().setMenuOuvert(false);
 
-  // Téléphone : Échap referme le menu, le focus va sur « Fermer » à l'ouverture.
-  useEffect(() => {
-    if (!menuOuvert) return;
-    fermerBtn.current?.focus();
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && fermer();
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [menuOuvert]);
+  // Téléphone : le menu couvre l'écran. Piège de focus : il entre par « Fermer », Tab y reste, Échap le referme et
+  // rend le focus au bouton du menu.
+  usePiegeFocus(nav, menuOuvert, fermer);
 
   return (
     <>
-      <nav className={`side ${replie ? 'replie' : ''} ${menuOuvert ? 'ouvert' : ''}`} aria-label="Usines et écrans">
+      <nav ref={nav} className={`side ${replie ? 'replie' : ''} ${menuOuvert ? 'ouvert' : ''}`} aria-label="Usines et écrans">
         <div className="side-tete">
           {!logoEnHaut && <LogoVoyageur />}
           <button
@@ -256,7 +245,7 @@ export function Sidebar() {
           >
             {replie ? <PanelLeftOpen /> : <PanelLeftClose />}
           </button>
-          <button ref={fermerBtn} className="btn sm icon ghost side-fermer" onClick={fermer} aria-label="Fermer le menu" title="Fermer (Échap)">
+          <button data-autofocus className="btn sm icon ghost side-fermer" onClick={fermer} aria-label="Fermer le menu" title="Fermer (Échap)">
             <X />
           </button>
         </div>

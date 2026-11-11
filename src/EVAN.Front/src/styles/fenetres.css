@@ -1,6 +1,7 @@
-/* Fenêtres, poignées de rotation, barre du haut étroite, légende des barres, carte des arrêts. */
+/* Fenêtres, avis, angle de rotation, légende des barres, carte des arrêts. */
 
-/* Fenêtre d'accès */
+/* Fenêtres : un voile sans flou, une surface au palier du dessus bordée d'un filet, et l'ombre réservée à ce qui
+   flotte. Le rayon est celui des volets (16 px). */
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -10,38 +11,44 @@
   padding: 16px;
   /* Voile sans flou : la scène 3D peut continuer de tourner dessous sans recalculer un flou plein écran. */
   background: var(--scrim);
-  animation: fadein 200ms var(--ease);
+  animation: fadein var(--dur) var(--ease);
 }
 .modal {
   position: relative;
   width: min(520px, 100%);
   padding: 24px;
-  border-radius: var(--r-lg);
+  border-radius: var(--r-xl);
   background: var(--surface);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-3);
-  animation: rise3 260ms var(--ease);
+  animation: fenetre-entree var(--dur-entree) var(--ease);
 }
 .modal h2 {
-  margin: 12px 0 8px;
-  font-size: 20px;
+  margin: 16px 0 8px;
+  font-size: var(--fs-2xl);
+  font-weight: var(--fw-medium);
+  line-height: 1.3;
 }
 .modal p {
   margin: 0;
 }
 .modal-close {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: 16px;
+  right: 16px;
 }
-.modal-icon {
-  width: 44px;
-  height: 44px;
+/* Repère de la fenêtre : l'icône de ce qu'elle concerne, en neutre. Une fenêtre n'a pas de couleur à elle ;
+   .accent (posé par certaines fenêtres) ne change plus rien, la règle d'espaces.css est ici neutralisée. */
+.modal-icon,
+.modal-icon.accent {
+  width: 40px;
+  height: 40px;
   border-radius: var(--r-md);
   display: grid;
   place-items: center;
-  color: var(--warn);
-  background: var(--warn-soft);
+  color: var(--text-2);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
 }
 .modal-icon svg {
   width: var(--icon-lg);
@@ -53,36 +60,23 @@
   gap: 8px;
   margin-top: 16px;
 }
-.modal-steps span {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px;
-  border-radius: var(--r-sm);
-  font-size: 12.5px;
-  background: var(--surface-2);
-  color: var(--text-2);
-}
-.modal-steps span.on {
-  background: var(--accent-soft);
-  color: var(--accent-text);
-  font-weight: 650;
-}
 
-/* Accès à la configuration : ce qu'on va faire (les cinq étapes, celle où l'on arrive), pourquoi c'est protégé. */
+/* Accès à la configuration : ce qu'on va faire (les cinq étapes, celle où l'on arrive), pourquoi c'est protégé.
+   L'étape d'arrivée reprend le marquage de l'étape en cours dans la barre latérale. */
 .modal.acces {
   width: min(560px, 100%);
   max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
   overflow-y: auto;
 }
 .acces-texte {
-  font-size: 14px;
+  font-size: var(--fs-base);
   line-height: 1.55;
   color: var(--text-2);
 }
 .acces-texte b {
   color: var(--text);
-  font-weight: 620;
+  font-weight: var(--fw-medium);
   white-space: nowrap;
 }
 .acces-etapes {
@@ -92,24 +86,33 @@
   display: grid;
   gap: 4px;
 }
-.acces-etapes li {
+/* Chaque étape est un bouton : elle ouvre la configuration directement sur elle. */
+.acces-etape {
   display: flex;
   align-items: center;
   gap: 12px;
+  width: 100%;
   padding: 8px;
   border-radius: var(--r-md);
   border: 1px solid transparent;
-  animation: entree 360ms var(--ease-out) backwards;
-  animation-delay: calc(120ms + var(--i, 0) * 45ms);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--dur) var(--ease);
 }
-.acces-etapes li.ici {
+.acces-etape:hover {
+  background: var(--surface-2);
+}
+.acces-etapes li.ici .acces-etape {
   background: var(--accent-soft);
   border-color: color-mix(in srgb, var(--accent) 35%, transparent);
 }
 .acces-num {
   flex: none;
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   display: grid;
   place-items: center;
@@ -131,51 +134,51 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  line-height: 1.3;
+  line-height: 1.35;
 }
 .acces-ligne b {
-  font-size: 13.5px;
-  font-weight: 620;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
 }
 .acces-ligne span {
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   color: var(--text-2);
 }
 .acces-ici {
   flex: none;
+  padding-right: 4px;
   font-style: normal;
-  font-size: 12px;
-  font-weight: 650;
-  color: var(--accent-text);
+  font-size: var(--fs-sm);
+  color: var(--text-2);
 }
 .acces-pourquoi {
   display: flex;
-  gap: 8px;
+  gap: 12px;
   margin-top: 16px;
   padding: 12px 16px;
   border-radius: var(--r-md);
   background: var(--surface-2);
-  font-size: 13px;
+  font-size: var(--fs-md);
   line-height: 1.5;
   color: var(--text-2);
 }
 .acces-pourquoi > svg {
   flex: none;
-  width: var(--icon-lg);
-  height: var(--icon-lg);
-  margin-top: 1px;
-  color: var(--ok);
+  width: var(--icon);
+  height: var(--icon);
+  margin-top: 2px;
+  color: var(--text-2);
 }
 .acces-pourquoi b {
   color: var(--text);
-  font-weight: 620;
+  font-weight: var(--fw-medium);
 }
 .acces-actions {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 8px;
-  margin-top: 16px;
+  margin-top: 24px;
 }
 @media (max-width: 600px) {
   .modal.acces {
@@ -197,11 +200,107 @@
     flex: 1 1 100%;
   }
 }
+
+/* Avis (barre de notifications) : ce qui vient de se passer en une ligne (« Panne détectée »), le détail, l'action
+   utile. Leur place à l'écran est réglée avec le panneau (.toasts, panneau.css). Seule une alarme porte une couleur,
+   celle de l'état de la machine, avec sa forme ; un échec d'action garde le rouge de ce qui est à reprendre ; le
+   reste est neutre. Le trait du bas se vide pendant le temps où l'avis reste affiché. */
+.avis {
+  --c: var(--text-2);
+  position: relative;
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+  padding: 12px 8px 16px 16px;
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  box-shadow: var(--shadow-2);
+  overflow: hidden;
+  animation: avis-entree var(--dur-entree) var(--ease) backwards;
+}
+.avis.critique {
+  --c: var(--crit);
+}
+.avis.attention {
+  --c: var(--warn);
+}
+/* Panne d'exercice : le pointillé du bouton qui l'a déclenchée, sans teinte. La forme d'état garde sa forme, pas son
+   cramoisi (sa classe st-panne le posait sur le dessin lui-même). */
+.avis.exercice {
+  --c: var(--text-2);
+  border-style: dashed;
+}
+.avis.exercice .avis-forme .status-icon {
+  color: var(--c);
+}
+/* Le repère tient sur la ligne du « quoi » : forme d'état pour une alarme, icône neutre sinon. */
+.avis-forme {
+  height: 18px;
+  display: grid;
+  place-items: center;
+  color: var(--c);
+}
+.avis-forme svg.lucide {
+  width: var(--icon);
+  height: var(--icon);
+}
+.avis-quoi {
+  display: block;
+  font-size: var(--fs-sm);
+  line-height: 18px;
+  color: var(--c);
+}
+.avis b {
+  display: block;
+  margin-top: 4px;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
+}
+.avis p {
+  margin: 4px 0 0;
+  font-size: var(--fs-md);
+  line-height: 1.45;
+  color: var(--text-2);
+}
+.avis .btn:not(.icon) {
+  margin-top: 12px;
+}
+.avis-temps {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--border-strong);
+  transform-origin: left center;
+  animation: avis-temps var(--duree, 6s) linear forwards;
+}
+@keyframes avis-entree {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+}
+@keyframes avis-temps {
+  to {
+    transform: scaleX(0);
+  }
+}
+
 @keyframes fadein {
   from {
     opacity: 0;
   }
 }
+@keyframes fenetre-entree {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+/* Bulles d'aide et fiches flottantes (ecrans.css, espaces.css, pannes.css). */
 @keyframes rise3 {
   from {
     opacity: 0;
@@ -209,34 +308,9 @@
   }
 }
 
-/* Poignées de rotation des machines */
-.rot-handle {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: var(--surface);
-  color: var(--accent-text);
-  border: 2px solid var(--accent);
-  box-shadow: var(--shadow-2);
-  cursor: grab;
-  touch-action: none;
-  user-select: none;
-  transition: transform 120ms var(--ease);
-}
-.rot-handle:hover {
-  transform: scale(1.12);
-}
-.rot-handle:active {
-  cursor: grabbing;
-}
-.rot-handle svg {
-  width: var(--icon);
-  height: var(--icon);
-}
+/* Angle affiché pendant qu'on tourne une machine au plan : la valeur de la manipulation en cours. */
 .rot-angle {
-  font: 700 12px/1 var(--font);
+  font: var(--fw-medium) var(--fs-sm) / 1 var(--mono);
   font-variant-numeric: tabular-nums;
   padding: 4px 8px;
   border-radius: var(--r-sm);
@@ -245,17 +319,6 @@
   white-space: nowrap;
   pointer-events: none;
 }
-@media (max-width: 1500px) {
-  .topbar .hide-lg {
-    display: none;
-  }
-}
-/* Barre du haut : libellés des actions jusqu'à 1200 px (portable 1280 compris), icônes seules en dessous. */
-@media (max-width: 1200px) {
-  .topbar .hide-ml {
-    display: none;
-  }
-}
 
 /* Légende explicite au-dessus des barres empilées */
 .chart-legend {
@@ -263,7 +326,7 @@
   flex-wrap: wrap;
   gap: 4px 16px;
   margin: 4px 0 8px;
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--text-2);
 }
 .chart-legend span {
@@ -278,10 +341,9 @@
 }
 .chart-legend b {
   color: var(--text);
-  font-weight: 650;
+  font-weight: var(--fw-medium);
 }
 
-/* Carte des arrêts */
 /* Carte des arrêts : remplit toute la hauteur de sa carte (à côté du graphique), ou une hauteur fixe seule sur sa ligne. */
 .map-card {
   display: flex;
@@ -326,13 +388,72 @@
   align-items: center;
   gap: 8px;
   min-height: 20px;
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--text-2);
 }
+.heat-legend b {
+  color: var(--text);
+  font-weight: var(--fw-medium);
+}
+/* Échelle de la carte : cinq paliers en aplat, lus comme les machines du plan. Gris pour aucune panne, puis le rouge
+   de la panne de plus en plus couvrant, au quart, à la moitié, aux trois quarts et au plus long arrêt. Les couleurs
+   sont celles des rectangles du plan, --panne-palier-0 à 4 (graphiques.css), que HeatPlan pose aussi en ligne sur
+   la légende. Des paliers plutôt qu'un fondu : l'œil les compare un par un aux machines. */
 .heat-legend i {
+  --p0: var(--panne-palier-0);
+  --p1: var(--panne-palier-1);
+  --p2: var(--panne-palier-2);
+  --p3: var(--panne-palier-3);
+  --p4: var(--panne-palier-4);
   flex: 1;
-  max-width: 180px;
+  max-width: 160px;
   height: 8px;
   border-radius: var(--r-xs);
-  background: linear-gradient(90deg, color-mix(in srgb, var(--crit) 10%, var(--surface)), var(--crit));
+  background: linear-gradient(
+    90deg,
+    var(--p0) 0 calc(20% - 1px),
+    transparent 0 calc(20% + 1px),
+    var(--p1) 0 calc(40% - 1px),
+    transparent 0 calc(40% + 1px),
+    var(--p2) 0 calc(60% - 1px),
+    transparent 0 calc(60% + 1px),
+    var(--p3) 0 calc(80% - 1px),
+    transparent 0 calc(80% + 1px),
+    var(--p4) 0
+  );
+}
+
+/* Page d'erreur (app/router.tsx) : l'effacement de l'usine, en retrait et confirmé, puis le détail technique replié. */
+.hr-effacer {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.hr-effacer p {
+  max-width: 36em;
+  margin: 0;
+  font-size: var(--fs-md);
+  line-height: 1.5;
+  color: var(--text-2);
+}
+.hr-effacer .hr-actions {
+  margin-top: 12px;
+}
+.hr-detail {
+  margin-top: 24px;
+  font-size: var(--fs-sm);
+  color: var(--text-3);
+}
+.hr-detail summary {
+  cursor: pointer;
+}
+.hr-detail code {
+  display: block;
+  margin-top: 8px;
+  padding: 8px 12px;
+  border-radius: var(--r-sm);
+  font-family: var(--mono);
+  color: var(--text-2);
+  background: var(--surface-2);
+  overflow-wrap: anywhere;
 }

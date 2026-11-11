@@ -96,6 +96,44 @@ function teinterBarre(theme: UiState['theme']) {
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', BARRE_NAVIGATEUR[theme === 'light' ? 'light' : 'dark']);
 }
 
+/** Choix « Réduire les animations » gardé dans ce navigateur : sans lui, il était oublié au rechargement. */
+const CLE_ANIMATIONS = 'evan.animations';
+
+/** Lit le choix gardé : réduites, normales, ou rien (la préférence du système s'applique). */
+export function lireChoixAnimations(valeur: string | null): boolean | null {
+  if (valeur === 'reduites') return true;
+  if (valeur === 'normales') return false;
+  return null;
+}
+
+function initialReducedMotion(): boolean | null {
+  try {
+    return lireChoixAnimations(localStorage.getItem(CLE_ANIMATIONS));
+  } catch {
+    return null;
+  }
+}
+
+function garderChoixAnimations(v: boolean | null) {
+  try {
+    if (v === null) localStorage.removeItem(CLE_ANIMATIONS);
+    else localStorage.setItem(CLE_ANIMATIONS, v ? 'reduites' : 'normales');
+  } catch {
+    /* navigation privée : le choix vaut pour cette visite */
+  }
+}
+
+/**
+ * Animations réduites, appliquées par la seule marque data-motion de la racine (adaptatif.css) : la préférence du
+ * système la pose, un choix explicite dans l'interface la remplace dans les deux sens. Une règle @media globale
+ * rendait le bouton trompeur : il ne pouvait pas remettre les animations quand le système les réduisait.
+ */
+function appliquerMouvement(reduit: boolean) {
+  if (typeof document === 'undefined') return;
+  if (reduit) document.documentElement.dataset.motion = 'reduce';
+  else delete document.documentElement.dataset.motion;
+}
+
 function initialTheme(): UiState['theme'] {
   try {
     const t = localStorage.getItem('evan.theme');
@@ -112,7 +150,7 @@ export const useUi = create<UiState>()((set, get) => ({
   focus: { kind: 'site' },
   focusNonce: 0,
   tour: { playing: false },
-  reducedMotionUser: null,
+  reducedMotionUser: initialReducedMotion(),
   systemReducedMotion: mq?.matches ?? false,
   theme: initialTheme(),
   niveau: 0,
@@ -144,7 +182,10 @@ export const useUi = create<UiState>()((set, get) => ({
     teinterBarre(theme);
     set({ theme });
   },
-  setReducedMotionUser: (reducedMotionUser) => set({ reducedMotionUser }),
+  setReducedMotionUser: (reducedMotionUser) => {
+    garderChoixAnimations(reducedMotionUser);
+    set({ reducedMotionUser });
+  },
   setPlacingType: (placingType) => set({ placingType }),
   setNiveau: (niveau) => set({ niveau }),
   setShowLabels: (showLabels) => set({ showLabels }),
@@ -164,6 +205,11 @@ export function useEspace(): Espace {
 }
 
 mq?.addEventListener('change', (e) => useUi.setState({ systemReducedMotion: e.matches }));
+// La marque des animations réduites suit l'état, partout (accueil compris), dès le chargement.
+appliquerMouvement(isReducedMotion());
+useUi.subscribe((s, avant) => {
+  if (s.reducedMotionUser !== avant.reducedMotionUser || s.systemReducedMotion !== avant.systemReducedMotion) appliquerMouvement(isReducedMotion());
+});
 // index.html pose le thème avant le premier rendu ; la barre du navigateur le rejoint au chargement de l'application.
 if (typeof document !== 'undefined') teinterBarre(useUi.getState().theme);
 

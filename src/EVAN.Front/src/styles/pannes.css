@@ -38,7 +38,7 @@
   top: 50%;
   transform: translateY(-50%);
   font-style: normal;
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--text-3);
   pointer-events: none;
 }
@@ -47,22 +47,29 @@
   flex-wrap: wrap;
   gap: 8px;
 }
+/* Aspect du défaut : des boutons à bascule (rayon de commande, pas de pilule), l'aspect choisi en ivoire. */
 .chip-btn {
-  height: 30px;
+  height: 32px;
   padding: 0 12px;
-  border-radius: 999px;
+  border-radius: var(--r-md);
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--text-2);
-  font-size: 12.5px;
-  font-weight: 600;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
   cursor: pointer;
   transition:
-    background var(--dur) var(--ease),
-    border-color var(--dur) var(--ease);
+    background-color var(--dur) var(--ease),
+    border-color var(--dur) var(--ease),
+    color var(--dur) var(--ease),
+    transform var(--dur) var(--ease);
 }
 .chip-btn:hover {
   background: var(--surface-2);
+  color: var(--text);
+}
+.chip-btn:active {
+  transform: scale(0.98);
 }
 .chip-btn.on {
   background: var(--accent-soft);
@@ -86,7 +93,7 @@
   background: var(--surface);
   cursor: pointer;
   transition:
-    background var(--dur) var(--ease),
+    background-color var(--dur) var(--ease),
     border-color var(--dur) var(--ease);
 }
 .pitch-cand:disabled {
@@ -100,8 +107,9 @@
   background: color-mix(in srgb, var(--accent) 6%, var(--surface));
 }
 .pitch-cand b {
-  font-size: 13px;
+  font-size: var(--fs-md);
 }
+/* Rang de la pièce : la confiance se lit en paliers de gris (plein, cerclé, discret), sans teinte d'état. */
 .pitch-rank {
   flex: none;
   width: 24px;
@@ -109,8 +117,9 @@
   border-radius: 50%;
   display: grid;
   place-items: center;
-  font-size: 12px;
-  font-weight: 750;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  font-variant-numeric: tabular-nums;
   color: var(--text-2);
   background: var(--surface-2);
 }
@@ -119,8 +128,9 @@
   background: var(--accent);
 }
 .pitch-rank.conf-moyenne {
-  color: var(--warn);
-  background: var(--warn-soft);
+  color: var(--text);
+  background: var(--surface-3);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
 }
 .pitch-gap {
   flex: none;
@@ -128,11 +138,11 @@
   flex-direction: column;
   align-items: flex-end;
   gap: 4px;
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
 }
 .pitch-same {
   margin-top: 4px;
-  color: var(--warn) !important;
+  color: var(--text) !important;
 }
 .pitch-locate {
   flex: none;
@@ -150,7 +160,7 @@
   height: min(900px, calc(100vh - 24px));
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
-  border-radius: var(--r-lg);
+  border-radius: var(--r-xl);
   background: var(--surface);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-3);
@@ -166,11 +176,11 @@
 }
 .replay-head h2 {
   margin: 0;
-  font-size: 17px;
+  font-size: var(--fs-xl);
 }
 .replay-head p {
   margin: 0;
-  font-size: 12.5px;
+  font-size: var(--fs-md);
 }
 .replay-body {
   display: grid;
@@ -193,28 +203,31 @@
   border-radius: var(--r-md);
 }
 .replay-clock .mono {
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-size: var(--fs-2xl);
+  font-weight: var(--fw-medium);
+  font-variant-numeric: tabular-nums;
 }
+/* L'étape en cours, posée sur la 3D : un verre neutre, sans bande de couleur ; l'état de la machine est dit par la
+   puce à côté de l'horloge. */
 .replay-now {
-  --c: var(--accent);
   position: absolute;
   left: 12px;
   right: 12px;
   bottom: 12px;
   max-width: 560px;
-  padding: 8px 12px;
+  padding: 12px 16px;
   border-radius: var(--r-md);
-  border-left: 4px solid var(--c);
   display: flex;
   flex-direction: column;
   gap: 4px;
-  font-size: 12.5px;
-  animation: rise2 300ms var(--ease);
+  font-size: var(--fs-md);
+  color: var(--text-2);
+  animation: rise2 var(--dur-entree) var(--ease-out);
 }
 .replay-now b {
-  font-size: 14px;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
+  color: var(--text);
 }
 .ton-warn {
   --c: var(--warn);
@@ -293,12 +306,12 @@
   height: var(--icon-sm);
 }
 .replay-steps b {
-  font-size: 12.5px;
+  font-size: var(--fs-md);
 }
 .replay-steps time {
   flex: none;
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: var(--fs-xs);
   color: var(--text-3);
   padding-top: 4px;
 }
@@ -315,11 +328,13 @@
   gap: 8px;
   padding: 8px;
   border-radius: var(--r-sm);
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   background: var(--surface-2);
 }
 .replay-value b {
   color: var(--c);
+  font-weight: var(--fw-medium);
+  font-variant-numeric: tabular-nums;
   transition: color var(--dur) var(--ease);
 }
 .replay-value.main {
@@ -330,13 +345,12 @@
 }
 .replay-value.niv-alarme {
   --c: var(--crit);
-  background: var(--crit-soft);
 }
 .replay-cause {
   padding: 8px;
   border-radius: var(--r-sm);
   background: var(--surface-2);
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   color: var(--text-2);
 }
 .replay-cause p {
@@ -354,7 +368,7 @@
   padding: 8px 16px 12px;
 }
 .replay-chart-title {
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   margin-bottom: 4px;
 }
 .replay-chart .recharts-wrapper {
@@ -393,11 +407,11 @@
   pointer-events: none;
 }
 .energy-donut-center b {
-  font-size: 19px;
+  font-size: var(--fs-2xl);
   font-variant-numeric: tabular-nums;
 }
 .energy-donut-center small {
-  font-size: 10.5px;
+  font-size: var(--fs-xs);
   color: var(--text-3);
 }
 .gisements {
@@ -418,7 +432,7 @@
   border-bottom: 0;
 }
 .gisements b {
-  font-size: 13.5px;
+  font-size: var(--fs-base);
 }
 
 /* Vue d'ensemble de l'organisation */
@@ -426,7 +440,6 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  border-top: 3px solid var(--usine);
 }
 .org-usine-plan .heatplan-box {
   min-height: 260px;

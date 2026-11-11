@@ -8,7 +8,7 @@
 .compteur output {
   min-width: 28px;
   text-align: center;
-  font-size: 15px;
-  font-weight: 650;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-medium);
   color: var(--text);
 }

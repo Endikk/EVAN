@@ -5,11 +5,11 @@
  * Une seule scène : carte satellite à l'étape 1, puis plan 3D (ou 2D) jusqu'à la supervision. Elle reste montée d'un
  * écran à l'autre, puisque seule la page change.
  */
-import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useState } from 'react';
-import { ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react';
 import { Outlet, useLocation, useSearchParams } from 'react-router';
 import { useProject, type ProjectMode } from '@/store/project';
-import { useUi, useReducedMotion, espaceOf, enPleinePage, type Step } from '@/store/ui';
+import type { EtapeConfig } from '@/store/avancement';
+import { useUi, espaceOf, enPleinePage } from '@/store/ui';
 import { useLive } from '@/store/live';
 import { useRealtime } from '@/realtime/source';
 import { setTabPage, setTabStatus } from '@/ui/brand';
@@ -22,10 +22,9 @@ import { useCoquille } from '@/widgets/shell/coquille';
 import '@/widgets/shell/coquille.css';
 import { Toasts } from '@/widgets/shell/Toasts';
 import { CaptionBar, StageHud } from '@/widgets/shell/StageHud';
-import { finishConfiguration, focusAlarm, goToStep } from '@/widgets/shell/navigation';
+import { focusAlarm } from '@/widgets/shell/navigation';
 import { AccessDialog } from '@/widgets/shell/AccessDialog';
 import { lireChemin, titreEcran, type Ecran } from '@/widgets/shell/ecrans';
-import { CONFIG_STEPS } from '@/widgets/shell/steps';
 import { ZonesProvider, useZonesHote } from '@/widgets/shell/zones';
 import { OrganisationDialog } from '@/widgets/usines/OrganisationDialog';
 import { AlarmCard } from '@/widgets/pannes/AlarmCard';
@@ -33,14 +32,40 @@ import { ReplayDialog } from '@/widgets/pannes/ReplayGate';
 import { InterventionDialog } from '@/widgets/intervention/InterventionDialog';
 import { AssistantPanel } from '@/widgets/assistant/AssistantPanel';
 import { useSceneUi } from '@/widgets/scene/sceneState';
-import { pauseTour, startTour, stopTour } from '@/widgets/tour/tour';
+import { pauseTour, startTour } from '@/widgets/tour/tour';
 import { ErreurApi } from '@/api/http';
 import { chargerDepuisServeur, chargerEspace } from './lib/chargement';
 import { ChargementServeur } from './features/ChargementServeur';
+import { PiedConfiguration } from './features/PiedConfiguration';
 import { useAvantDeQuitter } from './hooks/useAvantDeQuitter';
 import { useEcranDansUrl } from './hooks/useEcranDansUrl';
 import { useRaccourcis } from './hooks/useRaccourcis';
 import { poserMachineChoisie, useDepotMachine } from './hooks/useDepotMachine';
+
+/**
+ * La visite guidée rend la main dès qu'on touche à l'interface : un clic ou une touche d'action (Entrée, Espace) sur
+ * la barre latérale, la barre du haut, les onglets d'un écran ou la scène la met en pause. Seules ses propres commandes
+ * (sa légende, son entrée dans la barre latérale, marquées data-visite) la laissent jouer : elles la pilotent elles-mêmes.
+ * Sans cela, elle reprenait l'écran qu'on venait d'ouvrir.
+ */
+function reprendLaMain(e: ReactPointerEvent | ReactKeyboardEvent) {
+  if (!e.isTrusted || !useUi.getState().tour.playing) return;
+  const cible = e.target as HTMLElement;
+  if (cible.closest('.caption, [data-visite]')) return;
+  if ('key' in e && e.key !== 'Enter' && e.key !== ' ') return;
+  pauseTour();
+}
+
+/**
+ * Après un changement d'écran, le focus passe au titre de l'écran (tabIndex -1) : le clavier et le lecteur d'écran
+ * repartent du haut du nouvel écran, au lieu du bouton cliqué (parfois disparu) ou du corps de la page. Sauf si le
+ * focus est dans la légende de la visite ou dans une fenêtre : on les utilise encore.
+ */
+function focusTitreEcran() {
+  const actif = document.activeElement;
+  if (actif instanceof HTMLElement && actif.closest('.caption, [role="dialog"], .assistant')) return;
+  document.querySelector<HTMLElement>('.ecran-titre')?.focus({ preventScroll: true });
+}
 
 // Chargés à la demande : moteur 3D et carte sortent du premier téléchargement.
 const SceneCanvas = lazy(() => import('@/widgets/scene/SceneCanvas').then((m) => ({ default: m.SceneCanvas })));
@@ -99,7 +124,6 @@ export function Workspace({ mode }: { mode: ProjectMode }) {
 
   const step = useUi((s) => s.step);
   const focus = useUi((s) => s.focus);
-  const reduced = useReducedMotion();
   const replie = useCoquille((s) => s.replie);
   const groundReady = useSceneUi((s) => s.groundReady);
   const alarms = useLive((s) => s.alarms);
@@ -115,9 +139,16 @@ export function Workspace({ mode }: { mode: ProjectMode }) {
   const espace = espaceOf(ecran === 'organisation' ? step : ecran);
   const pleinePage = ecran === 'organisation' || enPleinePage(ecran);
 
+  // Focus sur le titre à chaque changement d'écran, pas au premier affichage (le navigateur garde son ordre naturel).
+  const ecranPrecedent = useRef<typeof ecran | null>(null);
   useEffect(() => {
-    document.documentElement.dataset.motion = reduced ? 'reduce' : '';
-  }, [reduced]);
+    if (!ready) return;
+    const avant = ecranPrecedent.current;
+    ecranPrecedent.current = ecran;
+    if (avant === null || avant === ecran) return;
+    const raf = requestAnimationFrame(focusTitreEcran);
+    return () => cancelAnimationFrame(raf);
+  }, [ecran, ready]);
 
   // Onglet du navigateur : l'écran ouvert dans le titre, le point de l'icône à la couleur de l'atelier, le code de
   // la panne en tête.
@@ -177,26 +208,26 @@ export function Workspace({ mode }: { mode: ProjectMode }) {
     if (arrierePlan && step >= 2 && hasBuildings) setSceneMounted(true);
   }, [arrierePlan, step, hasBuildings]);
   const sceneVisible = sceneMounted && hasBuildings;
+  const carteVisible = step === 1 || !mapGone;
+  const sceneDevant = mapGone && step !== 1;
 
   // Le temps de lire l'organisation du compte, rien d'autre ne s'affiche : ni la démo, ni une copie du navigateur.
   if (serveur) return <ChargementServeur erreur={serveur.erreur} reessayer={() => setEssai((n) => n + 1)} />;
 
   return (
     <ZonesProvider value={noeuds}>
-      <div className={`app ${espace} ${pleinePage ? 'page' : ''} ${replie ? 'replie' : ''}`}>
+      <div
+        className={`app ${espace} ${pleinePage ? 'page' : ''} ${replie ? 'replie' : ''}`}
+        onPointerDownCapture={reprendLaMain}
+        onKeyDownCapture={reprendLaMain}
+      >
         <Sidebar />
         <TopBar />
         <div className="zone-hote" ref={refs.bandeau} />
-        <main
-          className="stage"
-          onPointerDownCapture={(e) => {
-            if ((e.target as HTMLElement).closest('.caption')) return;
-            // Un clic dans la scène met la visite en pause ; la légende reste pour reprendre.
-            if (useUi.getState().tour.playing && e.isTrusted) pauseTour();
-          }}
-        >
-          {/* Étape 1 : carte satellite (reste montée pour la transition retour). */}
-          <div className={`stage-layer ${step === 1 || !mapGone ? '' : 'hidden'}`} style={{ zIndex: step === 1 ? 2 : 1 }}>
+        <main className="stage">
+          {/* Étape 1 : carte satellite (reste montée pour la transition retour). Masquée, elle sort de l'ordre de
+              tabulation et de l'arbre d'accessibilité (inert) : ses commandes ne se tabulent plus sous les autres écrans. */}
+          <div className={`stage-layer ${carteVisible ? '' : 'hidden'}`} style={{ zIndex: step === 1 ? 2 : 1 }} inert={!carteVisible}>
             <ErrorBoundary
               label="Carte"
               resetKey={activeId}
@@ -212,7 +243,7 @@ export function Workspace({ mode }: { mode: ProjectMode }) {
           </div>
 
           {sceneVisible && (
-            <div className={`stage-layer ${mapGone && step !== 1 ? '' : 'hidden'}`} style={{ zIndex: 1 }} {...depot}>
+            <div className={`stage-layer ${sceneDevant ? '' : 'hidden'}`} style={{ zIndex: 1 }} inert={!sceneDevant || pleinePage} {...depot}>
               <ErrorBoundary
                 label="Vue 3D"
                 resetKey={activeId}
@@ -254,22 +285,7 @@ export function Workspace({ mode }: { mode: ProjectMode }) {
         {!pleinePage && (
           <aside className="panel" aria-label={espace === 'configuration' ? 'Panneau de l’étape' : 'Supervision'}>
             <div className="zone-hote" ref={refs.panneau} />
-            {espace === 'configuration' && (
-              <div className="panel-foot">
-                <button className="btn sm ghost" disabled={step === 1} onClick={() => (stopTour(), void goToStep((step - 1) as Step, { force: true }))}>
-                  <ArrowLeft /> {step > 1 ? 'Étape précédente' : 'Précédent'}
-                </button>
-                {step < 5 ? (
-                  <button className="btn sm primary" disabled={!hasBuildings} onClick={() => (stopTour(), void goToStep((step + 1) as Step, { force: true }))}>
-                    Suivant : {CONFIG_STEPS[step]?.titre} <ArrowRight />
-                  </button>
-                ) : (
-                  <button className="btn sm primary" disabled={!hasBuildings} onClick={() => (stopTour(), void finishConfiguration())}>
-                    <CheckCircle2 /> Terminer la configuration
-                  </button>
-                )}
-              </div>
-            )}
+            {espace === 'configuration' && step <= 5 && <PiedConfiguration step={step as EtapeConfig} avecBatiment={hasBuildings} />}
           </aside>
         )}
         {/* La page de l'écran : elle n'affiche rien ici, elle remplit les zones ci-dessus. */}
@@ -283,7 +299,8 @@ export function Workspace({ mode }: { mode: ProjectMode }) {
         <AssistantPanel />
         {/* Hors de la scène : la légende de la visite reste lisible au-dessus des fenêtres qu'elle ouvre. */}
         <CaptionBar />
-        <Toasts />
+        {/* Avis en haut de la scène (la fiche de la pièce, au milieu, n'est jamais couverte), au-dessus des fenêtres. */}
+        <Toasts surScene={!pleinePage} />
       </div>
     </ZonesProvider>
   );

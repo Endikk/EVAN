@@ -33,6 +33,8 @@ import { EXPLOIT_TABS, STEPS } from '@/widgets/shell/steps';
 import type { FlyToOptions } from 'maplibre-gl';
 
 let ctrl: AbortController | null = null;
+/** Chapitre par lequel la visite en cours a commencé (« Voir la démo » de l'accueil part du 6). */
+let chapitreDeDepart = 1;
 
 class Cancelled extends Error {}
 
@@ -102,12 +104,15 @@ async function montrer(cible: string | null, signal?: AbortSignal) {
 
 /** Les écrans d'exploitation se racontent depuis l'exploitation : un chapitre lancé en configuration la termine. */
 async function enExploitation(step: 6 | 7 | 8 | 9 = 6) {
-  if (espaceOf(useUi.getState().step) === 'configuration') await finishConfiguration();
+  // Sans le bilan d'avant la fin (machine posée par la visite, non branchée) : la visite ne s'arrête pas sur un avis.
+  if (espaceOf(useUi.getState().step) === 'configuration') await finishConfiguration({ confirme: true });
   useUi.getState().setVueOrganisation(false);
   await goToStep(step, { force: true });
 }
 
 const machinesDemo = () => useProject.getState().machines;
+/** Première lettre en minuscule, le reste intact : « Lampe UV » devient « lampe UV », pas « lampe uv ». */
+const minuscule = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 const flexoDemo = () => machinesDemo().find((m) => m.type === 'flexo') ?? machinesDemo()[0];
 
 /**
@@ -302,8 +307,10 @@ export const CHAPITRES: Chapitre[] = [
       // Fin de la configuration : la suite se passe dans l'espace d'exploitation, le paramétrage repasse derrière un accès.
       await enExploitation(6);
       caption(titreEtape(6), 'Les machines bougent comme dans l’atelier. La forme et la couleur de leur étiquette disent si elles produisent, se règlent ou sont en panne.');
-      await wait(5000, s);
-      const r04 = machinesDemo().find((m) => m.numero === 'R04');
+      // Arrivé de l'accueil par « Voir la démo » : la panne vient tout de suite, sans le détour par la fiche de R04.
+      const directe = chapitreDeDepart === 6;
+      await wait(directe ? 3500 : 5000, s);
+      const r04 = directe ? undefined : machinesDemo().find((m) => m.numero === 'R04');
       if (r04) {
         useUi.getState().selectMachine(r04.id);
         useUi.getState().setFocus({ kind: 'machine', machineId: r04.id });
@@ -369,7 +376,7 @@ export const CHAPITRES: Chapitre[] = [
       caption(
         'Prévoir avant la panne',
         derive
-          ? `${machines.find((m) => m.id === derive.machineId)?.numero} · ${derive.libelle.toLowerCase()} dérive lentement : EVAN prolonge la tendance et date le jour où le seuil sera franchi. On intervient avant.`
+          ? `${machines.find((m) => m.id === derive.machineId)?.numero} · ${minuscule(derive.libelle)} dérive lentement : EVAN prolonge la tendance et date le jour où le seuil sera franchi. On intervient avant.`
           : 'Quand une mesure dérive régulièrement, EVAN prolonge la tendance jusqu’au seuil : on intervient avant la panne.',
       );
       await wait(5200, s);
@@ -422,7 +429,7 @@ export const CHAPITRES: Chapitre[] = [
         const best = diagnostiquerPas(type.organes, PAS_DEFAUT_MM, { nature: 'decoupe' }).candidats[0];
         if (best) {
           await montrer(null);
-          caption('Un clic montre la pièce en 3D', `${best.cylindre} · organe ${best.organeNumero}, ${best.organeNom.toLowerCase()}.`);
+          caption('Un clic montre la pièce en 3D', `${best.cylindre} · organe ${best.organeNumero}, ${minuscule(best.organeNom)}.`);
           await showOrgan(flexo.id, `${flexo.id}.o${best.organeNumero}`);
           await wait(6000, s);
           useUi.getState().selectMachine(undefined);
@@ -442,10 +449,10 @@ export const CHAPITRES: Chapitre[] = [
       caption('La courbe de la journée', 'Le pic fixe l’abonnement électrique. La nuit et le dimanche, il ne reste que la veille des machines.');
       await wait(4500, s);
       await montrer('gisements', s);
-      caption('Où économiser', 'Réglages, veille hors production, machine plus gourmande que ses voisines : chaque piste est chiffrée en euros par an.');
+      caption('Où économiser', 'Réglages, veille hors production, machine plus gourmande que ses voisines : chaque piste est chiffrée, au plus, en euros par an.');
       await wait(5200, s);
       await montrer('energie-machines', s);
-      caption('Machine par machine', 'Ce que chaque machine consomme quand elle produit, se règle ou attend. Le détail s’affiche au survol.');
+      caption('Machine par machine', 'Ce que chaque machine dépense sans produire, en kWh et en euros. Le détail s’affiche au survol.');
       await wait(4200, s);
       await montrer(null);
     },
@@ -509,11 +516,16 @@ export const CHAPITRES: Chapitre[] = [
       caption('Modifier l’usine est protégé', 'Changer le plan, les machines ou leurs branchements demande d’ouvrir un accès, noté au journal.');
       await wait(5000, s);
       useUi.getState().setAccessRequest(null);
-      caption('À vous de jouer', 'Menu ⋯, puis «\u00a0Commencer avec mon usine\u00a0» : votre adresse, votre bâtiment, vos machines.');
+      caption('À vous de jouer', '«\u00a0Créer mon usine\u00a0», en bas de la barre latérale : votre adresse, votre bâtiment, vos machines.');
       await wait(6500, s);
     },
   },
 ];
+
+/** Titre d'un chapitre, affiché dès qu'on y saute : la légende du chapitre quitté ne reste pas le temps qu'il démarre. */
+function titreChapitre(n: number): string {
+  return n <= EXPLOIT_TABS[EXPLOIT_TABS.length - 1].n ? titreEtape(n) : `${n} · ${CHAPITRES[n - 1]?.titre ?? ''}`;
+}
 
 /** Interrompt le chapitre en cours sans toucher à la légende. */
 function interrompre() {
@@ -535,13 +547,14 @@ export async function startTour(from?: number) {
   ui.setAccessRequest(null);
   ui.setAssistantOuvert(false);
   const start = Math.min(Math.max(1, Math.round(from ?? ui.tour.chapitre ?? 1)), CHAPITRES.length);
-  ui.setTour({ playing: true, chapitre: start });
+  chapitreDeDepart = start;
+  ui.setTour({ playing: true, chapitre: start, caption: titreChapitre(start), sub: undefined });
   // La visite raconte l'usine de Tours : on y revient si l'on regardait une autre usine de la démo.
   const { mode, usines, activeId } = useProject.getState();
   if (mode === 'demo' && usines[0] && activeId !== usines[0].id) await openUsine(usines[0].id);
   try {
     for (let n = start; n <= CHAPITRES.length; n++) {
-      useUi.getState().setTour({ chapitre: n });
+      if (n !== start) useUi.getState().setTour({ chapitre: n, caption: titreChapitre(n), sub: undefined });
       await CHAPITRES[n - 1].run(c.signal);
       if (c.signal.aborted) return;
     }

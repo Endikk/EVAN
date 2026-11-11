@@ -4,7 +4,7 @@
  * chacun nommé avec sa machine ou son bâtiment, et un bouton pour réessayer.
  */
 import { useEffect, useId, useRef, useState } from 'react';
-import { AlertTriangle, CheckCircle2, CloudUpload, Loader2, RefreshCw } from 'lucide-react';
+import { AlertTriangle, Check, CloudUpload, Loader2, RefreshCw } from 'lucide-react';
 import { useProject } from '@/store/project';
 import { useEnregistrement } from '@/store/enregistrement';
 import './enregistrement.css';
@@ -36,19 +36,20 @@ export function EtatEnregistrement() {
   if (!serveur || etat === 'inactif') return null;
   const enregistrer = () => void useEnregistrement.getState().enregistrer();
 
+  // À enregistrer, en cours, enregistré : un état de l'application, pas d'une machine, donc une puce neutre. Seul le
+  // refus, qui demande d'agir, prend le rouge.
   if (etat !== 'erreur') {
     const contenu = {
-      modifie: { classe: 'chip setup', icone: <CloudUpload aria-hidden />, texte: 'Modifications à enregistrer', titre: 'Envoyées au serveur quelques secondes après la dernière modification.' },
-      enregistrement: { classe: 'chip', icone: <Loader2 aria-hidden className="enr-tourne" />, texte: 'Enregistrement…', titre: 'Envoi de la configuration au serveur EVAN.' },
+      modifie: { icone: <CloudUpload aria-hidden />, texte: 'Modifications à enregistrer', titre: 'Envoyées au serveur quelques secondes après la dernière modification.' },
+      enregistrement: { icone: <Loader2 aria-hidden className="enr-tourne" />, texte: 'Enregistrement…', titre: 'Envoi de la configuration au serveur EVAN.' },
       enregistre: {
-        classe: 'chip ok',
-        icone: <CheckCircle2 aria-hidden />,
+        icone: <Check aria-hidden />,
         texte: derniere ? `Enregistré à ${heure(derniere)}` : 'À jour sur le serveur',
         titre: 'La configuration de vos usines est enregistrée sur le serveur EVAN.',
       },
     }[etat];
     return (
-      <span className={`${contenu.classe} enr-puce hide-sm`} role="status" title={contenu.titre}>
+      <span className="chip enr-puce hide-sm" role="status" title={contenu.titre}>
         {contenu.icone}
         <span className="hide-md">{contenu.texte}</span>
       </span>

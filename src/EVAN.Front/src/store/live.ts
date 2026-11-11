@@ -64,7 +64,21 @@ export interface Toast {
   titre: string;
   texte?: string;
   alarmeId?: string;
+  /** L'alarme de l'avis vient d'une panne d'exercice. */
+  exercice?: boolean;
+  /**
+   * Action proposée dans l'avis, en plus de « Fermer » : « Annuler » après une suppression ou une clôture,
+   * « Consigner l'intervention » après une réparation. L'avis se ferme une fois l'action faite.
+   */
+  action?: ToastAction;
+  /** Durée d'affichage (ms) ; par défaut 12 s pour un avis critique, 6 s sinon, 10 s s'il porte une action. */
+  duree?: number;
   t: number;
+}
+
+export interface ToastAction {
+  libelle: string;
+  faire: () => void;
 }
 
 export type SourceKind = 'local' | 'api';
@@ -81,8 +95,17 @@ interface LiveState {
   events: Evenement[];
   trace?: DetectionTrace;
   toasts: Toast[];
-  pushToast(t: Omit<Toast, 'id' | 't'>): void;
+  /** Pousse un avis et rend son identifiant. Un avis sur la même alarme remplace le précédent, comme celui d'une
+   *  alarme du même titre : une mesure « à surveiller » qui s'aggrave en panne devient une nouvelle alarme (autre
+   *  identifiant, même code et même machine) et ne doit pas s'empiler en deux avis presque identiques. */
+  pushToast(t: Omit<Toast, 'id' | 't'>): string;
   dismissToast(id: string): void;
+}
+
+/** Deux avis d'alarme parlent de la même chose : même alarme, ou même titre (code et machine) après une escalade. */
+function memeAlarme(a: Pick<Toast, 'alarmeId' | 'titre'>, b: Pick<Toast, 'alarmeId' | 'titre'>): boolean {
+  if (!a.alarmeId || !b.alarmeId) return false;
+  return a.alarmeId === b.alarmeId || a.titre === b.titre;
 }
 
 export const useLive = create<LiveState>()((set, get) => ({
@@ -96,8 +119,11 @@ export const useLive = create<LiveState>()((set, get) => ({
   toasts: [],
   pushToast: (t) => {
     const toast = { ...t, id: `t-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, t: Date.now() };
-    set({ toasts: [toast, ...get().toasts].slice(0, 4) });
-    window.setTimeout(() => get().dismissToast(toast.id), t.gravite === 'critique' ? 12000 : 6000);
+    const autres = t.alarmeId ? get().toasts.filter((x) => !memeAlarme(x, t)) : get().toasts;
+    set({ toasts: [toast, ...autres].slice(0, 4) });
+    const duree = t.duree ?? (t.action ? 10000 : t.gravite === 'critique' ? 12000 : 6000);
+    setTimeout(() => get().dismissToast(toast.id), duree);
+    return toast.id;
   },
   dismissToast: (id) => set({ toasts: get().toasts.filter((x) => x.id !== id) }),
 }));

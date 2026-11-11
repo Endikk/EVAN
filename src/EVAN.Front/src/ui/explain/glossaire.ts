@@ -131,7 +131,13 @@ export const GLOSSAIRE = {
   },
   veille: {
     mot: 'Veille',
-    sens: 'Ce que les machines consomment quand elles ne produisent pas : la nuit, le week-end, entre deux séries.',
+    sens: 'Ce que les machines consomment, allumées, quand elles ne produisent ni ne se règlent : la nuit, le week-end, entre deux séries.',
+    lecture: 'Les réglages et les pannes sous tension sont comptés à part : avec la veille, ils font l’énergie dépensée sans produire.',
+  },
+  horsProduction: {
+    mot: 'Dépensé sans produire',
+    sens: 'Toute l’électricité consommée pendant que les machines ne produisent pas : les réglages, la veille et les pannes pendant lesquelles la machine reste sous tension.',
+    lecture: 'La veille n’en est qu’une part. « Où part l’énergie » donne les trois.',
   },
   emprise: {
     mot: 'Emprise',

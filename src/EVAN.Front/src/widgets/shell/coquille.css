@@ -41,7 +41,7 @@
   flex-direction: column;
   min-height: 0;
   border-right: 1px solid var(--border);
-  background: color-mix(in srgb, var(--surface) 55%, var(--bg));
+  background: var(--bg);
   overflow: hidden;
 }
 .side-tete {
@@ -62,10 +62,10 @@
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
-  padding: 8px 12px 12px;
+  padding: 4px 12px 12px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 24px;
   scrollbar-width: thin;
 }
 .side-usines-compact {
@@ -76,18 +76,12 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 8px;
-  min-height: 28px;
-  padding: 0 8px 4px;
+  padding: 0 10px 8px;
 }
 .side-section-tete h2 {
   margin: 0;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--text-3);
-  letter-spacing: 0;
-}
-.side-compte {
-  font-size: 12px;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-regular);
   color: var(--text-3);
 }
 .side-liste {
@@ -96,25 +90,25 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 .side-sep {
   height: 1px;
-  margin: 8px;
+  margin: 8px 10px;
   background: var(--border);
 }
 
-/* Une entrée : une icône, un nom, et en petit ce qu'on y trouve. L'entrée ouverte : fond rouge léger et un trait
-   rouge à gauche qui se déploie. */
+/* Une entrée : une icône au trait, un nom. Les usines gardent une deuxième ligne pour leur état. L'écran ouvert monte
+   d'un palier de bleu, son icône passe au vermillon et un trait vermillon le marque au bord de la barre. */
 .side-item {
   position: relative;
   display: grid;
-  grid-template-columns: 34px minmax(0, 1fr);
-  gap: 12px;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 10px;
   align-items: center;
   width: 100%;
-  min-height: 46px;
-  padding: 8px;
+  min-height: 36px;
+  padding: 6px 10px;
   border: 1px solid transparent;
   border-radius: var(--r-md);
   background: transparent;
@@ -123,54 +117,55 @@
   font: inherit;
   cursor: pointer;
   transition:
-    background var(--dur) var(--ease),
+    background-color var(--dur) var(--ease),
     color var(--dur) var(--ease);
-}
-.side-item::before {
-  content: '';
-  position: absolute;
-  left: -12px;
-  top: 10px;
-  bottom: 10px;
-  width: 3px;
-  border-radius: 0 var(--r-xs) var(--r-xs) 0;
-  background: var(--accent);
-  transform: scaleY(0);
-  transition: transform 320ms var(--ease-out);
 }
 .side-item:hover {
   background: var(--surface-2);
   color: var(--text);
 }
 .side-item[aria-current='page'] {
-  background: var(--accent-soft);
+  background: var(--surface-3);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-1);
   color: var(--text);
 }
+.side-item::before {
+  content: '';
+  position: absolute;
+  left: -13px;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 0 var(--r-xs) var(--r-xs) 0;
+  background: var(--accent-2);
+  opacity: 0;
+  transform: scaleY(0.4);
+  transition:
+    opacity var(--dur) var(--ease),
+    transform var(--dur-entree) var(--ease);
+}
 .side-item[aria-current='page']::before {
-  transform: scaleY(1);
+  opacity: 1;
+  transform: none;
 }
 .side-icone {
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
-  border-radius: var(--r-sm);
-  background: var(--surface-2);
-  border: 1px solid var(--border);
+  width: 20px;
+  height: 20px;
   color: var(--text-3);
-  transition:
-    color var(--dur) var(--ease),
-    background var(--dur) var(--ease),
-    border-color var(--dur) var(--ease);
+  transition: color var(--dur) var(--ease);
 }
 .side-icone svg {
   width: var(--icon);
   height: var(--icon);
 }
+.side-item:hover .side-icone {
+  color: var(--text);
+}
 .side-item[aria-current='page'] .side-icone {
-  background: var(--accent);
-  border-color: transparent;
-  color: var(--accent-contrast);
+  color: var(--accent-text);
 }
 .side-txt {
   display: flex;
@@ -179,17 +174,22 @@
   line-height: 1.3;
 }
 .side-txt b {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-regular);
+  color: inherit;
+}
+.side-item[aria-current='page'] .side-txt b {
+  font-weight: var(--fw-medium);
 }
 .side-txt small {
-  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-sm);
   color: var(--text-3);
-}
-/* Sur le fond teinté de l'écran ouvert, --text-3 passe sous le contraste AA le jour (4,1:1). */
-.side-item[aria-current='page'] .side-txt small:not([class]) {
-  color: var(--text-2);
 }
 .side-txt small.ton-ok {
   color: var(--ok);
@@ -202,30 +202,52 @@
 }
 /* L'état d'une usine se lit sur son icône : la forme de l'état machine, à sa couleur. */
 .side-etat .ton-glyph {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
+}
+.side-etat .ton-glyph svg {
+  width: 12px;
+  height: 12px;
 }
 .side-etat.ton-neutre .ton-glyph {
   color: var(--text-3);
 }
-/* L'usine ouverte : un fond discret, son état garde sa couleur. Le rouge plein reste réservé à l'écran ouvert. */
+.side-usine {
+  min-height: 44px;
+}
+/* L'usine ouverte se distingue de l'écran ouvert : un palier de surface, sans filet, sans relief ni trait vermillon.
+   Une seule entrée de la barre porte la sélection pleine ; l'usine garde la couleur de son état. */
 .side-usine[aria-current='page'] {
   background: var(--surface-2);
-  border-color: var(--border-strong);
+  border-color: transparent;
+  box-shadow: none;
 }
-.side-usine[aria-current='page']::before {
-  background: var(--text-3);
+.side-usine::before {
+  display: none;
 }
 .side-usine[aria-current='page'] .side-icone {
-  background: var(--surface-3);
-  border-color: var(--border-strong);
-  color: var(--text-3);
+  color: inherit;
 }
 .side-ajout .side-icone {
-  border-style: dashed;
+  color: var(--text-3);
 }
-.side-retour {
-  margin-top: 4px;
+/* Panne ouverte : marque sur l'entrée Supervision, à droite du nom (sur l'icône quand la barre est repliée). */
+.side-marque {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  transform: translateY(-50%);
+  color: var(--crit);
+}
+.side-marque.exercice .status-icon {
+  color: var(--text-2);
+}
+.app.replie .side-marque {
+  right: 8px;
+  top: 6px;
+  transform: none;
 }
 
 /* Étapes de configuration dans la barre : même fil que l'ancien rail. */
@@ -243,36 +265,16 @@
   height: 34px;
 }
 
-/* Pied : réglages, et le nuage de pixels sous eux. */
+/* Pied : la visite, la sortie de la démo, puis les réglages d'affichage. */
 .side-pied {
-  position: relative;
   flex: none;
-  padding: 8px 12px 16px;
+  padding: 8px 12px 12px;
   border-top: 1px solid var(--border);
-  overflow: hidden;
-}
-.side-pied > .pixel-field {
-  top: auto;
-  bottom: 0;
-  height: 120px;
-  -webkit-mask-image: linear-gradient(180deg, transparent, #000 70%);
-  mask-image: linear-gradient(180deg, transparent, #000 70%);
-  opacity: 0.55;
 }
 .side-pied-actions {
-  position: relative;
-  z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-}
-.side-pied .side-item {
-  min-height: 40px;
-}
-.side-pied .side-icone {
-  width: 30px;
-  height: 30px;
-  background: transparent;
+  gap: 2px;
 }
 .side-reglages {
   display: flex;
@@ -315,7 +317,7 @@
   display: flex;
   align-items: center;
   min-width: 0;
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--text-3);
 }
 .fil li {
@@ -332,23 +334,67 @@
 }
 .ecran-titre {
   margin: 0;
-  font-size: 17px;
-  font-weight: 650;
-  letter-spacing: -0.01em;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-medium);
   color: var(--text);
-  animation: entree 380ms var(--ease-out) backwards;
+}
+/* Le titre reçoit le focus après un changement d'écran pour que le clavier reparte de là ; il n'est pas une commande,
+   il n'a pas d'anneau. */
+.ecran-titre:focus,
+.ecran-titre:focus-visible {
+  outline: none;
 }
 .topbar .config-chip {
   margin-left: 0;
 }
+/* Libellé long sur grand écran, court sur tablette et téléphone (jamais une icône seule sur tablette : le title qui
+   l'expliquait ne se lit pas au toucher). */
+.topbar .show-md,
+.topbar .lib-court,
+.topbar .conn-court {
+  display: none;
+}
+
+/* Panne en cours, gardée en vue depuis les autres écrans tant qu'elle n'est pas close. */
+.pastille-panne {
+  gap: 6px;
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--crit) 55%, var(--border));
+  background: color-mix(in srgb, var(--crit) 10%, var(--surface));
+}
+.pastille-panne .status-icon {
+  color: var(--crit);
+}
+.pastille-panne-voir {
+  color: var(--text-2);
+}
+/* Panne d'exercice : neutre et en pointillé, le cramoisi reste aux pannes réelles. */
+.pastille-panne.exercice {
+  border-style: dashed;
+  border-color: var(--border-strong);
+  background: var(--surface);
+}
+.pastille-panne.exercice .status-icon {
+  color: var(--text-2);
+}
+
 @media (max-width: 1280px) {
   .topbar .hide-md {
     display: none;
   }
+  .topbar .show-md {
+    display: inline;
+  }
 }
 @media (max-width: 1200px) {
-  .topbar .hide-ml {
+  .topbar .hide-ml,
+  .topbar .lib-long,
+  .topbar .conn-long {
     display: none;
+  }
+  .topbar .lib-court,
+  .topbar .conn-court {
+    display: inline;
   }
 }
 @media (max-width: 900px) {
@@ -358,6 +404,14 @@
 }
 @media (max-width: 600px) {
   .topbar .hide-xs {
+    display: none;
+  }
+  /* Téléphone : le fil d'Ariane ne garde que son dernier maillon (l'usine, ou « Configuration »), lisible en entier,
+     au lieu de trois morceaux coupés. */
+  .fil li:not(:last-child) {
+    display: none;
+  }
+  .fil li:last-child > svg {
     display: none;
   }
 }
@@ -393,6 +447,7 @@
 .app.replie .side-etapes .rail-step {
   grid-template-columns: 1fr;
   justify-items: center;
+  min-height: 40px;
   padding: 8px 0;
 }
 .app.replie .side-etapes .rail-step .txt {
@@ -402,7 +457,7 @@
   --fil: 27px;
 }
 .app.replie .side-item::before {
-  left: -10px;
+  left: -9px;
 }
 .app.replie .side-pied {
   padding: 8px 8px 12px;
@@ -432,55 +487,7 @@
   width: min(380px, calc(100vw - var(--side-w) - 24px));
 }
 
-/* Tablette : toujours repliée, sans bouton pour la déplier. */
-@media (max-width: 1280px) and (min-width: 901px) {
-  .app {
-    --side-w: 76px;
-  }
-  .side-replier {
-    display: none;
-  }
-  .side-tete {
-    flex-direction: column;
-    justify-content: center;
-    gap: 4px;
-    height: auto;
-    min-height: var(--header-h);
-    padding: 8px 0;
-  }
-  .side-corps {
-    padding: 8px 8px 12px;
-  }
-  .side-txt,
-  .side-section-tete,
-  .side-usines,
-  .side-sep {
-    display: none;
-  }
-  .side-reglages {
-    flex-direction: column;
-    align-items: center;
-    padding: 4px 0 0;
-  }
-  .side-usines-compact {
-    display: block;
-  }
-  .side-item,
-  .side-etapes .rail-step {
-    grid-template-columns: 1fr;
-    justify-items: center;
-    padding: 8px 0;
-  }
-  .side-etapes .rail-step .txt {
-    display: none;
-  }
-  .side-etapes .rail-steps {
-    --fil: 27px;
-  }
-  .side-item::before {
-    left: -10px;
-  }
-}
+/* Tablette : la barre part repliée (coquille.ts) et se déplie avec le même bouton que sur grand écran. */
 
 /* ---------- Téléphone et petite tablette : menu qui glisse ---------- */
 @media (max-width: 900px) {
@@ -498,9 +505,19 @@
       'kpis'
       'stage'
       'panel';
-    overflow-y: auto;
+    /* La page défile (pas .app) : un conteneur qui défile lui-même cassait position: sticky (barre du haut, pied du
+       panneau). Le débordement horizontal reste coupé, sans créer de défilement. */
+    overflow: visible;
+    overflow-x: clip;
     height: auto;
     min-height: 100%;
+  }
+  /* « Étape précédente » et « Suivant » restent au bas de l'écran pendant qu'on fait défiler le panneau. */
+  .panel-foot {
+    position: sticky;
+    bottom: 0;
+    z-index: 3;
+    background: var(--surface);
   }
   .app.exploitation.page {
     grid-template-rows: var(--header-h) 0 calc(100dvh - var(--header-h)) 0;
@@ -586,6 +603,6 @@
     animation: fond 240ms var(--ease) both;
   }
   .ecran-titre {
-    font-size: 15.5px;
+    font-size: var(--fs-lg);
   }
 }

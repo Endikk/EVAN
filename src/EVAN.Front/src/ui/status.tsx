@@ -30,6 +30,12 @@ export const ETAT_FORME: Record<EtatMachine, string> = {
 export const LIBELLE_HORS_LIGNE = 'Liaison perdue';
 
 /**
+ * Libellé d'une machine pas encore branchée à EVAN, pendant la configuration : elle est montrée éteinte, sans état de
+ * production, puisque rien ne remonte encore de son automate.
+ */
+export const LIBELLE_NON_BRANCHEE = 'Non branchée';
+
+/**
  * État à afficher : une machine hors ligne apparaît éteinte (voyants et animation coupés), pas dans son dernier état
  * connu, qui n'est peut-être plus vrai.
  */

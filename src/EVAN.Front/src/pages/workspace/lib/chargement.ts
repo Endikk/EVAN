@@ -12,15 +12,14 @@ import { lireOrganisation } from '@/api/usine';
 import { useMapUi } from '@/widgets/carte/mapState';
 import { stopTour } from '@/widgets/tour/tour';
 import { ecranDe, estConfiguration, type Ecran } from '@/widgets/shell/ecrans';
+import { chapitreDepart, etapeOuvertureVisite } from './visite';
 
-/** Paramètres lus au chargement, retirés ensuite de l'adresse : recharger la page ne doit pas les rejouer. */
-export const PARAMS_LUS = ['nouveau', 'ecran'] as const;
-
-/** Chapitre de départ de la visite : ?visite=8 démarre directement à la maintenance. */
-function chapitreDepart(params: URLSearchParams) {
-  const n = Number(params.get('visite'));
-  return Number.isInteger(n) && n >= 1 ? n : 1;
-}
+/**
+ * Paramètres lus au chargement, retirés ensuite de l'adresse : recharger la page ne doit pas les rejouer.
+ * `configurer` : « Rouvrir la configuration » de la page d'erreur. L'usine repasse en configuration, au lieu de rouvrir
+ * la supervision qui venait de planter.
+ */
+export const PARAMS_LUS = ['nouveau', 'ecran', 'configurer'] as const;
 
 function chargerOrganisation(mode: ProjectMode, params: URLSearchParams, serveur: boolean) {
   const ui = useUi.getState();
@@ -28,7 +27,7 @@ function chargerOrganisation(mode: ProjectMode, params: URLSearchParams, serveur
     // Organisation du compte, déjà relue sur le serveur. « Créer mon usine » en ajoute une sans rien effacer ; le
     // carnet saisi part vers le serveur et n'est pas gardé dans ce navigateur.
     if (params.get('nouveau')) useProject.getState().addUsine();
-    useCarnet.setState({ saisies: [], persistant: false });
+    useCarnet.setState({ saisies: [], prevues: [], persistant: false });
     ui.selectBatiment(useProject.getState().batiments[0]?.id);
   } else if (mode === 'demo') {
     useProject.getState().loadDemo();
@@ -51,11 +50,12 @@ function chargerOrganisation(mode: ProjectMode, params: URLSearchParams, serveur
 /**
  * Écran d'ouverture. Une usine configurée s'ouvre en exploitation : un écran de paramétrage demandé par l'adresse
  * passe par la fenêtre d'accès, comme depuis le bouton « Configurer ». Une usine en cours de paramétrage reprend
- * l'étape demandée si son bâtiment est relevé, l'étape 1 sinon. La visite guidée commence toujours par l'étape 1.
+ * l'étape demandée si son bâtiment est relevé, l'étape 1 sinon. La visite guidée s'ouvre sur l'écran de son chapitre
+ * de départ : la carte pour la configuration, l'écran lui-même pour l'exploitation (visite.ts).
  */
-function ecranOuverture(demande: Ecran | undefined, visite: boolean): { step: Step; organisation: boolean; acces: Step | null } {
+function ecranOuverture(demande: Ecran | undefined, visite: number | null): { step: Step; organisation: boolean; acces: Step | null } {
   const { configure, site, batiments } = useProject.getState();
-  if (visite) return { step: 1, organisation: false, acces: null };
+  if (visite !== null) return { step: configure ? etapeOuvertureVisite(visite) : 1, organisation: false, acces: null };
   if (configure) {
     if (demande === 'organisation') return { step: 6, organisation: true, acces: null };
     if (demande !== undefined && espaceOf(demande) === 'exploitation') return { step: demande, organisation: false, acces: null };
@@ -92,10 +92,11 @@ export function chargerEspace(mode: ProjectMode, ecranUrl: Ecran | undefined, pa
   ui.setReplay(null);
   useMapUi.getState().set({ mode: 'browse', editing: undefined, lastAddedId: undefined, detectError: undefined });
   chargerOrganisation(mode, params, serveur);
+  if (mode === 'assistant' && params.get('configurer')) useProject.getState().setConfigure(false);
 
   const demande = ecranUrl ?? ecranDe(params.get('ecran') ?? '');
   const visite = mode === 'demo' && demande === undefined && params.get('visite') !== '0' && !params.get('usine') ? chapitreDepart(params) : null;
-  const { step, organisation, acces } = ecranOuverture(demande, visite !== null);
+  const { step, organisation, acces } = ecranOuverture(demande, visite);
   ui.setStep(step);
   ui.setVueOrganisation(organisation);
   ui.setAccessRequest(acces);

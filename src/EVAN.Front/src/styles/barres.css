@@ -11,8 +11,8 @@
   gap: 12px;
   padding: 0 16px;
   border-bottom: 1px solid var(--border);
-  /* Rien ne défile sous la barre : un aplat suffit, sans flou d'arrière-plan à recalculer. */
-  background: color-mix(in srgb, var(--surface) 75%, var(--bg));
+  /* Le bleu de Prusse du cadre (jetons redéfinis dans jetons.css) : rien ne défile dessous, un aplat suffit. */
+  background: var(--bg);
   z-index: 20;
 }
 /* Les commandes de la barre gardent leur taille ; seul le sélecteur d'usine se tronque. */
@@ -28,9 +28,9 @@
   gap: 8px;
   text-decoration: none;
   color: var(--text);
-  font-weight: 760;
+  font-weight: var(--fw-strong);
   letter-spacing: 0.02em;
-  font-size: 17px;
+  font-size: var(--fs-xl);
 }
 /* Logo : « evan » et son point d'état, aux couleurs des états machine (marche, attention, panne). */
 .evan-logo {
@@ -67,14 +67,12 @@
     transform: scale(1.9);
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  .evan-logo.is-pulse .evan-logo-halo {
-    animation: none;
-  }
+:root[data-motion='reduce'] .evan-logo.is-pulse .evan-logo-halo {
+  animation: none;
 }
 .brand small {
-  font-weight: 560;
-  font-size: 12px;
+  font-weight: var(--fw-medium);
+  font-size: var(--fs-sm);
   color: var(--text-3);
   letter-spacing: 0;
 }
@@ -86,8 +84,8 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 12.5px;
-  font-weight: 560;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
   color: var(--text-2);
   padding: 0 12px 0 8px;
   height: 30px;
@@ -127,11 +125,13 @@
 }
 .clock {
   font-family: var(--mono);
-  font-size: 13px;
+  font-size: var(--fs-md);
   color: var(--text-2);
 }
 
-/* Étapes de configuration (barre latérale) : un fil qui se remplit jusqu'à l'étape en cours. */
+/* Étapes de configuration (barre latérale, widgets/shell/StepRail.tsx) : la charpente seulement, un fil qui se remplit
+   jusqu'à l'étape en cours, la grille de chaque étape et son rond. Les couleurs et les états (étape en cours, faite,
+   survol, focus) sont dans styles/panneau.css ; les tailles de la barre latérale dans widgets/shell/coquille.css. */
 .rail-steps {
   --fil: 26px;
   position: relative;
@@ -142,7 +142,6 @@
   flex-direction: column;
   gap: 8px;
 }
-/* Le fil : gris sur toute la hauteur, rouge EVAN jusqu'à l'étape en cours. */
 .rail-steps::before,
 .rail-steps::after {
   content: '';
@@ -156,7 +155,6 @@
   background: var(--border-strong);
 }
 .rail-steps::after {
-  background: var(--accent);
   transform-origin: top center;
   transform: scaleY(var(--avance, 0));
   transition: transform 700ms var(--ease-out);
@@ -176,13 +174,6 @@
   background: transparent;
   text-align: left;
   cursor: pointer;
-  color: var(--text-2);
-  transition:
-    background var(--dur) var(--ease),
-    border-color var(--dur) var(--ease);
-}
-.rail-step:hover:not(:disabled) {
-  background: var(--surface-2);
 }
 .rail-step:disabled {
   cursor: not-allowed;
@@ -194,13 +185,11 @@
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: var(--surface-2);
   border: 1px solid var(--border-strong);
-  color: var(--text-3);
   transition:
-    background 400ms var(--ease),
-    color 400ms var(--ease),
-    border-color 400ms var(--ease);
+    background-color var(--dur-entree) var(--ease),
+    color var(--dur-entree) var(--ease),
+    border-color var(--dur-entree) var(--ease);
 }
 .rail-step .n svg {
   width: var(--icon);
@@ -208,37 +197,15 @@
 }
 .rail-step b {
   display: block;
-  font-size: 14px;
-  font-weight: 620;
-  color: var(--text);
+  font-size: var(--fs-base);
 }
-.rail-step small {
-  display: block;
-  margin-top: 4px;
-  font-size: 12.5px;
-  color: var(--text-2);
-  line-height: 1.35;
-  animation: entree 360ms var(--ease-out) backwards;
-}
-.rail-step[aria-current='step'] {
-  background: var(--accent-soft);
-  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
-}
-.rail-step[aria-current='step'] .n {
-  background: var(--accent);
-  color: var(--accent-contrast);
-  border-color: transparent;
-}
-.rail-step.done .n {
-  background: color-mix(in srgb, var(--ok) 16%, var(--surface));
-  color: var(--ok);
-  border-color: color-mix(in srgb, var(--ok) 45%, transparent);
-}
+/* La coche d'une étape faite se trace une fois. */
 .rail-check {
   stroke-dasharray: 24;
   stroke-dashoffset: 24;
   animation: trace 420ms var(--ease-out) 80ms forwards;
 }
+/* Tracé d'un trait (coche) : aussi employé par la coche « Rien à signaler » de la supervision. */
 @keyframes trace {
   to {
     stroke-dashoffset: 0;

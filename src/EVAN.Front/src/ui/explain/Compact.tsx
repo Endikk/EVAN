@@ -1,7 +1,7 @@
 /**
  * Deux formes compactes pour dire peu et bien :
- * - ChiffresSecondaires : les chiffres de second rang, en une rangée toujours visible (nom, valeur, « ? »), au lieu
- *   d'une liste repliée qu'on n'ouvre pas ;
+ * - ChiffresSecondaires : les chiffres de second rang, en une rangée toujours visible (nom, valeur), au lieu
+ *   d'une liste repliée qu'on n'ouvre pas ; le nom souligné en pointillé ouvre son explication ;
  * - TitreCarte : le titre d'un bloc, son « ? » pour la méthode, et une seule ligne qui en tire la leçon.
  */
 import type { ReactNode } from 'react';
@@ -37,8 +37,14 @@ export function ChiffresSecondaires({ items, label = 'Autres chiffres', classNam
       {items.map((c) => (
         <div key={c.label} className={`cs-item ${c.ton && c.ton !== 'neutre' && c.ton !== 'ok' ? `ton-${c.ton}` : ''}`}>
           <dt>
-            {c.label}
-            <Aide label={c.label} aide={c.aide} terme={c.terme} />
+            {c.aide || c.terme ? (
+              <InfoTip texte={c.label} label={`Comprendre : ${c.label}`}>
+                {c.terme && <DefinitionTerme t={GLOSSAIRE[c.terme]} />}
+                {c.aide && <p>{c.aide}</p>}
+              </InfoTip>
+            ) : (
+              c.label
+            )}
           </dt>
           <dd className="num">
             {c.ton === 'warn' || c.ton === 'crit' ? <TonGlyph ton={c.ton} /> : null}

@@ -1,6 +1,7 @@
 /**
- * Petites animations qui expliquent un changement : un nombre qui monte jusqu'à sa valeur montre qu'il vient d'être
- * calculé ou qu'il a bougé. Animations réduites : la valeur s'affiche directement.
+ * Petites animations qui expliquent un changement : un nombre qui rejoint sa nouvelle valeur montre qu'il a bougé.
+ * Au premier affichage, la valeur est là tout de suite : un compteur qui partait de 0 montrait pendant 700 ms des
+ * valeurs fausses (« 0 tâche en retard ») qu'on avait le temps de lire. Animations réduites : jamais d'animation.
  */
 import { useEffect, useRef, useState } from 'react';
 import { isReducedMotion } from '@/store/ui';
@@ -9,18 +10,18 @@ const DUREE_MS = 700;
 
 const sortie = (t: number) => 1 - Math.pow(1 - t, 3);
 
-/** Valeur affichée qui rejoint `cible` en `duree` ms, à chaque changement de la cible. */
+/** Valeur affichée : `cible` dès le premier affichage, puis elle rejoint chaque nouvelle cible en `duree` ms. */
 export function useCountUp(cible: number, duree = DUREE_MS): number {
-  const [affiche, setAffiche] = useState(() => (isReducedMotion() ? cible : 0));
-  const depart = useRef(affiche);
+  const [affiche, setAffiche] = useState(cible);
+  const depart = useRef(cible);
 
   useEffect(() => {
-    if (!Number.isFinite(cible)) return setAffiche(cible);
-    if (isReducedMotion()) {
+    if (!Number.isFinite(cible) || !Number.isFinite(depart.current) || isReducedMotion()) {
       depart.current = cible;
       return setAffiche(cible);
     }
     const de = depart.current;
+    if (de === cible) return;
     const t0 = performance.now();
     let raf = 0;
     const pas = (t: number) => {

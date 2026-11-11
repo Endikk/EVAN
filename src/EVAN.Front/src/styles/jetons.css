@@ -2,35 +2,59 @@
    EVAN : jetons du système de design (importés en premier par app.css)
    Thèmes nuit (par défaut) et jour par jetons, états machine par couleur + forme + animation.
    Aucune couleur en dur hors de ce bloc : chaque règle passe par un jeton, pour que le jour suive.
+
+   Identité : les deux encres de l'imprimerie. Le bleu de Prusse tient le cadre (barre latérale et barre du haut,
+   dans les deux thèmes) ; le vermillon EVAN (--accent*) marque l'action principale, la sélection, le focus et la
+   série qui mène un graphique. Le contenu reste sur des neutres à peine bleutés, pour que les couleurs d'état
+   (marche, à surveiller, panne, réglage, arrêt) gardent leur sens.
    ============================================================ */
 
 :root {
-  --font: 'Onest Variable', 'Onest', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, 'Cascadia Code', monospace;
+  --font: 'IBM Plex Sans Variable', 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', 'Cascadia Code', monospace;
 
-  /* Nuit d'atelier : encre bleu nuit, rouge EVAN. Thème par défaut. */
-  --bg: #040812;
-  --surface: #0a101c;
-  --surface-2: #0f1726;
-  --surface-3: #172133;
+  /* Échelle typographique : neuf crans, rien entre deux. */
+  --fs-xs: 11px;
+  --fs-sm: 12px;
+  --fs-md: 13px;
+  --fs-base: 14px;
+  --fs-lg: 16px;
+  --fs-xl: 18px;
+  --fs-2xl: 20px;
+  --fs-3xl: 24px;
+  --fs-4xl: 32px;
+  /* Trois graisses : le texte, le titre et le chiffre, l'insistance rare. */
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-strong: 600;
+
+  /* Nuit d'atelier : encre à peine bleutée (cousine du bleu de Prusse du cadre), texte ivoire comme le papier. */
+  --bg: #0a0d13;
+  --surface: #10141b;
+  --surface-2: #151a22;
+  --surface-3: #1c222c;
   /* Fond des commandes posées sur la scène 3D ou la photo : presque opaque, sans flou. */
-  --glass: rgba(10, 16, 28, 0.94);
-  --border: #162034;
-  --border-strong: #24314b;
-  --text: #eef2f8;
-  --text-2: #a3aec2;
-  /* Assez clair pour le contraste AA des petits libellés, même sur --surface-2. */
-  --text-3: #7a869c;
-  /* Rouge EVAN : --accent pour les aplats (texte blanc dessus, 4,8:1), --accent-text pour le texte sur fond nuit. */
+  --glass: rgba(16, 20, 27, 0.94);
+  --border: #1e242e;
+  --border-strong: #2a323e;
+  --text: #ecebe6;
+  --text-2: #a7adb8;
+  /* Assez clair pour le contraste AA des petits libellés, même sur --surface-2 (4,8:1). */
+  --text-3: #878e9a;
+  /* Vermillon EVAN : --accent pour les aplats (texte blanc dessus, 4,8:1), --accent-text pour le texte et les traits
+     sur fond nuit, --accent-2 pour les marques vives (points, courbe qui mène). */
   --accent: #cf3f0b;
   --accent-2: #ff7a3d;
-  --accent-deep: #8a2400;
+  --accent-deep: #a83208;
   --accent-text: #ff7a3d;
-  --accent-soft: rgba(226, 71, 15, 0.14);
+  --accent-soft: rgba(255, 106, 43, 0.14);
   --accent-contrast: #ffffff;
   --map-line: #ff7a3d;
 
-  /* États machine : la panne (rose cramoisi) ne se confond pas avec le rouge de la marque (orangé). */
+  /* Bleu de Prusse du cadre (barre latérale, barre du haut) : le même dans les deux thèmes. */
+  --prusse: #0d1f33;
+
+  /* États machine : les seules teintes de l'interface. Chacune a aussi sa forme (rond, triangle, carré, losange). */
   --ok: #2fd07f;
   --ok-soft: rgba(47, 208, 127, 0.14);
   --warn: #f6b73c;
@@ -39,28 +63,29 @@
   --crit-soft: rgba(255, 61, 110, 0.15);
   --setup: #5c9dff;
   --setup-soft: rgba(92, 157, 255, 0.15);
-  --idle: #7e8aa0;
-  --idle-soft: rgba(126, 138, 160, 0.16);
+  --idle: #80838c;
+  --idle-soft: rgba(128, 131, 140, 0.16);
   /* Texte posé sur un aplat --crit : sombre la nuit (le blanc n'y fait que 3,4:1), blanc le jour. */
   --on-crit: #1a0309;
 
-  --shadow-1: 0 1px 0 rgba(255, 255, 255, 0.03) inset;
-  --shadow-2: 0 12px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.02);
-  --shadow-3: 0 30px 80px rgba(0, 0, 0, 0.65);
-  --ring: 0 0 0 3px rgba(255, 122, 61, 0.45);
+  /* La nuit, le relief vient des paliers de surface et des filets ; l'ombre ne sert qu'à ce qui flotte. */
+  --shadow-1: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --shadow-2: 0 12px 32px rgba(0, 0, 0, 0.45);
+  --shadow-3: 0 24px 64px rgba(0, 0, 0, 0.6);
+  --ring: 0 0 0 2px var(--bg), 0 0 0 4px rgba(255, 122, 61, 0.6);
   /* Voile sous une fenêtre : sans flou, la scène 3D continue de tourner dessous sans coût. Plus léger sous un volet
      latéral, qui laisse l'écran lisible à côté. */
-  --scrim: rgba(2, 5, 12, 0.62);
-  --scrim-soft: rgba(2, 5, 12, 0.45);
+  --scrim: rgba(5, 6, 9, 0.64);
+  --scrim-soft: rgba(5, 6, 9, 0.46);
 
   /* Repères posés sur la scène 3D ou la photo satellite : la photo reste chargée quel que soit le thème,
      ces étiquettes gardent donc les mêmes couleurs de jour comme de nuit. */
-  --scene-tag-bg: rgba(6, 10, 20, 0.84);
-  --scene-tag-text: #f4f6fa;
+  --scene-tag-bg: rgba(11, 12, 16, 0.86);
+  --scene-tag-text: #f4f2ea;
   --scene-tag-shadow: 0 4px 14px rgba(0, 0, 0, 0.42);
   --scene-text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
   --map-handle: #ffffff;
-  --map-ink: #140803;
+  --map-ink: #0b0c10;
   --map-candidate: #ffc95c;
   /* Nom de zone posé sur le sol 3D : la couleur de la zone telle quelle, cernée d'ombre. */
   --zone-ink-mix: 100%;
@@ -76,26 +101,29 @@
   /* Chevron des dépliables natifs (masque CSS) : le dessin de lucide chevron-down. */
   --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
 
-  /* Rayons : quatre crans, du détail (pastille, barre) à la grande surface. Le cercle et la pilule restent à 50 % et 999px. */
+  /* Rayons : du détail à la fenêtre. Commande 8, carte 12, volet et fenêtre 16. La pilule (999px) reste aux puces
+     d'état ; un bouton n'en est jamais une. Rayon intérieur = rayon extérieur moins le retrait, 4 au minimum. */
   --r-xs: 4px;
-  --r-sm: 8px;
-  --r-md: 12px;
-  --r-lg: 18px;
-  --r-xl: 24px;
+  --r-sm: 6px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --r-xl: 16px;
 
   --header-h: 60px;
   --side-w: 264px;
   --panel-w: 400px;
   --touch: 44px;
 
-  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --dur: 220ms;
+  /* Une seule courbe pour tout ; deux durées : le retour d'un geste, et ce qui entre. */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur: 160ms;
+  --dur-entree: 360ms;
 
   color-scheme: dark;
 }
 
-/* Jour : même rouge, fond blanc cassé. */
+/* Jour : le papier. Fond blanc cassé, texte encre, vermillon un cran plus sombre ; le cadre reste bleu de Prusse. */
 :root[data-theme='light'] {
   --bg: #f4f3f1;
   --surface: #fffefc;
@@ -109,10 +137,11 @@
   --text-3: #6a6f7a;
   --accent: #c93a0a;
   --accent-2: #e2470f;
-  --accent-deep: #8a2400;
+  --accent-deep: #9f2d06;
   --accent-text: #b93508;
   --accent-soft: rgba(201, 58, 10, 0.1);
   --accent-contrast: #ffffff;
+  /* La photo satellite reste la même de jour : le trait garde le vermillon vif de nuit. */
   --map-line: #ff7a3d;
 
   /* Assez foncés pour servir de texte sur fond clair (AA), pas seulement de pastille. */
@@ -124,14 +153,14 @@
   --crit-soft: rgba(200, 25, 74, 0.11);
   --setup: #1f6fd6;
   --setup-soft: rgba(31, 111, 214, 0.11);
-  --idle: #687284;
-  --idle-soft: rgba(104, 114, 132, 0.13);
+  --idle: #6b6e76;
+  --idle-soft: rgba(107, 110, 118, 0.13);
   --on-crit: #ffffff;
 
-  --shadow-1: 0 1px 2px rgba(40, 30, 20, 0.06);
-  --shadow-2: 0 10px 28px rgba(40, 30, 20, 0.12), 0 2px 6px rgba(40, 30, 20, 0.06);
-  --shadow-3: 0 24px 60px rgba(40, 30, 20, 0.2);
-  --ring: 0 0 0 3px rgba(201, 58, 10, 0.32);
+  --shadow-1: 0 1px 2px rgba(21, 23, 28, 0.05);
+  --shadow-2: 0 8px 24px rgba(21, 23, 28, 0.08);
+  --shadow-3: 0 24px 56px rgba(21, 23, 28, 0.16);
+  --ring: 0 0 0 2px var(--bg), 0 0 0 4px rgba(201, 58, 10, 0.45);
   /* Voile à l'encre du texte : teinté brun, il salissait le blanc cassé en kaki. */
   --scrim: rgba(21, 23, 28, 0.3);
   --scrim-soft: rgba(21, 23, 28, 0.16);
@@ -140,4 +169,38 @@
   --zone-ink-mix: 55%;
   --zone-halo: 0 0 2px rgba(255, 255, 255, 0.95), 0 0 6px rgba(255, 255, 255, 0.85);
   color-scheme: light;
+}
+
+/* ============================================================
+   Cadre : barre latérale et barre du haut, à l'encre bleu de Prusse dans les deux thèmes. Les pages hors des
+   écrans (chargement, adresse inconnue, erreur) en prennent aussi le fond : c'est la couverture d'EVAN.
+   Les jetons y sont redéfinis : tout ce qui s'y pose (bouton, puce, champ, menu) en prend les couleurs sans règle de
+   plus. Les états gardent leurs teintes de nuit, lisibles sur ce fond sombre même quand l'écran est en jour.
+   ============================================================ */
+.side,
+.topbar,
+.cadre,
+.hors-route:not(.cpt) {
+  --bg: var(--prusse);
+  --surface: #12263d;
+  --surface-2: #163049;
+  --surface-3: #1d3a58;
+  --glass: rgba(13, 31, 51, 0.96);
+  --border: #1f3651;
+  --border-strong: #2c4868;
+  --text: #eef2f7;
+  --text-2: #b3c1d3;
+  --text-3: #8aa0bb;
+  --accent-text: #ff8a52;
+  --accent-soft: rgba(255, 122, 61, 0.16);
+  --ok: #2fd07f;
+  --warn: #f6b73c;
+  --crit: #ff3d6e;
+  --setup: #5c9dff;
+  --idle: #8a96a8;
+  --on-crit: #1a0309;
+  --shadow-1: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --ring: 0 0 0 2px var(--prusse), 0 0 0 4px rgba(255, 122, 61, 0.6);
+  color-scheme: dark;
+  color: var(--text);
 }

@@ -7,7 +7,7 @@ import { useLive } from '@/store/live';
 import { choisirNiveau, useNiveauActif, useNiveauxUsine } from '@/store/niveau';
 import { niveauDe, nomNiveau, nomNiveauCourt } from '@/domain/niveaux';
 import { Select } from '@/ui/Select';
-import { switchView, zoomPlan } from '@/widgets/scene/planView';
+import { recadrer, switchView, zoomPlan } from '@/widgets/scene/planView';
 import { useMapUi } from '@/widgets/carte/mapState';
 import { useSceneUi } from '@/widgets/scene/sceneState';
 import { formatNumber } from '@/geo/geodesy';
@@ -57,7 +57,7 @@ export function CaptionBar() {
         <button className="btn sm icon ghost" disabled={n >= CHAPITRES.length} onClick={() => void startTour(n + 1)} aria-label="Chapitre suivant" title="Passer au chapitre suivant">
           <SkipForward />
         </button>
-        <button className="btn sm icon ghost" onClick={() => stopTour()} aria-label="Fermer la visite" title="Fermer la visite (elle se relance depuis le menu ⋯)">
+        <button className="btn sm icon ghost" onClick={() => stopTour()} aria-label="Fermer la visite" title="Fermer la visite : « Visite guidée », en bas de la barre latérale, la relance">
           <X />
         </button>
       </div>
@@ -78,9 +78,10 @@ function PlanHud() {
         <i style={{ width: L * zoom }} />
         <span>{L} m</span>
       </div>
-      <div className="compass glass" title="La flèche rouge montre le nord" aria-label="Nord géographique">
+      {/* Le nord en clair, le sud en gris : le rouge est réservé aux pannes, il ne sert pas à la boussole. */}
+      <div className="compass glass" title="La pointe claire montre le nord" aria-label="Nord géographique">
         <svg viewBox="-20 -20 40 40" style={{ transform: `rotate(${angle}deg)` }} aria-hidden>
-          <path d="M0 -15 L5.5 3 L0 0 L-5.5 3 Z" fill="var(--crit)" />
+          <path d="M0 -15 L5.5 3 L0 0 L-5.5 3 Z" fill="var(--text)" />
           <path d="M0 15 L5.5 3 L0 0 L-5.5 3 Z" fill="var(--text-3)" />
         </svg>
         <b style={{ transform: `rotate(${angle}deg) translateY(-18px) rotate(${-angle}deg)` }}>N</b>
@@ -114,12 +115,17 @@ function LegendeEtats() {
 
   useEffect(() => {
     if (!ouvert) return;
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && fermer();
+    // Échap ferme le volet seul : lu en capture et marqué traité, il ne ferme pas en plus le détail de la machine.
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || e.defaultPrevented) return;
+      e.preventDefault();
+      fermer();
+    };
     const onDown = (e: PointerEvent) => !racine.current?.contains(e.target as Node) && fermer();
-    window.addEventListener('keydown', onKey);
+    window.addEventListener('keydown', onKey, true);
     document.addEventListener('pointerdown', onDown);
     return () => {
-      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('keydown', onKey, true);
       document.removeEventListener('pointerdown', onDown);
     };
   }, [ouvert, fermer]);
@@ -284,6 +290,12 @@ export function StageHud() {
         >
           {showLabels ? <Eye aria-hidden /> : <EyeOff aria-hidden />} <span className="hud-libelle">Étiquettes</span>
         </button>
+        {view === '3d' && (
+          // Le pendant du « Voir tout le site » du plan 2D : après un zoom ou une rotation où l'on s'est perdu.
+          <button className="btn sm glass hud-recadrer" onClick={recadrer} aria-label="Recadrer la vue" title="Revenir au cadrage de ce qu’on regarde : l’usine, la machine ou la pièce choisie">
+            <Maximize aria-hidden /> <span className="hud-libelle">Recadrer</span>
+          </button>
+        )}
         <SelecteurNiveau etats={step >= 4} />
       </div>
       {view === '2d' && <PlanHud />}

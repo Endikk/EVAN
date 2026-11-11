@@ -15,7 +15,7 @@ const publicDir = path.join(front, 'public');
 const capture = path.resolve(front, '../../docs/media/supervision.avif');
 
 /** Fond des icônes pleines : celui du favicon (--bg de la nuit). */
-const FOND = '#040812';
+const FOND = '#0d1f33';
 
 /**
  * Plein : sans coin transparent. iOS arrondit lui-même l'icône de l'écran d'accueil et noircirait la transparence.

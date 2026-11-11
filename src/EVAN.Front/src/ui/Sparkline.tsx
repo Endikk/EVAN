@@ -1,7 +1,10 @@
 import { Line, LineChart, ReferenceArea, YAxis } from 'recharts';
 import type { Seuils } from '@/domain/types';
 
-/** Mini-courbe temps réel (Recharts) avec la plage normale (entre seuils d'attention) en fond. */
+/**
+ * Mini-courbe temps réel (Recharts) avec la plage normale (entre seuils d'attention) en fond. Décorative : la valeur
+ * est écrite à côté. Sans couche d'accessibilité, recharts ne fait pas de chaque courbe un arrêt de tabulation sans nom.
+ */
 export function Sparkline({
   values,
   seuils,
@@ -30,7 +33,7 @@ export function Sparkline({
   const pad = Math.max(1e-6, max - min) * 0.1;
   const data = vals.map((v, i) => ({ i, v }));
   return (
-    <LineChart width={width} height={height} data={data} margin={{ top: 2, right: 3, bottom: 2, left: 0 }} aria-hidden="true">
+    <LineChart width={width} height={height} data={data} margin={{ top: 2, right: 3, bottom: 2, left: 0 }} accessibilityLayer={false} aria-hidden="true" tabIndex={-1}>
       <YAxis hide domain={[min - pad, max + pad]} />
       {(showLo || showHi) && <ReferenceArea y1={showLo ? lo : min - pad} y2={showHi ? hi : max + pad} fill="var(--idle-soft)" fillOpacity={1} stroke="none" ifOverflow="hidden" />}
       <Line type="monotone" dataKey="v" stroke={color} strokeWidth={1.6} dot={false} isAnimationActive={false} />

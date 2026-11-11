@@ -4,15 +4,14 @@
  * /demo/supervision… Ajouter un écran = une page dans src/pages/<écran>/index.tsx, son adresse dans
  * widgets/shell/ecrans.ts et une entrée dans PAGES.
  */
-import { Suspense, lazy, useEffect, type ComponentType } from 'react';
+import { Suspense, lazy, useEffect, useState, type ComponentType } from 'react';
 import { createBrowserRouter, Link, useLocation, useRouteError, type RouteObject } from 'react-router';
-import { ArrowRight, Home, RefreshCw, Trash2 } from 'lucide-react';
+import { ArrowRight, Home, RefreshCw, Settings2, Trash2 } from 'lucide-react';
 import { Landing } from '@/pages/landing';
 import { clearSavedAssistant, type ProjectMode } from '@/store/project';
 import { isChunkError } from '@/ui/ErrorBoundary';
 import { setTabPage } from '@/ui/brand';
 import { EvanLogo } from '@/ui/EvanLogo';
-import { PixelField } from '@/ui/PixelField';
 import { quandAuRepos } from '@/ui/repos';
 import { chemin, lireChemin, slugDe, type Slug } from '@/widgets/shell/ecrans';
 import { EXPLOIT_TABS } from '@/widgets/shell/steps';
@@ -72,7 +71,7 @@ function Loading() {
   return (
     <div className="hors-route chargement" role="status" aria-live="polite">
       <div className="hr-contenu">
-        <EvanLogo size={34} pulse />
+        <EvanLogo size={32} pulse />
         <p className="hr-phrase">Chargement d’EVAN…</p>
         <span className="hr-barre" aria-hidden>
           <i />
@@ -82,7 +81,10 @@ function Loading() {
   );
 }
 
-/** Adresse inconnue : on le dit simplement, avec de quoi repartir (l'accueil, ou un écran de la démo). */
+/**
+ * Adresse inconnue : on le dit simplement, avec de quoi repartir (l'accueil, ou un écran de la démo). Les écrans forment
+ * une seule liste qui entre avec le reste du bloc, sans cascade.
+ */
 function NotFound() {
   const { pathname } = useLocation();
   useEffect(() => {
@@ -91,7 +93,6 @@ function NotFound() {
   }, []);
   return (
     <main className="hors-route">
-      <PixelField placement="hero" intensite={1} />
       <div className="hr-contenu entree">
         <Link to="/" aria-label="EVAN, accueil" className="hr-logo">
           <EvanLogo size={30} status="warn" />
@@ -109,8 +110,8 @@ function NotFound() {
         <nav className="hr-ecrans" aria-label="Écrans de la démonstration">
           <h2>Ou ouvrez un écran de la démonstration</h2>
           <ul>
-            {EXPLOIT_TABS.map((t, i) => (
-              <li key={t.n} className="entree" style={{ ['--i' as string]: i + 2 }}>
+            {EXPLOIT_TABS.map((t) => (
+              <li key={t.n}>
                 <Link to={chemin('demo', t.n)}>
                   <t.icon aria-hidden />
                   <span>
@@ -128,42 +129,91 @@ function NotFound() {
   );
 }
 
+/** Message lisible d'une erreur quelconque, pour le détail technique de la page d'erreur. */
+function messageErreur(error: unknown): string {
+  if (error instanceof Error) return `${error.name} : ${error.message}`;
+  if (typeof error === 'object' && error && 'statusText' in error) return String((error as { status?: number; statusText: string }).statusText);
+  return String(error);
+}
+
 /**
- * Dernier recours : une erreur que rien n'a rattrapée. Au lieu d'une page blanche, un moyen de repartir, y compris
- * quand la cause est une sauvegarde locale illisible (elle ferait échouer chaque rechargement).
+ * Dernier recours : une erreur que rien n'a rattrapée. Au lieu d'une page blanche, de quoi repartir : recharger,
+ * revenir à l'accueil, rouvrir la configuration de son usine (une erreur à la fin de la configuration se rejouait à
+ * chaque rechargement), et seulement en dernier effacer l'usine enregistrée, après confirmation. Le détail technique
+ * reste replié, pour le transmettre.
  */
 function RouteError() {
   const error = useRouteError();
-  // Après un déploiement, un onglet resté ouvert peut demander un fichier qui n'existe plus : recharger suffit.
+  const { pathname } = useLocation();
+  const [effacer, setEffacer] = useState(false);
+  // Après un déploiement, un onglet resté ouvert peut demander un fichier qui n'existe plus : recharger suffit. Hors
+  // ligne, la même erreur veut dire que la connexion est coupée : on ne parle pas de mise à jour.
   const chunk = isChunkError(error);
+  const horsLigne = chunk && typeof navigator !== 'undefined' && !navigator.onLine;
+  const assistant = lireChemin(pathname)?.mode === 'assistant';
+  const titre = horsLigne ? 'La connexion est coupée' : chunk ? 'EVAN a été mis à jour' : 'Une erreur a interrompu EVAN';
+  const texte = horsLigne
+    ? 'EVAN n’a pas pu charger cet écran : ce poste n’est plus relié au réseau. Rétablissez la connexion, puis rechargez la page. Vos données ne sont pas perdues.'
+    : chunk
+      ? 'Cet onglet affiche encore l’ancienne version. Rechargez la page pour passer à la nouvelle : vos données ne sont pas perdues.'
+      : assistant
+        ? 'Rechargez la page, cela suffit le plus souvent. Si l’erreur revient, rouvrez la configuration de votre usine : vous reprenez là où vous en étiez, sans rien perdre.'
+        : 'Rechargez la page, cela suffit le plus souvent.';
   return (
     <div role="alert" className="hors-route">
       <div className="hr-contenu entree">
-        <EvanLogo size={30} status={chunk ? 'warn' : 'crit'} />
-        <p className="hr-code">{chunk ? 'Nouvelle version' : 'Erreur'}</p>
-        <h1>{chunk ? 'EVAN a été mis à jour' : 'Une erreur a interrompu EVAN'}</h1>
-        <p className="hr-texte">
-          {chunk
-            ? 'Cet onglet affiche encore l’ancienne version. Rechargez la page pour passer à la nouvelle : vos données ne sont pas perdues.'
-            : 'Rechargez la page, cela suffit le plus souvent. Si l’erreur revient sur votre usine, effacez la version enregistrée dans ce navigateur : vous repartirez d’une usine vierge.'}
-        </p>
+        <Link to="/" aria-label="EVAN, accueil" className="hr-logo">
+          <EvanLogo size={30} status={chunk ? 'warn' : 'crit'} />
+        </Link>
+        <p className="hr-code">{horsLigne ? 'Hors ligne' : chunk ? 'Nouvelle version' : 'Erreur'}</p>
+        <h1>{titre}</h1>
+        <p className="hr-texte">{texte}</p>
         <div className="hr-actions">
           <button className="btn primary" onClick={() => location.reload()}>
             <RefreshCw aria-hidden /> Recharger la page
           </button>
-          {!chunk && (
-            <button
-              className="btn"
-              onClick={() => {
-                clearSavedAssistant();
-                location.assign('/');
-              }}
-              title="Efface l’usine enregistrée dans ce navigateur, puis revient à l’accueil"
-            >
-              <Trash2 aria-hidden /> Effacer l’usine enregistrée
+          {!chunk && assistant && (
+            <button className="btn" onClick={() => location.assign(`${chemin('assistant', 5)}?configurer=1`)} title="Rouvre votre usine en configuration, sans passer par la supervision">
+              <Settings2 aria-hidden /> Rouvrir la configuration
             </button>
           )}
+          <Link to="/" className="btn ghost">
+            <Home aria-hidden /> Retour à l’accueil
+          </Link>
         </div>
+        {!chunk && assistant && (
+          <div className="hr-effacer">
+            {effacer ? (
+              <>
+                <p>Effacer l’usine enregistrée dans ce navigateur ? Son plan, ses machines et leurs branchements seront perdus. C’est définitif.</p>
+                <div className="hr-actions">
+                  <button className="btn" onClick={() => setEffacer(false)} autoFocus>
+                    Garder mon usine
+                  </button>
+                  <button
+                    className="btn danger"
+                    onClick={() => {
+                      clearSavedAssistant();
+                      location.assign('/');
+                    }}
+                  >
+                    <Trash2 aria-hidden /> Effacer définitivement
+                  </button>
+                </div>
+              </>
+            ) : (
+              <button className="btn sm ghost" onClick={() => setEffacer(true)} title="Dernier recours, si l’erreur revient même après avoir rouvert la configuration">
+                <Trash2 aria-hidden /> Effacer l’usine enregistrée
+              </button>
+            )}
+          </div>
+        )}
+        {!chunk && (
+          <details className="hr-detail">
+            <summary>Détail technique, à transmettre si l’erreur revient</summary>
+            <code>{messageErreur(error)}</code>
+          </details>
+        )}
       </div>
     </div>
   );

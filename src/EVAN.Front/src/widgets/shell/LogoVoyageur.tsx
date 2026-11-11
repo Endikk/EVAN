@@ -33,12 +33,11 @@ function useMedia(requete: string): boolean {
   );
 }
 
-/** Le logo est dans la barre du haut quand la barre latérale n'affiche que des icônes (repliée ou tablette). */
+/** Le logo est dans la barre du haut quand la barre latérale n'affiche que des icônes (repliée, tablette comprise). */
 export function useLogoEnHaut(): boolean {
   const replie = useCoquille((s) => s.replie);
-  const tablette = useMedia('(max-width: 1280px) and (min-width: 901px)');
   const telephone = useMedia('(max-width: 900px)');
-  return !telephone && (replie || tablette);
+  return !telephone && replie;
 }
 
 export function LogoVoyageur({ className = '' }: { className?: string }) {

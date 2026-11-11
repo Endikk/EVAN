@@ -1,10 +1,14 @@
 /**
- * Aide contextuelle « ? » : la seule forme d'aide de l'interface, toujours au même endroit, juste après ce qu'elle
- * explique (un titre, un chiffre). L'explication (définition, méthode, source) s'ouvre au survol, au focus clavier
- * ou au toucher, au lieu d'occuper l'écran en permanence. Rien d'indispensable pour agir n'y est caché.
+ * Aide contextuelle : la seule forme d'aide de l'interface. Deux déclencheurs, une même bulle :
+ * - le « ? » juste après un titre de bloc ;
+ * - le libellé lui-même (prop `texte`), souligné en pointillé, pour un chiffre ou une ligne de liste : l'écran ne
+ *   se couvre pas de « ? » et chaque chiffre garde son explication.
+ * L'explication (définition, méthode, source) s'ouvre au survol, au focus clavier ou au toucher, au lieu d'occuper
+ * l'écran en permanence. Rien d'indispensable pour agir n'y est caché.
  *
  * La bulle est rendue dans le body (jamais rognée par une carte qui défile). On peut passer la souris dessus sans
- * qu'elle se ferme, Échap la ferme (WCAG 1.4.13).
+ * qu'elle se ferme, Échap la ferme (WCAG 1.4.13). Échap ne ferme qu'elle : il est lu en capture, avant les volets et
+ * les raccourcis globaux, puis marqué traité (`preventDefault`).
  */
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
@@ -15,7 +19,14 @@ const MARGE = 8;
 /** Délai avant fermeture quand la souris quitte le « ? » : le temps de rejoindre la bulle. */
 const SORTIE_MS = 140;
 
-export function InfoTip({ children, label = 'Explication' }: { children: ReactNode; label?: string }) {
+interface Props {
+  children: ReactNode;
+  label?: string;
+  /** Libellé qui sert lui-même de déclencheur, à la place du « ? ». */
+  texte?: ReactNode;
+}
+
+export function InfoTip({ children, label = 'Explication', texte }: Props) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ left: number; top?: number; bottom?: number }>();
   const btn = useRef<HTMLButtonElement>(null);
@@ -54,17 +65,21 @@ export function InfoTip({ children, label = 'Explication' }: { children: ReactNo
     const suivre = () => {
       if (!placer()) close();
     };
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && close();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || e.defaultPrevented) return;
+      e.preventDefault();
+      close();
+    };
     const onDown = (e: PointerEvent) => {
       const t = e.target as Node;
       if (!btn.current?.contains(t) && !bulle.current?.contains(t)) close();
     };
-    window.addEventListener('keydown', onKey);
+    window.addEventListener('keydown', onKey, true);
     window.addEventListener('scroll', suivre, true);
     window.addEventListener('resize', suivre);
     document.addEventListener('pointerdown', onDown);
     return () => {
-      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('keydown', onKey, true);
       window.removeEventListener('scroll', suivre, true);
       window.removeEventListener('resize', suivre);
       document.removeEventListener('pointerdown', onDown);
@@ -78,9 +93,10 @@ export function InfoTip({ children, label = 'Explication' }: { children: ReactNo
       <button
         ref={btn}
         type="button"
-        className="infotip"
-        aria-label={label}
+        className={texte === undefined ? 'infotip' : 'infotip-texte'}
+        aria-label={texte === undefined ? label : undefined}
         aria-expanded={open}
+        aria-controls={open ? id : undefined}
         aria-describedby={open ? id : undefined}
         onPointerEnter={(e) => e.pointerType === 'mouse' && ouvrir()}
         onPointerLeave={(e) => e.pointerType === 'mouse' && fermerBientot()}
@@ -94,7 +110,15 @@ export function InfoTip({ children, label = 'Explication' }: { children: ReactNo
           else setOpen((v) => !v);
         }}
       >
-        <CircleHelp aria-hidden />
+        {texte === undefined ? (
+          <CircleHelp aria-hidden />
+        ) : (
+          // Le nom lu commence par le libellé visible (WCAG 2.5.3) et dit qu'il ouvre une explication.
+          <>
+            {texte}
+            <span className="sr-only"> : explication</span>
+          </>
+        )}
       </button>
       {open &&
         pos &&

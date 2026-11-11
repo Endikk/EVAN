@@ -33,24 +33,27 @@ interface Props {
   note?: ReactNode;
   noteVisible?: boolean;
   onClick?: () => void;
+  /** Ce que fait le clic, pour les lecteurs d'écran : « voir la liste », « aller à l'alarme ». */
+  action?: string;
   /** Identifiant pour « Montrer » dans le guide de l'écran. */
   guide?: string;
   className?: string;
 }
 
-export function Repere({ titre, terme, aide, valeur, format, unite, ton = 'neutre', mot, jauge, cible, note, noteVisible, onClick, guide, className = '' }: Props) {
+export function Repere({ titre, terme, aide, valeur, format, unite, ton = 'neutre', mot, jauge, cible, note, noteVisible, onClick, action = 'voir le détail', guide, className = '' }: Props) {
   const noteDansAide = note && !noteVisible ? note : undefined;
   const aAide = terme || aide || noteDansAide;
   const corps = (
     <>
       <div className="rp-titre">
-        <span>{titre}</span>
-        {aAide && (
-          <InfoTip label={`Comprendre : ${typeof titre === 'string' ? titre : 'ce chiffre'}`}>
+        {aAide ? (
+          <InfoTip texte={titre} label={`Comprendre : ${typeof titre === 'string' ? titre : 'ce chiffre'}`}>
             {terme && <DefinitionTerme t={GLOSSAIRE[terme]} />}
             {aide && <p>{aide}</p>}
             {noteDansAide && <p>{noteDansAide}</p>}
           </InfoTip>
+        ) : (
+          <span>{titre}</span>
         )}
       </div>
       <div className="rp-valeur">
@@ -73,21 +76,13 @@ export function Repere({ titre, terme, aide, valeur, format, unite, ton = 'neutr
     </>
   );
   const classes = `repere ton-${ton} ${onClick ? 'cliquable' : ''} ${className}`;
-  // Repère cliquable : un div qui se comporte en bouton, pour que son « ? » (un bouton) n'y soit pas imbriqué.
+  // Repère cliquable : un vrai bouton étiré sur toute la carte (CSS), frère du libellé qui ouvre l'aide. Un élément
+  // role="button" qui contiendrait ce libellé le rendrait muet pour les lecteurs d'écran.
+  const nom = typeof titre === 'string' ? titre : 'Ce chiffre';
   return onClick ? (
-    <div
-      role="button"
-      tabIndex={0}
-      className={classes}
-      onClick={onClick}
-      onKeyDown={(e) => {
-        if (e.target !== e.currentTarget || (e.key !== 'Enter' && e.key !== ' ')) return;
-        e.preventDefault();
-        onClick();
-      }}
-      data-guide={guide}
-    >
+    <div className={classes} data-guide={guide}>
       {corps}
+      <button type="button" className="rp-etendu" onClick={onClick} aria-label={`${nom} : ${action}`} />
     </div>
   ) : (
     <div className={classes} data-guide={guide}>

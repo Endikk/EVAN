@@ -1,21 +1,17 @@
 /* ============================================================
-   Hors des écrans : chargement, adresse inconnue, erreur, vue indisponible
+   Hors des écrans : chargement, adresse inconnue, erreur, vue indisponible.
+   Une colonne posée un peu au-dessus du milieu de l'écran : le logo, ce qui se passe, de quoi repartir. Sans décor.
    ============================================================ */
 .hors-route {
   position: relative;
   min-height: 100%;
   display: grid;
   place-items: center;
-  padding: 32px 16px;
+  /* Plus de marge en bas qu'en haut : le bloc se pose au centre optique, un peu au-dessus du milieu. */
+  padding: 32px 16px 64px;
   overflow: hidden;
   isolation: isolate;
   background: var(--bg);
-}
-.hors-route > .pixel-field {
-  opacity: 0.9;
-  /* Le nuage reste dans le coin : il s'efface avant d'atteindre le texte. */
-  -webkit-mask-image: linear-gradient(115deg, transparent 52%, #000 88%);
-  mask-image: linear-gradient(115deg, transparent 52%, #000 88%);
 }
 .hr-contenu {
   position: relative;
@@ -26,32 +22,40 @@
   align-items: flex-start;
 }
 .hr-logo {
+  display: inline-flex;
+  margin-left: -4px;
+  padding: 4px;
+  border-radius: var(--r-md);
   color: var(--text);
 }
+/* Ce qui arrive, en une étiquette discrète au-dessus du titre (« Erreur 404 », « Nouvelle version »). */
 .hr-code {
-  margin: 32px 0 8px;
-  font-size: 13px;
-  font-weight: 650;
-  color: var(--accent-text);
+  margin: 32px 0 12px;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
+  color: var(--text-3);
 }
 .hors-route h1 {
   margin: 0;
-  font-size: clamp(28px, 1.4rem + 1.6vw, 40px);
-  line-height: 1.12;
+  font-size: clamp(var(--fs-4xl), 1.25rem + 1.6vw, 40px);
+  font-weight: var(--fw-medium);
+  line-height: 1.15;
   letter-spacing: -0.02em;
   text-wrap: balance;
 }
 .hr-texte {
-  margin: 12px 0 0;
-  font-size: 15px;
+  max-width: 36em;
+  margin: 16px 0 0;
+  font-size: var(--fs-lg);
   line-height: 1.55;
   color: var(--text-2);
+  text-wrap: pretty;
 }
 .hr-texte code {
+  padding: 0 4px;
+  border-radius: var(--r-xs);
   font-family: var(--mono);
   font-size: 0.9em;
-  padding: 0 8px;
-  border-radius: var(--r-sm);
   color: var(--text);
   background: var(--surface-2);
   overflow-wrap: anywhere;
@@ -62,76 +66,79 @@
   gap: 8px;
   margin-top: 24px;
 }
+
+/* Les écrans de la démonstration : une seule liste, comme un menu, plutôt qu'une grille de cartes pareilles. */
 .hr-ecrans {
   width: 100%;
-  margin-top: 32px;
+  margin-top: 40px;
 }
 .hr-ecrans h2 {
-  margin: 0 0 8px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-3);
+  margin: 0 0 12px;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
+  color: var(--text-2);
 }
 .hr-ecrans ul {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+.hr-ecrans li + li {
+  border-top: 1px solid var(--border);
 }
 .hr-ecrans a {
-  display: flex;
+  display: grid;
+  grid-template-columns: var(--icon) minmax(0, 1fr) var(--icon);
   align-items: center;
   gap: 12px;
-  height: 100%;
-  padding: 12px;
-  border-radius: var(--r-md);
-  border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  min-height: 56px;
+  padding: 8px 16px;
   color: var(--text);
   text-decoration: none;
-  transition:
-    border-color var(--dur) var(--ease),
-    background var(--dur) var(--ease);
+  transition: background-color var(--dur) var(--ease);
 }
 .hr-ecrans a:hover {
-  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
   background: var(--surface-2);
 }
-.hr-ecrans a > svg:first-child {
-  flex: none;
-  width: var(--icon-lg);
-  height: var(--icon-lg);
-  color: var(--accent-text);
+/* Dans la liste arrondie, l'anneau du focus se dessine à l'intérieur de la ligne, sans être rogné. */
+.hr-ecrans a:focus-visible {
+  border-radius: 0;
+  box-shadow: inset 0 0 0 2px var(--text-2);
 }
-.hr-ecrans span {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  line-height: 1.3;
-}
-.hr-ecrans b {
-  font-size: 13.5px;
-  font-weight: 620;
-}
-.hr-ecrans small {
-  font-size: 12px;
-  color: var(--text-2);
-}
-.hr-fleche {
-  flex: none;
+.hr-ecrans a > svg {
   width: var(--icon);
   height: var(--icon);
   color: var(--text-3);
 }
-.hr-ecrans a:hover .hr-fleche {
-  color: var(--accent-text);
+.hr-ecrans span {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.3;
+}
+.hr-ecrans b {
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
+}
+.hr-ecrans small {
+  font-size: var(--fs-md);
+  color: var(--text-2);
+}
+.hr-ecrans a > .hr-fleche {
+  color: var(--text-3);
+  transition: color var(--dur) var(--ease);
+}
+.hr-ecrans a:hover > .hr-fleche {
+  color: var(--text);
 }
 @media (max-width: 600px) {
-  .hr-ecrans ul {
-    grid-template-columns: minmax(0, 1fr);
+  .hors-route {
+    padding-bottom: 48px;
   }
   .hr-actions {
     align-self: stretch;
@@ -146,14 +153,14 @@
   width: auto;
   align-items: center;
   gap: 16px;
-  animation: entree 420ms var(--ease-out) 150ms backwards;
+  animation: entree var(--dur-entree) var(--ease) 150ms backwards;
 }
 .hors-route.chargement .evan-logo {
   color: var(--text);
 }
 .hr-phrase {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--fs-base);
   color: var(--text-2);
 }
 .hr-barre {
@@ -182,7 +189,8 @@
   }
 }
 
-/* Vue indisponible (carte, 3D, écran) : même allure, à l'échelle d'une zone. */
+/* Vue indisponible (carte, 3D, écran) : même allure, à l'échelle d'une zone. Ce n'est pas un état de machine : le
+   triangle reste neutre, la bordure en pointillé dit la place vide. */
 .indispo {
   height: 100%;
   min-height: 220px;
@@ -201,7 +209,7 @@
   border-radius: var(--r-lg);
   border: 1px dashed var(--border-strong);
   background: var(--surface);
-  animation: entree 360ms var(--ease-out) backwards;
+  animation: entree var(--dur-entree) var(--ease) backwards;
 }
 .indispo-icone {
   width: 40px;
@@ -209,8 +217,8 @@
   border-radius: var(--r-md);
   display: grid;
   place-items: center;
-  color: var(--warn);
-  background: var(--warn-soft);
+  color: var(--text-2);
+  background: var(--surface-2);
 }
 .indispo-icone svg {
   width: var(--icon-lg);
@@ -218,11 +226,12 @@
 }
 .indispo h3 {
   margin: 4px 0 0;
-  font-size: 16px;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-medium);
 }
 .indispo p {
   margin: 0 0 8px;
-  font-size: 13.5px;
+  font-size: var(--fs-base);
   line-height: 1.5;
   color: var(--text-2);
 }

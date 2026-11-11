@@ -6,8 +6,7 @@
   border-left: 1px solid var(--border);
 }
 
-/* Onglets d'exploitation : icône et nom. L'onglet courant a son texte en clair, son icône en rouge, et un trait rouge
-   sous lui qui glisse d'un onglet à l'autre (transform seulement) : on voit d'où l'on vient et où l'on arrive. */
+/* Puce « Configuration ouverte », à côté du titre. */
 .config-chip {
   margin-left: 4px;
 }
@@ -18,7 +17,7 @@
   display: flex;
   justify-content: space-between;
   gap: 8px;
-  font-size: 10.5px;
+  font-size: var(--fs-xs);
   color: var(--text-3);
   white-space: nowrap;
 }
@@ -80,7 +79,7 @@ button.kpi:disabled {
 }
 .table-view {
   margin-top: 8px;
-  font-size: 12.5px;
+  font-size: var(--fs-md);
 }
 .journal-more {
   margin-top: 8px;
@@ -111,8 +110,8 @@ button.kpi:disabled {
   .table.journal td::before {
     content: attr(data-l);
     display: block;
-    font-size: 10.5px;
-    font-weight: 600;
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-medium);
     color: var(--text-3);
   }
   .table.journal td[data-l='Message'] {
@@ -126,17 +125,15 @@ button.kpi:disabled {
   .table-view .table td {
     padding-left: 4px;
     padding-right: 4px;
-    font-size: 11px;
+    font-size: var(--fs-xs);
     overflow-wrap: anywhere;
   }
 }
 .table-view summary {
   cursor: pointer;
   color: var(--text-2);
-  font-weight: 600;
+  font-weight: var(--fw-medium);
 }
-
-/* Rail de configuration */
 
 /* Organisation et usines : sélecteur de la barre du haut */
 .usine-menu {
@@ -182,13 +179,13 @@ button.kpi:disabled {
   line-height: 1.2;
 }
 .usine-switch-txt small {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
   color: var(--text-3);
 }
 .usine-switch-txt b {
-  font-size: 13px;
-  font-weight: 650;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
 }
 .usine-panel {
   position: absolute;
@@ -218,14 +215,15 @@ button.kpi:disabled {
   gap: 4px;
 }
 .usine-org b {
-  font-size: 15px;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-medium);
 }
 .usine-org .muted {
-  font-size: 12px;
+  font-size: var(--fs-sm);
 }
 .usine-kicker {
-  font-size: 10.5px;
-  font-weight: 700;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-regular);
   letter-spacing: 0;
   color: var(--text-3);
 }
@@ -245,11 +243,13 @@ button.kpi:disabled {
   align-items: flex-start;
   gap: 8px;
   padding: 8px;
-  border-radius: var(--r-md);
+  /* Rayon du menu (12) moins son retrait (8). */
+  border-radius: var(--r-xs);
   border: 0;
   background: transparent;
   cursor: pointer;
   text-align: left;
+  transition: background-color var(--dur) var(--ease);
 }
 .usine-item:hover {
   background: var(--surface-2);
@@ -265,17 +265,18 @@ button.kpi:disabled {
   gap: 4px;
 }
 .usine-item-txt b {
-  font-size: 13.5px;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
 }
 .usine-item-txt span {
-  font-size: 12px;
+  font-size: var(--fs-sm);
 }
 .usine-check {
   flex: none;
   width: var(--icon);
   height: var(--icon);
   margin-top: 4px;
-  color: var(--accent-text);
+  color: var(--text-2);
 }
 .usine-add {
   width: 100%;
@@ -284,9 +285,5 @@ button.kpi:disabled {
 }
 .usine-note {
   margin: 8px 8px 4px;
-  font-size: 12px;
-}
-.modal-icon.accent {
-  color: var(--accent-text);
-  background: var(--accent-soft);
+  font-size: var(--fs-sm);
 }
