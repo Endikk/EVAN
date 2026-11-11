@@ -1,0 +1,180 @@
+diff --git a/node_modules/@react-three/fiber/dist/events-21d8cd92.cjs.dev.js b/node_modules/@react-three/fiber/dist/events-21d8cd92.cjs.dev.js
+index 9b43bdf..b838094 100644
+--- a/node_modules/@react-three/fiber/dist/events-21d8cd92.cjs.dev.js
++++ b/node_modules/@react-three/fiber/dist/events-21d8cd92.cjs.dev.js
+@@ -1008,6 +1008,46 @@ function createEvents(store) {
+ 
+ const isRenderer = def => !!(def != null && def.render);
+ const context = /* @__PURE__ */React__namespace.createContext(null);
++// THREE.Clock, déprécié depuis three r183, avertit en console à chaque création (une fois par <Canvas>).
++// Même horloge, recopiée de three sans l'avertissement : state.clock garde son interface et son comportement.
++class FrameClock {
++  constructor(autoStart = true) {
++    this.autoStart = autoStart;
++    this.startTime = 0;
++    this.oldTime = 0;
++    this.elapsedTime = 0;
++    this.running = false;
++  }
++  start() {
++    this.startTime = performance.now();
++    this.oldTime = this.startTime;
++    this.elapsedTime = 0;
++    this.running = true;
++  }
++  stop() {
++    this.getElapsedTime();
++    this.running = false;
++    this.autoStart = false;
++  }
++  getElapsedTime() {
++    this.getDelta();
++    return this.elapsedTime;
++  }
++  getDelta() {
++    let diff = 0;
++    if (this.autoStart && !this.running) {
++      this.start();
++      return 0;
++    }
++    if (this.running) {
++      const newTime = performance.now();
++      diff = (newTime - this.oldTime) / 1000;
++      this.oldTime = newTime;
++      this.elapsedTime += diff;
++    }
++    return diff;
++  }
++}
+ const createStore = (invalidate, advance) => {
+   const rootStore = traditional.createWithEqualityFn((set, get) => {
+     const position = new THREE__namespace.Vector3();
+@@ -1076,7 +1116,7 @@ const createStore = (invalidate, advance) => {
+       linear: false,
+       flat: false,
+       controls: null,
+-      clock: new THREE__namespace.Clock(),
++      clock: new FrameClock(),
+       pointer,
+       mouse: pointer,
+       frameloop: 'always',
+diff --git a/node_modules/@react-three/fiber/dist/events-9ce18a08.esm.js b/node_modules/@react-three/fiber/dist/events-9ce18a08.esm.js
+index ea6b4c9..0431285 100644
+--- a/node_modules/@react-three/fiber/dist/events-9ce18a08.esm.js
++++ b/node_modules/@react-three/fiber/dist/events-9ce18a08.esm.js
+@@ -983,6 +983,46 @@ function createEvents(store) {
+ 
+ const isRenderer = def => !!(def != null && def.render);
+ const context = /* @__PURE__ */React.createContext(null);
++// THREE.Clock, déprécié depuis three r183, avertit en console à chaque création (une fois par <Canvas>).
++// Même horloge, recopiée de three sans l'avertissement : state.clock garde son interface et son comportement.
++class FrameClock {
++  constructor(autoStart = true) {
++    this.autoStart = autoStart;
++    this.startTime = 0;
++    this.oldTime = 0;
++    this.elapsedTime = 0;
++    this.running = false;
++  }
++  start() {
++    this.startTime = performance.now();
++    this.oldTime = this.startTime;
++    this.elapsedTime = 0;
++    this.running = true;
++  }
++  stop() {
++    this.getElapsedTime();
++    this.running = false;
++    this.autoStart = false;
++  }
++  getElapsedTime() {
++    this.getDelta();
++    return this.elapsedTime;
++  }
++  getDelta() {
++    let diff = 0;
++    if (this.autoStart && !this.running) {
++      this.start();
++      return 0;
++    }
++    if (this.running) {
++      const newTime = performance.now();
++      diff = (newTime - this.oldTime) / 1000;
++      this.oldTime = newTime;
++      this.elapsedTime += diff;
++    }
++    return diff;
++  }
++}
+ const createStore = (invalidate, advance) => {
+   const rootStore = createWithEqualityFn((set, get) => {
+     const position = new THREE.Vector3();
+@@ -1051,7 +1091,7 @@ const createStore = (invalidate, advance) => {
+       linear: false,
+       flat: false,
+       controls: null,
+-      clock: new THREE.Clock(),
++      clock: new FrameClock(),
+       pointer,
+       mouse: pointer,
+       frameloop: 'always',
+diff --git a/node_modules/@react-three/fiber/dist/events-a816cbab.cjs.prod.js b/node_modules/@react-three/fiber/dist/events-a816cbab.cjs.prod.js
+index c26a227..0388e97 100644
+--- a/node_modules/@react-three/fiber/dist/events-a816cbab.cjs.prod.js
++++ b/node_modules/@react-three/fiber/dist/events-a816cbab.cjs.prod.js
+@@ -1008,6 +1008,46 @@ function createEvents(store) {
+ 
+ const isRenderer = def => !!(def != null && def.render);
+ const context = /* @__PURE__ */React__namespace.createContext(null);
++// THREE.Clock, déprécié depuis three r183, avertit en console à chaque création (une fois par <Canvas>).
++// Même horloge, recopiée de three sans l'avertissement : state.clock garde son interface et son comportement.
++class FrameClock {
++  constructor(autoStart = true) {
++    this.autoStart = autoStart;
++    this.startTime = 0;
++    this.oldTime = 0;
++    this.elapsedTime = 0;
++    this.running = false;
++  }
++  start() {
++    this.startTime = performance.now();
++    this.oldTime = this.startTime;
++    this.elapsedTime = 0;
++    this.running = true;
++  }
++  stop() {
++    this.getElapsedTime();
++    this.running = false;
++    this.autoStart = false;
++  }
++  getElapsedTime() {
++    this.getDelta();
++    return this.elapsedTime;
++  }
++  getDelta() {
++    let diff = 0;
++    if (this.autoStart && !this.running) {
++      this.start();
++      return 0;
++    }
++    if (this.running) {
++      const newTime = performance.now();
++      diff = (newTime - this.oldTime) / 1000;
++      this.oldTime = newTime;
++      this.elapsedTime += diff;
++    }
++    return diff;
++  }
++}
+ const createStore = (invalidate, advance) => {
+   const rootStore = traditional.createWithEqualityFn((set, get) => {
+     const position = new THREE__namespace.Vector3();
+@@ -1076,7 +1116,7 @@ const createStore = (invalidate, advance) => {
+       linear: false,
+       flat: false,
+       controls: null,
+-      clock: new THREE__namespace.Clock(),
++      clock: new FrameClock(),
+       pointer,
+       mouse: pointer,
+       frameloop: 'always',

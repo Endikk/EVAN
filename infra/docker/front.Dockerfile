@@ -3,6 +3,8 @@
 FROM node:24-alpine AS build
 WORKDIR /repo
 COPY src/EVAN.Front/package.json src/EVAN.Front/package-lock.json src/EVAN.Front/
+# Correctifs de dépendances appliqués par le postinstall de npm ci (patch-package) : à copier avant l'installation.
+COPY src/EVAN.Front/patches/ src/EVAN.Front/patches/
 # Cache npm partagé entre les builds : une dépendance déjà téléchargée ne l'est plus.
 RUN --mount=type=cache,target=/root/.npm,sharing=locked cd src/EVAN.Front && npm ci --no-audit --no-fund
 COPY data/ data/
