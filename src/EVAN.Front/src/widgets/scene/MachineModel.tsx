@@ -14,6 +14,7 @@ import { useGLTF } from '@react-three/drei';
 import type { EtatMachine } from '@/domain/types';
 import { disposeInstance, highlightNear, instantiate, resetHighlight, setVoyant, type CouleurVoyant, type Habillage, type VoyantRef } from './model';
 import { instantiateFast } from './mergedModel';
+import { useCouleurSelection } from './couleurs';
 
 export interface OrganFocus {
   numero: number;
@@ -21,7 +22,6 @@ export interface OrganFocus {
 }
 
 const RED = new THREE.Color('#ff3d6e');
-const BRAISE = new THREE.Color('#ff7a3d');
 
 /** Rayon à l'écran (px CSS) au-delà duquel la version détaillée s'affiche, et en deçà duquel elle cède la place. */
 const DETAIL_IN_PX = 150;
@@ -68,6 +68,8 @@ function applyVoyants(voyants: Record<CouleurVoyant, VoyantRef>, etat: EtatMachi
 
 export function MachineModel({ url, etat, facteur, focus, reduced, ghost, clignote, detail = 'always', habillage }: Props) {
   const { scene } = useGLTF(url);
+  // L'organe choisi prend la couleur de sélection du thème, comme le contour et la balise ; la panne garde son rouge.
+  const selection = useCouleurSelection();
   const fast = useMemo(() => (detail === 'auto' ? instantiateFast(scene) : null), [scene, detail]);
   const [near, setNear] = useState(false);
   const showDetail = !fast || !!focus || near;
@@ -95,7 +97,7 @@ export function MachineModel({ url, etat, facteur, focus, reduced, ghost, cligno
     if (!node) return;
     wrapper.current?.updateMatrixWorld(true);
     const world = node.getWorldPosition(new THREE.Vector3());
-    hits.current = highlightNear(inst, world, focus.kind === 'defaut' ? RED : BRAISE, undefined, ghost);
+    hits.current = highlightNear(inst, world, focus.kind === 'defaut' ? RED : new THREE.Color(selection), undefined, ghost);
     // highlightNear estompe le reste d'un coup : on repart de l'opacité pleine pour y aller en fondu.
     const touches = new Set(hits.current);
     const mats = inst.meshes.filter((m) => !touches.has(m)).flatMap((m) => (Array.isArray(m.material) ? m.material : [m.material]));
@@ -105,7 +107,7 @@ export function MachineModel({ url, etat, facteur, focus, reduced, ghost, cligno
     return () => {
       fondu.current.cible = 0;
     };
-  }, [focus?.numero, focus?.kind, inst, ghost, reduced]);
+  }, [focus?.numero, focus?.kind, inst, ghost, reduced, selection]);
 
   useFrame((state, dt) => {
     if (fast && wrapper.current && ++frame.current % LOD_EVERY === 0) {

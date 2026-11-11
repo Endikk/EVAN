@@ -1,7 +1,8 @@
 /**
  * Onglet « Alarmes » : une ligne compacte par alarme, la plus urgente en haut. La gravité se lit par la forme (carré :
  * panne, triangle : à surveiller), le quoi en gras, le où et le code dessous, depuis quand à droite, et ce qu'il faut
- * faire en une ligne, parce que c'est ce qui sert à agir. Sans alarme : une forme, un titre, une ligne ; ce que ferait
+ * faire en une ligne, parce que c'est ce qui sert à agir. Une panne réelle a un bord cramoisi, une panne d'exercice
+ * un bord en pointillé. Sans alarme : une forme, un titre, une ligne ; ce que ferait
  * EVAN si une mesure sortait de sa limite est dans le « ? ».
  */
 import type { ReactNode } from 'react';
@@ -13,6 +14,7 @@ import { StatusIcon } from '@/ui/status';
 import { InfoTip } from '@/ui/InfoTip';
 import { fmtDuration } from '@/ui/format';
 import { focusAlarm } from '@/widgets/shell/navigation';
+import { estExercice } from '@/widgets/pannes/exercice';
 import { lieuAlarme } from '../lib/lieu';
 
 /** Que faire, en une ligne : l'étape qui vient. */
@@ -85,13 +87,15 @@ export function Alarmes({ alarmes, enSuivi = false }: { alarmes: Alarme[]; enSui
         const crit = a.gravite === 'critique';
         const prise = a.statut === 'acquittee';
         const l = lieuAlarme(a, machines, perso);
-        const gravite = crit ? 'Panne' : 'À surveiller';
+        const exercice = estExercice(a);
+        const gravite = `${crit ? 'Panne' : 'À surveiller'}${exercice ? ' (exercice)' : ''}`;
         const Icone = prise ? Hand : ArrowRight;
         return (
           <li key={a.id}>
-            <button className={`sv-alarme ${crit ? 'crit' : 'warn'} ${prise ? 'prise' : ''}`} onClick={() => focusAlarm(a.id)}>
+            <button className={`sv-alarme ${crit && !exercice ? 'crit' : ''} ${exercice ? 'exercice' : ''} ${prise ? 'prise' : ''}`} onClick={() => focusAlarm(a.id)}>
               <span className={`sv-alarme-forme st st-${crit ? 'panne' : 'attention'}`} title={gravite}>
-                <StatusIcon etat={crit ? 'panne' : 'attention'} size={12} animate={crit && a.statut === 'active'} />
+                {/* Immobile : en panne, seules l'étiquette de la 3D et la phrase du bandeau battent. */}
+                <StatusIcon etat={crit ? 'panne' : 'attention'} size={12} animate={false} />
               </span>
               <span className="sr-only">{gravite} :</span>
               <b className="sv-alarme-quoi">{a.message}</b>

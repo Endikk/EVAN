@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Alarme, EtatMachine, Machine } from '@/domain/types';
 import type { MachineLive } from '@/store/live';
-import { enumerer, etatAtelier, minusculeInitiale, nonProductives, parUrgence, verdictAtelier } from './atelier';
+import { depuisCompteurs, enumerer, etatAtelier, minusculeInitiale, motVitesse, nonProductives, parUrgence, verdictAtelier } from './atelier';
 
 const machine = (numero: string): Machine => ({
   id: `m-${numero}`,
@@ -50,14 +50,19 @@ describe('état de l’atelier', () => {
 describe('phrase du bandeau', () => {
   const machines = ['R01', 'R02', 'R03'].map(machine);
 
-  it('dit que tout tourne et nomme ce qui ne produit pas', () => {
-    const a = etatAtelier(machines, { 'm-R01': live('marche'), 'm-R02': live('marche'), 'm-R03': live('calage') });
+  it('nomme ce qui ne produit pas sans répéter le compte du repère, ni dire « tout tourne »', () => {
+    const a = etatAtelier(machines, { 'm-R01': live('marche'), 'm-R02': live('arret'), 'm-R03': live('calage') });
     const v = verdictAtelier(a, [], lieu, 0);
     expect(v.ton).toBe('ok');
-    expect(v.texte).toBe('Tout tourne : 2 machines sur 3 produisent, aucune alarme.');
-    // Rien à faire : pas de seconde ligne. Ce qui ne produit pas se lit dans le « ? » du repère.
+    expect(v.texte).toBe('Aucune alarme. R03 en réglage et R02 à l’arrêt.');
+    // Rien à faire : pas de seconde ligne.
     expect(v.suite).toBeUndefined();
-    expect(nonProductives(a)).toBe('R03 est en réglage (calage).');
+    expect(nonProductives(a)).toBe('R03 est en réglage (calage). R02 est à l’arrêt.');
+  });
+
+  it('dit « tout tourne » seulement quand toutes les machines produisent', () => {
+    const a = etatAtelier(machines, { 'm-R01': live('marche'), 'm-R02': live('marche'), 'm-R03': live('attention') });
+    expect(verdictAtelier(a, [], lieu, 0).texte).toBe('Tout tourne, aucune alarme.');
   });
 
   it('met la panne en tête, avec la machine, la durée et l’organe', () => {
@@ -74,6 +79,7 @@ describe('phrase du bandeau', () => {
     const v = verdictAtelier(a, [alarme({ gravite: 'attention' })], lieu, MIN);
     expect(v.ton).toBe('warn');
     expect(v.texte).toBe('Aucune panne. Un point à surveiller sur R03, côté groupe d’impression 2.');
+    expect(v.action).toBe('Voir le point à surveiller');
   });
 
   it('attend les données avant de conclure', () => {
@@ -105,4 +111,25 @@ describe('mots', () => {
     expect(enumerer(['R01', 'R02', 'R03'])).toBe('R01, R02 et R03');
   });
 
+});
+
+describe('vitesse en mots', () => {
+  it('dit « S’arrête » tant qu’une machine en panne ralentit encore', () => {
+    expect(motVitesse('panne', 0.15).mot).toBe('S’arrête');
+    expect(motVitesse('panne', 0).mot).toBe('Arrêtée');
+    expect(motVitesse('arret', 0.01).mot).toBe('Arrêtée');
+  });
+
+  it('distingue la marche normale du ralenti', () => {
+    expect(motVitesse('marche', 0.95)).toEqual({ ton: 'ok', mot: 'Normale' });
+    expect(motVitesse('attention', 0.5)).toEqual({ ton: 'warn', mot: 'Ralentie' });
+    expect(motVitesse('calage', 0.18).mot).toBe('Réglage');
+  });
+});
+
+describe('période des compteurs', () => {
+  it('dit le début du poste en démonstration, et la source des compteurs sur l’API', () => {
+    expect(depuisCompteurs('local', new Date('2026-10-08T13:00:00').getTime())).toBe('depuis le début du poste (13 h)');
+    expect(depuisCompteurs('api', 0)).toBe('selon les compteurs remontés par les machines');
+  });
 });

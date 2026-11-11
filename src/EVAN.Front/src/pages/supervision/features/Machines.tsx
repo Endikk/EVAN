@@ -11,6 +11,7 @@ import { MACHINE_TYPES } from '@/domain/catalog';
 import { StatusIcon } from '@/ui/status';
 import { fmtDuration, fmtValue } from '@/ui/format';
 import { focusAlarm } from '@/widgets/shell/navigation';
+import { estExercice } from '@/widgets/pannes/exercice';
 import { ETAT_MOT, MOT_HORS_LIGNE, type EtatAtelier, type MachineEtat } from '../lib/atelier';
 
 const GROUPES: EtatMachine[] = ['panne', 'attention', 'calage', 'marche', 'arret'];
@@ -24,6 +25,9 @@ function ouvrir(machineId: string) {
 
 function Ligne({ e, now }: { e: MachineEtat; now: number }) {
   const l = useLive((s) => s.machines[e.machine.id]);
+  // Machine en panne : cramoisi si la panne est réelle, pointillé si elle vient de « Simuler une panne ».
+  const panne = useLive((s) => s.alarms.find((a) => a.machineId === e.machine.id && a.statut !== 'resolue' && a.gravite === 'critique'));
+  const exercice = e.etat === 'panne' && !!panne && estExercice(panne);
   const type = MACHINE_TYPES[e.machine.type];
   const facteur = Math.min(1, Math.max(0, l?.facteur ?? 0));
   const mot = e.horsLigne ? MOT_HORS_LIGNE : ETAT_MOT[e.etat];
@@ -31,7 +35,7 @@ function Ligne({ e, now }: { e: MachineEtat; now: number }) {
   const depuis = e.depuis && (e.horsLigne || e.etat !== 'marche') ? `depuis ${fmtDuration(now - e.depuis)}` : undefined;
   return (
     <li>
-      <button className={`sv-machine ${e.etat === 'panne' ? 'crit' : ''}`} onClick={() => ouvrir(e.machine.id)}>
+      <button className={`sv-machine ${e.etat === 'panne' && !exercice ? 'crit' : ''} ${exercice ? 'exercice' : ''}`} onClick={() => ouvrir(e.machine.id)}>
         <span className={`st st-${e.etat}`} title={mot}>
           <StatusIcon etat={e.etat} />
         </span>

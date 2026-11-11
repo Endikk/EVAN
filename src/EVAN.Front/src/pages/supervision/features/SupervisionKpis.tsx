@@ -1,17 +1,18 @@
 /**
  * Bandeau de la supervision : d'abord la phrase qui dit si l'atelier tourne et, sinon, où ça coince (pendant une
- * panne, une ligne dit si quelqu'un s'en occupe) ; puis trois repères qui se lisent d'un coup d'œil, sans phrase sous les
- * valeurs : machines qui produisent (une forme par machine), efficacité du moment (une jauge face au repère de
- * 85 %), alarmes à traiter. Le détail de chaque chiffre est dans son « ? ». Les autres chiffres (production,
- * étiquettes jetées, arrêts du jour, tendance) passent dans un volet, « Plus de chiffres ».
+ * panne, une ligne dit si quelqu'un s'en occupe). C'est elle qui mène. À côté, trois repères en relevé compact, une
+ * ligne chacun, qui se lisent d'un coup d'œil sans phrase sous les valeurs : machines qui produisent (une forme par
+ * machine), efficacité du moment (une jauge face au repère de 85 %), alarmes à traiter. Le détail de chaque chiffre
+ * s'ouvre sur son libellé. Les autres chiffres (production, étiquettes jetées, arrêts du jour, tendance) passent dans
+ * un volet, « Plus de chiffres ».
  * Le bandeau reste bas : il est posé au-dessus de la 3D.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BarChart3, LocateFixed } from 'lucide-react';
 import { useProject } from '@/store/project';
 import { useLive } from '@/store/live';
+import { useUi } from '@/store/ui';
 import { StatusIcon } from '@/ui/status';
-import { PixelField } from '@/ui/PixelField';
 import { EFFICACITE_REFERENCE, GuideButton, Repere, lireEfficacite } from '@/ui/explain';
 import { getHistory } from '@/sim/history';
 import { focusAlarm } from '@/widgets/shell/navigation';
@@ -29,6 +30,9 @@ const FENETRE_CADENCE = 60;
 /** Une durée ne se coupe pas en fin de ligne (« 1 » d'un côté, « s » de l'autre). */
 const insecable = (s: string) => s.replace(/(\d) (s|min|h)\b/g, '$1\u00a0$2');
 
+/** La phrase s'affiche comme un titre, sans point final (comme la tête des autres écrans). */
+const sansPointFinal = (s: string) => s.replace(/\.\s*$/, '');
+
 const TON_LU: Record<Ton, string> = {
   ok: 'Tout va bien.',
   warn: 'À surveiller.',
@@ -42,7 +46,7 @@ function BandeMachines({ atelier }: { atelier: EtatAtelier }) {
     <span className="sv-bande" role="img" aria-label={atelier.bande.map((b) => `${b.machine.numero} : ${b.horsLigne ? MOT_HORS_LIGNE : ETAT_MOT[b.etat]}`).join(', ')}>
       {atelier.bande.map((b) => (
         <span key={b.machine.id} className={`st st-${b.etat} ${b.horsLigne ? 'hors-ligne' : ''}`} title={`${b.machine.numero} · ${b.horsLigne ? MOT_HORS_LIGNE : ETAT_MOT[b.etat]}`}>
-          <StatusIcon etat={b.etat} size={11} />
+          <StatusIcon etat={b.etat} size={11} animate={false} />
         </span>
       ))}
     </span>
@@ -69,6 +73,7 @@ export function SupervisionKpis() {
   const live = useLive((s) => s.machines);
   const alarms = useLive((s) => s.alarms);
   const tick = useLive((s) => s.tick);
+  const focus = useUi((s) => s.focus);
   const [trend, setTrend] = useState<PointTendance[]>([]);
   const [volet, setVolet] = useState(false);
   // Fonction stable : le volet s'abonne au clavier une fois, pas à chaque seconde.
@@ -114,16 +119,18 @@ export function SupervisionKpis() {
   const dernier = prod.current[prod.current.length - 1];
   const cadence = premier && dernier && dernier.t > premier.t ? ((dernier.v - premier.v) / (dernier.t - premier.t)) * 3_600_000 : 0;
   const glyphe = GLYPHE[verdict.ton];
+  // La caméra montre déjà la pièce en cause : « Voir la panne » ne mènerait nulle part, le bouton s'efface.
+  const cible = verdict.alarmeId ? actives.find((a) => a.id === verdict.alarmeId) : undefined;
+  const dejaLa = !!cible && focus.kind === 'organe' && focus.organeId === cible.organeId;
 
   return (
     <section className={`sv-bandeau ton-${verdict.ton}`} aria-label="L’atelier en ce moment">
-      <PixelField placement="bas-droite" intensite={0.5} />
       <div className="sv-verdict entree" data-guide="sv-verdict" style={{ ['--i' as string]: 0 }}>
         <p className="sv-phrase" key={verdict.ton}>
           <span className={`sv-glyphe st st-${glyphe}`}>
-            <StatusIcon etat={glyphe} size={15} animate={verdict.ton === 'crit'} />
+            <StatusIcon etat={glyphe} size={14} animate={verdict.ton === 'crit'} />
           </span>
-          <span>{insecable(verdict.texte)}</span>
+          <span>{insecable(sansPointFinal(verdict.texte))}</span>
         </p>
         <p className="sr-only" aria-live="polite">
           {TON_LU[verdict.ton]} {verdict.annonce ?? verdict.texte}
@@ -131,8 +138,8 @@ export function SupervisionKpis() {
         <div className="sv-verdict-bas">
           {verdict.suite && <p className="sv-suite">{verdict.suite}</p>}
           <div className="sv-actions">
-            {verdict.alarmeId && (
-              <button className={`btn sm ${verdict.ton === 'crit' ? 'danger' : ''}`} onClick={() => focusAlarm(verdict.alarmeId!)}>
+            {verdict.alarmeId && !dejaLa && (
+              <button className="btn sm primary" onClick={() => focusAlarm(verdict.alarmeId!)}>
                 <LocateFixed /> {verdict.action}
               </button>
             )}
@@ -175,6 +182,7 @@ export function SupervisionKpis() {
             ton={tonAlarmes}
             mot={motAlarmes(pannes, aSurveiller)}
             onClick={actives.length ? () => focusAlarm(actives[0].id) : undefined}
+            action="aller à la première alarme"
           />
         </div>
       )}

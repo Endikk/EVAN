@@ -11,6 +11,7 @@ import { useIsDark, useReducedMotion } from '@/store/ui';
 import { ETAT_COULEUR } from '@/ui/status';
 import { MachineModel } from '@/widgets/scene/MachineModel';
 import { OrganBeacon } from '@/widgets/scene/OrganBeacon';
+import { couleurSelection } from '@/widgets/scene/couleurs';
 
 export function ReplayScene({ machine, organe, etat, facteur }: { machine: Machine; organe?: Organe; etat: EtatMachine; facteur: number }) {
   const dark = useIsDark();
@@ -53,7 +54,8 @@ export function ReplayScene({ machine, organe, etat, facteur }: { machine: Machi
           ghost={0.42}
         />
       </Suspense>
-      {organe?.position && <OrganBeacon position={organe.position} color={enDefaut ? ETAT_COULEUR[etat] : '#ff7a3d'} />}
+      {/* L'organe en défaut bat (la lecture rejoue du direct) ; hors défaut, la balise est fixe, à la couleur de sélection. */}
+      {organe?.position && <OrganBeacon position={organe.position} color={enDefaut ? ETAT_COULEUR[etat] : couleurSelection(dark)} bat={enDefaut} />}
       <ContactShadows position={[cx, 0.001, cz]} opacity={dark ? 0.55 : 0.35} scale={size * 1.6} blur={2.4} far={3} />
       <OrbitControls target={cible} enablePan={false} minDistance={size * 0.45} maxDistance={size * 3} maxPolarAngle={Math.PI * 0.49} enableDamping />
     </Canvas>

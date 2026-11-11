@@ -49,18 +49,19 @@ export function SatelliteGround({ frame, center, half, dark, visible = true }: {
     return (
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[center[0], -0.02, center[1]]} visible={visible}>
         <planeGeometry args={[half[0] * 2 + 180, half[1] * 2 + 180]} />
-        <meshStandardMaterial color={dark ? '#1a1f28' : '#9aa19a'} roughness={1} />
+        <meshStandardMaterial color={dark ? '#1a1f28' : '#9aa19a'} roughness={1} polygonOffset polygonOffsetFactor={2} polygonOffsetUnits={4} />
       </mesh>
     );
   }
   // La nuit, la photo est éclairée et assombrie avec la scène. Le jour, elle garde ses couleurs : éclairée par les
   // mêmes lumières que les machines, elle sortait délavée, presque blanche.
+  // Repoussée en profondeur (polygonOffset) : vue de loin, la photo à -2 cm ne se bat plus avec la dalle du bâtiment.
   return (
     <mesh geometry={geom} position={[0, -0.02, 0]} visible={visible}>
       {dark ? (
-        <meshStandardMaterial map={tex} roughness={1} metalness={0} color="#8f97a3" />
+        <meshStandardMaterial map={tex} roughness={1} metalness={0} color="#8f97a3" polygonOffset polygonOffsetFactor={2} polygonOffsetUnits={4} />
       ) : (
-        <meshBasicMaterial map={tex} toneMapped={false} />
+        <meshBasicMaterial map={tex} toneMapped={false} polygonOffset polygonOffsetFactor={2} polygonOffsetUnits={4} />
       )}
     </mesh>
   );

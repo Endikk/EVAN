@@ -2,10 +2,14 @@
  * Caméra : transitions continues site → machine → organe (camera-controls),
  * reprise exacte du point de vue de la carte satellite au passage en 3D,
  * et plan 2D : caméra orthographique vue de dessus (glisser = déplacer, molette = zoom vers le curseur).
+ *
+ * En 3D aussi, la molette zoome vers le curseur, et le point visé reste dans l'emprise de l'usine (avec une marge) :
+ * on ne se perd plus dans le vide en zoomant. La distance maximale et les plans de coupe suivent la taille du site :
+ * un grand bâtiment tient dans le cadre et son sol ne se strie plus de bandes (précision de profondeur).
  */
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
-import { useThree } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import { CameraControls, CameraControlsImpl } from '@react-three/drei';
 import { useProject } from '@/store/project';
 import { useUi, isReducedMotion, type CameraFocus, type View } from '@/store/ui';
@@ -45,9 +49,20 @@ export function organPose(m: Machine, local: [number, number, number]): Pose {
   return [...p, ...t];
 }
 
-export function overviewPose(center: XY, size: XY): Pose {
-  // Cadrage : tout le site tient dans le champ vertical de 36,87° (même focale que la carte).
-  const d = Math.max(size[0], size[1]) * 1.25 + 30;
+/** Demi-champ vertical de la caméra 3D (36,87°, même focale que la carte), en tangente. */
+const TAN_DEMI_CHAMP = Math.tan(((36.87 / 2) * Math.PI) / 180);
+
+/**
+ * Distance de la vue d'ensemble : tout le site tient dans le champ vertical, et aussi dans le champ horizontal quand
+ * la scène est étroite (panneau ouvert, tablette) ; sans quoi un grand bâtiment débordait sur les côtés.
+ */
+export function overviewDistance(size: XY, aspect = 16 / 9): number {
+  const cote = Math.max(size[0], size[1]);
+  return Math.max(cote * 1.25 + 30, (cote * 0.55) / (TAN_DEMI_CHAMP * Math.max(0.3, aspect)));
+}
+
+export function overviewPose(center: XY, size: XY, aspect?: number): Pose {
+  const d = overviewDistance(size, aspect);
   const polar = (52 * Math.PI) / 180;
   const az = 0.32;
   return [
@@ -134,7 +149,7 @@ export function CameraRig({ frame, center, size, view }: { frame: Frame; center:
     }
     const machines = useProject.getState().machines;
     if (f.kind === 'site') {
-      await c.setLookAt(...overviewPose(center, size), animate);
+      await c.setLookAt(...overviewPose(center, size, vp.width / Math.max(1, vp.height)), animate);
     } else {
       const m = machines.find((x) => x.id === f.machineId);
       if (!m) return;
@@ -200,6 +215,37 @@ export function CameraRig({ frame, center, size, view }: { frame: Frame; center:
     void goTo(useUi.getState().focus, !isReducedMotion());
   }, [nonce]);
 
+  // 3D : le point visé reste dans l'emprise du site, avec une marge ; le zoom vers le curseur ne mène pas dans le vide.
+  useEffect(() => {
+    const c = ref.current;
+    if (!ready || plan || !c) return;
+    const marge = Math.max(20, Math.max(size[0], size[1]) * 0.25);
+    c.setBoundary(
+      new THREE.Box3(
+        new THREE.Vector3(center[0] - size[0] / 2 - marge, 0, center[1] - size[1] / 2 - marge),
+        new THREE.Vector3(center[0] + size[0] / 2 + marge, 30, center[1] + size[1] / 2 + marge),
+      ),
+    );
+    c.boundaryEnclosesCamera = false;
+  }, [ready, plan, center[0], center[1], size[0], size[1]]);
+
+  // Plans de coupe proportionnés à la distance : un plan proche fixe (0,1 m) sur une vue de 300 m laissait trop peu
+  // de précision de profondeur, et le sol, la dalle et la photo se battaient en bandes sur un grand bâtiment.
+  const cible = useRef(new THREE.Vector3());
+  useFrame(() => {
+    const c = ref.current;
+    const cam = camera as THREE.PerspectiveCamera;
+    if (plan || !c || !cam.isPerspectiveCamera) return;
+    const d = cam.position.distanceTo(c.getTarget(cible.current));
+    const near = Math.min(5, Math.max(0.1, d / 250));
+    const far = Math.max(1500, d * 12);
+    if (Math.abs(near - cam.near) / cam.near > 0.05 || Math.abs(far - cam.far) / cam.far > 0.05) {
+      cam.near = near;
+      cam.far = far;
+      cam.updateProjectionMatrix();
+    }
+  });
+
   // Échelle du plan pour la barre d'échelle et le niveau de détail des étiquettes.
   const onChange = () => {
     if (!plan) return;
@@ -237,8 +283,9 @@ export function CameraRig({ frame, center, size, view }: { frame: Frame; center:
       ref={ref}
       makeDefault
       minDistance={1.2}
-      maxDistance={900}
+      maxDistance={Math.max(300, overviewDistance(size, vp.width / Math.max(1, vp.height)) * 2.2)}
       maxPolarAngle={Math.PI * 0.47}
+      dollyToCursor
       smoothTime={0.55}
       draggingSmoothTime={0.12}
       enabled={!dragging}

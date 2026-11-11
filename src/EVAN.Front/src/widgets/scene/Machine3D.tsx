@@ -9,10 +9,11 @@ import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import { Html, Line } from '@react-three/drei';
 import type { EtatMachine, Machine } from '@/domain/types';
 import { MODEL_FOOTPRINT } from '@/domain/catalog';
-import { ETAT_COULEUR, LIBELLE_HORS_LIGNE, StatusIcon } from '@/ui/status';
+import { ETAT_COULEUR, LIBELLE_HORS_LIGNE, LIBELLE_NON_BRANCHEE, StatusIcon } from '@/ui/status';
 import { MachineModel, type OrganFocus } from './MachineModel';
 import { sceneHandle, snap, useSceneUi } from './sceneState';
 import { RotationHandles } from './RotationHandles';
+import { useCouleurSelection } from './couleurs';
 import type { XY } from '@/geo/geodesy';
 import { ErrorBoundary } from '@/ui/ErrorBoundary';
 
@@ -25,6 +26,8 @@ interface Props {
   facteur: number | (() => number);
   /** Plus aucune donnée de la machine : étiquette « Liaison perdue ». */
   horsLigne?: boolean;
+  /** Configuration : machine pas encore branchée à EVAN, étiquette « Non branchée » (l'état est alors « arrêt »). */
+  nonBranchee?: boolean;
   selected: boolean;
   focus?: OrganFocus;
   /** Déplacement à la souris (étape 3). */
@@ -51,15 +54,11 @@ function StatusMarker({ etat, w, d, cx, cz, reduced, close }: { etat: EtatMachin
   const beam = useRef<THREE.Mesh>(null);
   const fill = useRef<THREE.MeshBasicMaterial>(null);
   const r = Math.hypot(w, d) / 2 + 0.4;
+  // Seule une panne bat, et en opacité seulement : l'anneau au sol garde sa taille. Un point à surveiller reste fixe.
   useFrame((state) => {
     const t = state.clock.elapsedTime;
-    if (ring.current) {
-      const k = reduced ? 0.4 : (t % 1.25) / 1.25;
-      ring.current.scale.setScalar(1 + k * 1.1);
-      (ring.current.material as THREE.MeshBasicMaterial).opacity = reduced ? 0.5 : 0.7 * (1 - k);
-    }
+    if (ring.current) (ring.current.material as THREE.MeshBasicMaterial).opacity = reduced ? 0.5 : 0.15 + 0.5 * (0.5 + 0.5 * Math.cos((t * Math.PI * 2) / 1.25));
     if (beam.current) (beam.current.material as THREE.MeshBasicMaterial).opacity = reduced ? 0.22 : 0.12 + 0.14 * (0.5 + 0.5 * Math.sin(t * 6));
-    if (fill.current && etat === 'attention') fill.current.opacity = reduced ? 0.2 : 0.1 + 0.12 * (0.5 + 0.5 * Math.sin(t * 3));
   });
   const hw = w / 2 + 0.35;
   const hd = d / 2 + 0.35;
@@ -94,7 +93,7 @@ function StatusMarker({ etat, w, d, cx, cz, reduced, close }: { etat: EtatMachin
 }
 
 function Machine3DImpl(p: Props) {
-  const { machine, etat, facteur, horsLigne, selected, focus, editable, rotatable, plan, detail, showTag, reduced, code, onSelect, onMove, onRotate, isValid } = p;
+  const { machine, etat, facteur, horsLigne, nonBranchee, selected, focus, editable, rotatable, plan, detail, showTag, reduced, code, onSelect, onMove, onRotate, isValid } = p;
   const group = useRef<THREE.Group>(null);
   const dragging = useRef<{ offset: XY; pos: XY } | null>(null);
   const fp = MODEL_FOOTPRINT[machine.type] ?? MODEL_FOOTPRINT.custom;
@@ -104,6 +103,7 @@ function Machine3DImpl(p: Props) {
   const cz = (fp.max[1] + fp.min[1]) / 2;
   const hit = useMemo(() => new THREE.Vector3(), []);
   const hover = useSceneUi((s) => s.hoverMachineId === machine.id);
+  const couleurSelection = useCouleurSelection();
   // Plan 2D : étiquette centrée sous l'emprise, quelle que soit la rotation (calcul en coordonnées monde puis retour au local).
   const tag2d = useMemo(() => {
     const a = (-machine.rotationDeg * Math.PI) / 180;
@@ -192,7 +192,7 @@ function Machine3DImpl(p: Props) {
             [cx - w / 2 - 0.7, 0.07, cz + d / 2 + 0.7],
             [cx - w / 2 - 0.7, 0.07, cz - d / 2 - 0.7],
           ]}
-          color="#ff7a3d"
+          color={couleurSelection}
           lineWidth={2.5}
         />
       )}
@@ -208,8 +208,8 @@ function Machine3DImpl(p: Props) {
           >
             <StatusIcon etat={etat} size={9} animate={!reduced} />
             <b>{machine.numero}</b>
-            {horsLigne ? (
-              <small>{LIBELLE_HORS_LIGNE}</small>
+            {horsLigne || nonBranchee ? (
+              <small>{horsLigne ? LIBELLE_HORS_LIGNE : LIBELLE_NON_BRANCHEE}</small>
             ) : (
               (detail || selected || hover || (etat === 'panne' && code)) && <small>{etat === 'panne' && code ? code : machine.nom}</small>
             )}
@@ -226,8 +226,8 @@ function Machine3DImpl(p: Props) {
             <StatusIcon etat={etat} size={11} animate={!reduced} />
             <span>{machine.numero}</span>
             {/* Le numéro suffit pour se repérer ; le nom au survol ou à la sélection, le code d'alarme en panne. */}
-            {horsLigne ? (
-              <small>{LIBELLE_HORS_LIGNE}</small>
+            {horsLigne || nonBranchee ? (
+              <small>{horsLigne ? LIBELLE_HORS_LIGNE : LIBELLE_NON_BRANCHEE}</small>
             ) : (
               (selected || hover || (etat === 'panne' && code)) && <small>{etat === 'panne' && code ? code : machine.nom}</small>
             )}
@@ -245,7 +245,8 @@ export function GhostMachine({ type, pos, valid, rotationDeg = 0 }: { type: stri
   const fp = MODEL_FOOTPRINT[type] ?? MODEL_FOOTPRINT.custom;
   const w = fp.max[0] - fp.min[0];
   const d = fp.max[1] - fp.min[1];
-  const color = valid ? '#ff7a3d' : '#ff3d6e';
+  const selection = useCouleurSelection();
+  const color = valid ? selection : '#ff3d6e';
   return (
     <group position={[pos[0], 0, pos[1]]} rotation={[0, (-rotationDeg * Math.PI) / 180, 0]}>
       <mesh position={[(fp.max[0] + fp.min[0]) / 2, fp.h / 2, (fp.max[1] + fp.min[1]) / 2]}>

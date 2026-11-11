@@ -2,7 +2,8 @@
  * Outil de diagnostic d'un défaut répétitif : l'opérateur mesure l'écart entre deux défauts identiques sur la bande
  * (ou compte les étiquettes), EVAN cherche la pièce tournante dont le tour fait cette longueur.
  * Un petit schéma montre le principe (un cylindre abîmé qui marque la bande à chaque tour) ; l'explication en mots
- * est dans le « ? ». Chaque pièce trouvée tient en deux lignes ; un clic la désigne dans la 3D.
+ * s'ouvre sur la consigne elle-même. Chaque pièce trouvée tient en deux lignes ; un clic la désigne dans la 3D.
+ * Rien n'est conclu avant que l'opérateur ait saisi sa mesure ; une saisie qui n'est pas un nombre le dit sous le champ.
  */
 import { useEffect, useMemo, useState } from 'react';
 import { Crosshair, Ruler } from 'lucide-react';
@@ -11,6 +12,7 @@ import { MACHINE_TYPES, PAS_ETIQUETTE_M, type NatureDefaut } from '@/domain/cata
 import { diagnostiquerPas, NATURE_DEFAUT_LIBELLE, TOLERANCE_PAS, type CandidatPas } from '@/analytics/repeatDefect';
 import { fmtNombre } from '@/ui/format';
 import { InfoTip } from '@/ui/InfoTip';
+import { erreurNombre, lireNombre as parse } from './nombre';
 import './RepeatDefectTool.css';
 
 const NATURES: (NatureDefaut | '')[] = ['', 'impression', 'decoupe', 'marque', 'dorure'];
@@ -61,14 +63,13 @@ function SchemaPas({ id }: { id: string }) {
   );
 }
 
-/** Le schéma, et une ligne : ce qu'il faut mesurer. Le pourquoi est dans le « ? ». */
+/** Le schéma, et une ligne : ce qu'il faut mesurer. Le pourquoi s'ouvre sur cette ligne (pas de « ? » de plus). */
 function Explication({ id, numero, pieces }: { id: string; numero: string; pieces: number }) {
   return (
     <div className="rd-intro">
       <SchemaPas id={id} />
       <p className="rd-comment">
-        Mesurez l’écart entre deux marques sur la bande.
-        <InfoTip label="Comprendre : défaut répétitif">
+        <InfoTip texte="Mesurez l’écart entre deux marques sur la bande" label="Comprendre : défaut répétitif">
           <p>Une pièce qui tourne (rouleau, cylindre, anilox), abîmée ou sale, marque la bande à chaque tour : la marque revient toujours au même écart.</p>
           <p>
             EVAN connaît {pieces} pièces qui tournent sur {numero} et cherche celle dont le tour fait cet écart.
@@ -83,7 +84,7 @@ export function RepeatDefectTool({ machine, onLocate, compact }: { machine: Mach
   const type = MACHINE_TYPES[machine.type];
   const [mode, setMode] = useState<'mm' | 'etiquettes'>('mm');
   const [pasMm, setPasMm] = useState('');
-  const [n, setN] = useState('3');
+  const [n, setN] = useState('');
   const [pasEtiquette, setPasEtiquette] = useState(String(Math.round(PAS_ETIQUETTE_M * 1000)));
   const [nature, setNature] = useState<NatureDefaut | ''>('');
 
@@ -101,6 +102,11 @@ export function RepeatDefectTool({ machine, onLocate, compact }: { machine: Mach
   }, [machine.id]);
 
   const pas = mode === 'mm' ? parse(pasMm) : parse(n) * parse(pasEtiquette);
+  // Une saisie qui n'est pas un nombre positif se signale au lieu de laisser la liste vide sans explication.
+  const erreurMm = mode === 'mm' ? erreurNombre(pasMm) : undefined;
+  const erreurN = mode === 'etiquettes' ? erreurNombre(n) : undefined;
+  const erreurLongueur = mode === 'etiquettes' ? erreurNombre(pasEtiquette) : undefined;
+  const erreurIds = `rd-erreur-${machine.id}-${compact ? 'c' : 'p'}`;
   const diag = useMemo(
     () => (type && pas > 0 ? diagnostiquerPas(type.organes, pas, { nature: nature || undefined }) : null),
     [type, pas, nature],
@@ -109,7 +115,7 @@ export function RepeatDefectTool({ machine, onLocate, compact }: { machine: Mach
 
   if (!type || !pieces) {
     return (
-      <p className="muted" style={{ fontSize: 12.5, margin: 0 }}>
+      <p className="rd-hors-bande">
         {machine.numero} ne travaille pas en bande continue : un défaut n’y revient pas au tour d’un cylindre.
       </p>
     );
@@ -131,30 +137,71 @@ export function RepeatDefectTool({ machine, onLocate, compact }: { machine: Mach
           <label className="field pitch-field">
             <span>Écart entre deux marques</span>
             <span className="input-unit">
-              <input className="input num" inputMode="decimal" placeholder="ex. 339,5" value={pasMm} onChange={(e) => setPasMm(e.target.value)} aria-label="Écart entre deux marques, en millimètres" />
+              <input
+                className="input num"
+                inputMode="decimal"
+                placeholder="ex. 339,5"
+                value={pasMm}
+                onChange={(e) => setPasMm(e.target.value)}
+                aria-label="Écart entre deux marques, en millimètres"
+                aria-invalid={!!erreurMm}
+                aria-describedby={erreurMm ? `${erreurIds}-mm` : undefined}
+              />
               <i>mm</i>
             </span>
+            {erreurMm && (
+              <span className="rd-erreur" id={`${erreurIds}-mm`}>
+                {erreurMm}
+              </span>
+            )}
           </label>
         ) : (
           <div className="row pitch-labels">
             <label className="field">
               <span>Une marque toutes les</span>
-              <input className="input num" inputMode="numeric" value={n} onChange={(e) => setN(e.target.value)} aria-label="Nombre d’étiquettes entre deux marques" />
+              <input
+                className="input num"
+                inputMode="numeric"
+                placeholder="ex. 3"
+                value={n}
+                onChange={(e) => setN(e.target.value)}
+                aria-label="Nombre d’étiquettes entre deux marques"
+                aria-invalid={!!erreurN}
+                aria-describedby={erreurN ? `${erreurIds}-n` : undefined}
+              />
+              {erreurN && (
+                <span className="rd-erreur" id={`${erreurIds}-n`}>
+                  {erreurN}
+                </span>
+              )}
             </label>
             <label className="field">
               <span>étiquettes, d’une longueur de</span>
               <span className="input-unit">
-                <input className="input num" inputMode="decimal" value={pasEtiquette} onChange={(e) => setPasEtiquette(e.target.value)} aria-label="Longueur d’une étiquette en millimètres" />
+                <input
+                  className="input num"
+                  inputMode="decimal"
+                  value={pasEtiquette}
+                  onChange={(e) => setPasEtiquette(e.target.value)}
+                  aria-label="Longueur d’une étiquette en millimètres"
+                  aria-invalid={!!erreurLongueur}
+                  aria-describedby={erreurLongueur ? `${erreurIds}-l` : undefined}
+                />
                 <i>mm</i>
               </span>
+              {erreurLongueur && (
+                <span className="rd-erreur" id={`${erreurIds}-l`}>
+                  {erreurLongueur}
+                </span>
+              )}
             </label>
           </div>
         )}
       </div>
       <div className="rd-nature">
-        <span className="rd-nature-tete">
-          <span id={`rd-nature-${machine.id}`}>À quoi ressemble le défaut ?</span>
-          <InfoTip label="Comprendre : l’aspect du défaut">
+        {/* Un libellé de champ : il ouvre lui-même son explication. */}
+        <span className="rd-nature-tete" id={`rd-nature-${machine.id}`}>
+          <InfoTip texte="À quoi ressemble le défaut ?" label="Comprendre : l’aspect du défaut">
             <p>Quand plusieurs pièces ont le même tour, l’aspect du défaut les départage.</p>
           </InfoTip>
         </span>
@@ -198,20 +245,13 @@ export function RepeatDefectTool({ machine, onLocate, compact }: { machine: Mach
             </button>
           ))}
           {!diag.candidats.length && (
-            <div className="empty" style={{ padding: 16 }}>
+            <div className="empty rd-aucune">
               <b>Aucune pièce qui tourne n’a ce tour (à {fmtNombre(TOLERANCE_PAS * 100, 1)} % près)</b>
-              <span className="muted" style={{ fontSize: 12.5 }}>
-                Cherchez ailleurs : matière, cliché ou plaque abîmés, ou machine en amont.
-              </span>
+              <span>Cherchez ailleurs : matière, cliché ou plaque abîmés, ou machine en amont.</span>
             </div>
           )}
         </div>
       )}
     </div>
   );
-}
-
-function parse(s: string): number {
-  const v = Number(s.replace(/\s/g, '').replace(',', '.'));
-  return Number.isFinite(v) ? v : 0;
 }

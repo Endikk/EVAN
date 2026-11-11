@@ -24,6 +24,11 @@ describe('journal en clair', () => {
     expect(l).toEqual({ sujet: 'Superviseur (démo)', texte: 'a pris en charge l’alarme MS-03.' });
   });
 
+  it('raconte une clôture annulée (alarme rouverte)', () => {
+    const l = ligneJournal(ev({ type: 'action', message: 'Clôture annulée, CF-02 rouverte.', auteur: 'Maintenance (démo)' }));
+    expect(l).toEqual({ sujet: 'Maintenance (démo)', texte: 'a annulé la clôture : l’alarme CF-02 est de nouveau ouverte.' });
+  });
+
   it('garde un message inconnu tel quel', () => {
     expect(ligneJournal(ev({ type: 'systeme', message: 'Passerelle redémarrée', auteur: 'EVAN' }))).toEqual({ texte: 'Passerelle redémarrée (EVAN)' });
   });

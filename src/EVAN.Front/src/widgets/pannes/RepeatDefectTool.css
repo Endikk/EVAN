@@ -1,9 +1,15 @@
 /* ============================================================
-   Défaut répétitif : le schéma du cylindre qui marque la bande à chaque tour, et une ligne (le pourquoi est dans le
-   « ? »).
-   Le schéma tourne en continu (CSS, transform seulement) ; animations réduites : il reste figé, marques visibles.
+   Défaut répétitif : le schéma du cylindre qui marque la bande à chaque tour, et une ligne (le pourquoi s'ouvre sur
+   cette ligne).
+   Le schéma fait trois tours à l'ouverture puis s'arrête (CSS, transform seulement) : il n'est pas en direct, il ne
+   boucle pas. Sa dernière image est celle du repos, marques visibles. Animations réduites : il reste figé.
+   Les marques et le point abîmé sont à l'encre du texte : un défaut d'impression n'est pas une panne de machine.
    ============================================================ */
 
+/* Gras à 500 dans l'outil : les noms de pièces ressortent par la couleur du texte. */
+.pitch b {
+  font-weight: var(--fw-medium);
+}
 .rd-intro {
   display: grid;
   grid-template-columns: 190px minmax(0, 1fr);
@@ -16,7 +22,7 @@
 }
 .rd-comment {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--fs-md);
   line-height: 1.45;
   color: var(--text);
 }
@@ -26,14 +32,14 @@
   overflow: visible;
 }
 .rd-schema text {
-  font-size: 9.5px;
+  font-size: var(--fs-xs);
   fill: var(--text-3);
 }
 .rd-bande-fond {
   fill: var(--surface-3);
 }
 .rd-marque {
-  fill: var(--crit);
+  fill: var(--text);
 }
 .rd-cote {
   fill: none;
@@ -43,7 +49,7 @@
 .rd-cylindre {
   transform-box: view-box;
   transform-origin: 190px 26px;
-  animation: rd-tour 2.4s linear infinite;
+  animation: rd-tour 2.4s linear 3;
 }
 .rd-cylindre circle:first-child {
   fill: var(--surface);
@@ -51,11 +57,11 @@
   stroke-width: 1.6;
 }
 .rd-defaut {
-  fill: var(--crit);
+  fill: var(--text);
 }
 /* La bande avance d'un écart pendant que le cylindre fait un tour : chaque marque naît sous le cylindre. */
 .rd-defile {
-  animation: rd-defile 2.4s linear infinite;
+  animation: rd-defile 2.4s linear 3;
 }
 @keyframes rd-tour {
   to {
@@ -76,14 +82,24 @@
 .rd-nature-tete {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--fs-md);
+  color: var(--text-2);
+}
+.rd-hors-bande {
+  margin: 0;
+  font-size: var(--fs-md);
+  color: var(--text-2);
+}
+.rd-aucune {
+  padding: 16px;
+}
+.rd-aucune span {
+  font-size: var(--fs-md);
   color: var(--text-2);
 }
 .rd-resultat {
   margin: 0 0 4px;
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   color: var(--text-2);
 }
 .rd-resultat b {
@@ -104,4 +120,12 @@
 }
 .diag-card .rd-schema {
   max-width: 250px;
+}
+
+/* Saisie qui n'est pas un nombre : la raison sous le champ, comme les erreurs du bon d'intervention. */
+.rd-erreur {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  line-height: 1.4;
+  color: var(--crit);
 }

@@ -1,32 +1,43 @@
 /* ============================================================
    Fiche d'alarme : accrochée à l'organe dans la 3D (.organ-card) ou posée dans le panneau (.compact).
    La gravité se lit par la forme et le mot ; la couleur ne fait que les doubler. Peu de mots : la mesure se lit dans
-   la jauge, les étapes se cochent, le détail est dans les « ? ».
+   la jauge, les étapes se cochent, le détail est dans les bulles d'aide.
+   Le cramoisi (bord, valeur, barre, zone hors limite) est réservé à la panne réelle. Une panne d'exercice a un bord
+   en pointillé et une jauge en gris ; un point à surveiller garde l'ambre sur sa mesure seulement.
    ============================================================ */
 
+/* Gras à 500 dans toute la fiche : la gravité et la mesure ressortent par la couleur et la taille. */
+.alarm-fiche b {
+  font-weight: var(--fw-medium);
+}
 .alarm-fiche {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  font-size: 13px;
+  font-size: var(--fs-md);
   line-height: 1.45;
   color: var(--text);
 }
 .alarm-fiche.organ-card {
   width: 330px;
-  max-height: min(540px, 58vh);
+  /* Bornée à la hauteur libre de la scène (OrganBeacon la donne) : plus longue, elle défile à l'intérieur. */
+  max-height: min(540px, 58vh, var(--fiche-hauteur-max, 100vh));
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 16px;
-  animation: af-pose 360ms var(--ease-out) both;
+  animation: af-pose var(--dur-entree) var(--ease-out) both;
 }
-.alarm-fiche.organ-card.warn {
-  border-color: color-mix(in srgb, var(--warn) 55%, var(--border));
+.alarm-fiche.organ-card.crit {
+  border-color: color-mix(in srgb, var(--crit) 55%, var(--border));
+}
+/* Pointillé d'exercice assez marqué pour se lire sur la scène, au-dessus de la photo comme du plan. */
+.alarm-fiche.organ-card.exercice {
+  border: 1px dashed color-mix(in srgb, var(--text-3) 70%, transparent);
 }
 @keyframes af-pose {
   from {
     opacity: 0;
-    transform: translateY(8px) scale(0.98);
+    transform: translateY(4px);
   }
 }
 
@@ -36,29 +47,35 @@
   align-items: center;
   gap: 8px;
 }
-.af-gravite {
+/* La gravité : la forme d'état en couleur et son mot en texte, sans pastille teintée. */
+.alarm-fiche .af-gravite {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  height: 24px;
-  padding: 0 8px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 700;
-  background: color-mix(in srgb, var(--c) 15%, transparent);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
+  color: var(--text);
+}
+.alarm-fiche .af-gravite svg {
+  color: var(--c);
 }
 .af-code {
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--text-2);
 }
+.af-exercice {
+  font-size: var(--fs-sm);
+  color: var(--text-3);
+}
 .af-fois {
-  font-size: 12px;
-  font-weight: 650;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
   color: var(--text);
 }
 .af-depuis {
   margin-left: auto;
-  font-size: 12px;
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
   color: var(--text-2);
   white-space: nowrap;
 }
@@ -68,10 +85,10 @@
   align-items: flex-start;
   gap: 4px;
   margin: 4px 0 0;
-  font-size: 15.5px;
+  font-size: var(--fs-lg);
   line-height: 1.3;
-  font-weight: 680;
-  letter-spacing: -0.01em;
+  font-weight: var(--fw-medium);
+  letter-spacing: 0;
 }
 .af-titre .infotip {
   margin-top: 0;
@@ -79,11 +96,11 @@
 .af-ou {
   margin: 0;
   color: var(--text-2);
-  font-size: 12.5px;
+  font-size: var(--fs-md);
 }
 .af-ou b {
   color: var(--text);
-  font-weight: 620;
+  font-weight: var(--fw-medium);
 }
 
 /* Mesure : son nom, la valeur en couleur, la limite. */
@@ -97,21 +114,26 @@
   align-items: baseline;
   gap: 4px 8px;
   margin: 0;
-  font-size: 12.5px;
+  font-size: var(--fs-md);
 }
 .af-mesure-nom {
   color: var(--text-2);
 }
 .af-valeur {
   color: var(--crit);
-  font-weight: 700;
+  font-weight: var(--fw-medium);
+  font-variant-numeric: tabular-nums;
 }
 .alarm-fiche.warn .af-valeur {
   color: var(--warn);
 }
+.alarm-fiche.exercice .af-valeur {
+  color: var(--text);
+}
 .af-limite {
   margin-left: auto;
   color: var(--text-3);
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 /* La mesure face à sa limite : la barre se remplit une fois, le trait marque la limite. */
@@ -123,16 +145,21 @@
   border-radius: var(--r-sm);
   background: var(--surface-3);
 }
-/* La zone hors limite, hachurée : la barre qui y entre se lit sans mot. */
+/* La zone hors limite, hachurée : c'est le seul endroit où les hachures portent un sens (au-delà de la limite). La
+   barre qui y entre se lit sans mot. Hachures et barre prennent la couleur de la gravité, le gris pour un exercice. */
 .af-jauge em {
+  --hachure: var(--crit);
   position: absolute;
   top: 0;
   bottom: 0;
   border-radius: inherit;
-  background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--crit) 32%, transparent) 0 3px, transparent 3px 6px);
+  background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--hachure) 32%, transparent) 0 3px, transparent 3px 6px);
 }
 .alarm-fiche.warn .af-jauge em {
-  background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--warn) 32%, transparent) 0 3px, transparent 3px 6px);
+  --hachure: var(--warn);
+}
+.alarm-fiche.exercice .af-jauge em {
+  --hachure: var(--text-2);
 }
 .af-jauge i {
   position: absolute;
@@ -144,6 +171,9 @@
 }
 .alarm-fiche.warn .af-jauge i {
   background: var(--warn);
+}
+.alarm-fiche.exercice .af-jauge i {
+  background: var(--text-2);
 }
 .af-jauge u {
   position: absolute;
@@ -170,7 +200,7 @@
   align-items: center;
   gap: 4px;
   margin-bottom: 8px;
-  font-size: 13px;
+  font-size: var(--fs-md);
 }
 .af-faire ol {
   list-style: none;
@@ -186,7 +216,7 @@
   grid-template-columns: 20px 1fr;
   gap: 8px;
   align-items: start;
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   color: var(--text-2);
 }
 .af-faire li.actuel {
@@ -202,7 +232,7 @@
 .af-etape {
   display: inline-flex;
   align-items: center;
-  font-weight: 560;
+  font-weight: var(--fw-medium);
 }
 /* La coche s'aligne sur la première ligne de l'étape (28 px), même quand le bouton passe dessous. */
 .af-faire .af-coche {
@@ -214,17 +244,17 @@
 }
 .af-fait {
   color: var(--text-2);
-  font-weight: 600;
+  font-weight: var(--fw-medium);
 }
 
-/* Coche qui se trace quand l'étape est faite. */
+/* Coche qui se trace quand l'étape est faite : pleine, en ivoire (l'encre le jour), la couleur de l'action. */
 .af-coche circle {
   fill: none;
   stroke: var(--border-strong);
   stroke-width: 1.6;
   transition:
-    fill 300ms var(--ease),
-    stroke 300ms var(--ease);
+    fill var(--dur) var(--ease),
+    stroke var(--dur) var(--ease);
 }
 .af-faire li.actuel .af-coche circle {
   stroke: var(--accent-text);
@@ -240,8 +270,8 @@
   transition: stroke-dashoffset 380ms var(--ease-out) 120ms;
 }
 .af-coche.faite circle {
-  fill: var(--ok);
-  stroke: var(--ok);
+  fill: var(--accent-text);
+  stroke: var(--accent-text);
 }
 .af-coche.faite path {
   stroke-dashoffset: 0;
@@ -251,8 +281,8 @@
   align-items: center;
   gap: 8px;
   margin: 0;
-  color: var(--ok);
-  font-weight: 600;
+  color: var(--text-2);
+  font-weight: var(--fw-medium);
 }
 
 .af-mobile {
@@ -261,11 +291,10 @@
 /* Téléphone : la 3D est petite, la fiche accrochée à l'organe se réduit à l'essentiel ; la fiche complète, avec ses
    boutons, est dans le panneau juste sous le plan. */
 @media (max-width: 600px) {
-  /* L'ancre est à droite de l'organe : la fiche se recentre dessus pour ne pas sortir de l'écran. */
+  /* La scène borne la fiche à ses bords (OrganBeacon) : pas de décalage ici. */
   .alarm-fiche.organ-card {
     width: min(220px, calc(100vw - 120px));
     padding: 8px 12px;
-    translate: -55% 0;
   }
   .alarm-fiche.organ-card .af-mesure,
   .alarm-fiche.organ-card .af-faire,
@@ -274,12 +303,35 @@
     display: none;
   }
   .alarm-fiche.organ-card .af-titre {
-    font-size: 14px;
+    font-size: var(--fs-base);
   }
   .af-mobile {
     display: block;
     margin: 0;
-    font-size: 12px;
+    font-size: var(--fs-sm);
     color: var(--text-2);
   }
+}
+
+/* Ce qu'il faut vérifier sur l'organe, écrit en clair sous l'étape (plus dans une bulle). */
+.af-verifier {
+  flex-basis: 100%;
+  font-size: var(--fs-md);
+  line-height: 1.45;
+  color: var(--text-2);
+}
+.af-verifier b {
+  color: var(--text);
+}
+/* Fiche close : la coche, puis consigner l'intervention (l'action qui suit) et revoir la panne. */
+.af-cloture {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.af-cloture-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
 }

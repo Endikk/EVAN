@@ -7,6 +7,10 @@
  *
  * Le récit ne garde que le titre et l'heure de chaque étape : son détail s'affiche sur la 3D quand la lecture
  * l'atteint (ou qu'on clique dessus). La lecture de la courbe est dans son « ? ».
+ *
+ * La fenêtre garde le focus (Tab boucle à l'intérieur, Échap ferme) et l'ouvre sur « Lecture » : Espace met en pause
+ * au lieu de fermer. Une panne réglée à l'instant se rejoue jusqu'à la reprise de la production, même si celle-ci
+ * n'a pas encore eu lieu à l'ouverture : la fin du rejeu s'allonge au fil des secondes.
  */
 import { lazy, memo, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -25,6 +29,7 @@ import {
 } from 'lucide-react';
 import { ComposedChart, Line, ReferenceArea, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useUi, useReducedMotion } from '@/store/ui';
+import { usePiegeFocus } from '@/ui/usePiegeFocus';
 import { useProject } from '@/store/project';
 import { getSeries } from '@/store/live';
 import { machineModel } from '@/domain/catalog';
@@ -37,6 +42,7 @@ import { ErrorBoundary } from '@/ui/ErrorBoundary';
 import { InfoTip } from '@/ui/InfoTip';
 import { fmtDuration, fmtTime, fmtValue } from '@/ui/format';
 import { graduationsRondes, uniteAxe } from '@/widgets/charts/axes';
+import { estExercice } from './exercice';
 import './replay.css';
 // Moteur 3D chargé à l'ouverture d'un rejeu seulement.
 const ReplayScene = lazy(() => import('./ReplayScene').then((m) => ({ default: m.ReplayScene })));
@@ -56,6 +62,11 @@ const ETAPES: Record<EtapeChronologie, { titre: string; icon: LucideIcon; ton: '
 const PHASE_TITRE: Record<Phase, string> = { avant: 'Avant la panne', panne: 'La panne', apres: 'Après' };
 
 const VITESSES = [1, 15, 60, 240];
+/**
+ * Panne de la session : après la réparation, la machine se règle 6 s puis produit. Le rejeu attend d'avoir ces
+ * secondes-là (et deux de production) dans le tampon des mesures avant de s'arrêter.
+ */
+const REPRISE_DIRECT_MS = 8_000;
 
 const jourHeure = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
 
@@ -157,13 +168,29 @@ export function Replay({ alarme }: { alarme: Alarme }) {
   const machines = useProject((s) => s.machines);
   const machine = machines.find((m) => m.id === alarme.machineId);
   const reduced = useReducedMotion();
+  // Rejeu d'une panne d'exercice de la session : le récit ne prend pas le cramoisi de la panne réelle.
+  const exercice = estExercice(alarme);
   const close = () => useUi.getState().setReplay(null);
-  const fermerRef = useRef<HTMLButtonElement>(null);
+  const fenetre = useRef<HTMLDivElement>(null);
+  // Le bon de travail ouvert par-dessus le rejeu a la main sur le clavier (Échap, Tab, espaces dans les champs).
+  const saisieOuverte = useUi((s) => !!s.saisie);
+  usePiegeFocus(fenetre, !saisieOuverte, close);
+
+  // Panne réglée à l'instant : la reprise n'est pas encore dans le tampon des mesures. L'horloge avance chaque seconde
+  // et la chronologie s'allonge jusqu'à la couvrir.
+  const direct = !alarme.id.startsWith('h-');
+  const [horloge, setHorloge] = useState(() => Date.now());
+  const grandit = direct && alarme.finLe !== undefined && horloge < alarme.finLe + REPRISE_DIRECT_MS;
+  useEffect(() => {
+    if (!grandit) return;
+    const t = window.setInterval(() => setHorloge(Date.now()), 1000);
+    return () => window.clearInterval(t);
+  }, [grandit]);
 
   const c = useMemo<Chronologie | null>(() => {
     if (!machine) return null;
-    return alarme.id.startsWith('h-') ? chronologie(getHistory(machines), machine, alarme) : chronologieDirect(machine, alarme, getSeries);
-  }, [alarme, machine, machines]);
+    return direct ? chronologieDirect(machine, alarme, getSeries, horloge) : chronologie(getHistory(machines), machine, alarme);
+  }, [alarme, machine, machines, direct, horloge]);
 
   // Lecture : on part un peu avant la dérive, à la vitesse choisie ; animations réduites = pas de lecture automatique.
   const [t, setT] = useState(() => c?.debut ?? 0);
@@ -172,24 +199,17 @@ export function Replay({ alarme }: { alarme: Alarme }) {
   const [vitesse, setVitesse] = useState(() => (c && c.fin - c.debut < 5 * 60_000 ? 1 : 60));
   const last = useRef<number | null>(null);
 
-  // Focus sur la fermeture à l'ouverture, retour à l'élément d'origine (« Revoir la panne ») à la fermeture.
+  // Espace hors d'un bouton ou d'un champ : lecture ou pause. Le focus et Échap sont tenus par usePiegeFocus.
   useEffect(() => {
-    const avant = document.activeElement as HTMLElement | null;
-    fermerRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
-      // Le bon de travail ouvert par-dessus le rejeu a la main sur le clavier (Échap, espaces dans les champs).
       if (useUi.getState().saisie) return;
-      if (e.key === 'Escape') close();
       if (e.key === ' ' && !(e.target as HTMLElement).closest('button, input, textarea, select, [contenteditable]')) {
         e.preventDefault();
         setPlaying((p) => !p);
       }
     };
     window.addEventListener('keydown', onKey);
-    return () => {
-      window.removeEventListener('keydown', onKey);
-      avant?.focus?.();
-    };
+    return () => window.removeEventListener('keydown', onKey);
   }, []);
 
   // Visite guidée : la phase de dérive se lit à vitesse normale, la suite (intervention, redémarrage) en accéléré.
@@ -211,7 +231,8 @@ export function Replay({ alarme }: { alarme: Alarme }) {
       setT((cur) => {
         const next = cur + dt * vitesse;
         if (next >= c.fin) {
-          setPlaying(false);
+          // Une fin qui s'allonge encore : la lecture attend la suite au lieu de s'arrêter.
+          if (!grandit) setPlaying(false);
           return c.fin;
         }
         return next;
@@ -223,7 +244,7 @@ export function Replay({ alarme }: { alarme: Alarme }) {
       cancelAnimationFrame(raf);
       last.current = null;
     };
-  }, [playing, vitesse, c]);
+  }, [playing, vitesse, c, grandit]);
 
   const seek = useCallback((x: number) => {
     setT(x);
@@ -233,8 +254,8 @@ export function Replay({ alarme }: { alarme: Alarme }) {
   if (!machine || !c) {
     return (
       <div className="modal-backdrop" onMouseDown={close}>
-        <div className="modal" role="dialog" aria-modal="true" aria-labelledby="replay-title" onMouseDown={(e) => e.stopPropagation()}>
-          <button ref={fermerRef} className="btn sm icon ghost modal-close" onClick={close} aria-label="Fermer" title="Fermer (Échap)">
+        <div ref={fenetre} className="modal" role="dialog" aria-modal="true" aria-labelledby="replay-title" onMouseDown={(e) => e.stopPropagation()}>
+          <button className="btn sm icon ghost modal-close" onClick={close} aria-label="Fermer" title="Fermer (Échap)">
             <X />
           </button>
           <h2 id="replay-title">Panne non rejouable</h2>
@@ -250,7 +271,7 @@ export function Replay({ alarme }: { alarme: Alarme }) {
   const evCourant = courant >= 0 ? c.evenements[courant] : undefined;
   const model = machineModel(machine);
   const panne = model.defs[alarme.organeId]?.panne;
-  const fini = t >= c.fin;
+  const fini = t >= c.fin && !grandit;
   const restart = () => {
     setT(c.debut);
     setPlaying(true);
@@ -258,10 +279,11 @@ export function Replay({ alarme }: { alarme: Alarme }) {
 
   return (
     <div className="modal-backdrop replay-backdrop" onMouseDown={close}>
-      <div className="replay rp" role="dialog" aria-modal="true" aria-labelledby="replay-title" onMouseDown={(e) => e.stopPropagation()}>
+      <div ref={fenetre} className={`replay rp ${exercice ? 'exercice' : ''}`} role="dialog" aria-modal="true" aria-labelledby="replay-title" onMouseDown={(e) => e.stopPropagation()}>
         <header className="replay-head">
-          <span className="chip crit mono" title="Code de l’alarme">
-            <AlertOctagon /> {alarme.code}
+          {/* Le code est une référence, pas un état : une puce neutre, en chiffres à chasse fixe. */}
+          <span className="chip mono" title="Code de l’alarme">
+            {alarme.code}
           </span>
           <div className="grow" style={{ minWidth: 0 }}>
             <h2 id="replay-title" className="truncate">
@@ -293,7 +315,7 @@ export function Replay({ alarme }: { alarme: Alarme }) {
           >
             <ClipboardCheck /> <span>Consigner le compte rendu</span>
           </button>
-          <button ref={fermerRef} className="btn sm icon ghost" onClick={close} aria-label="Fermer" title="Fermer (Échap)">
+          <button className="btn sm icon ghost" onClick={close} aria-label="Fermer" title="Fermer (Échap)">
             <X />
           </button>
         </header>
@@ -371,7 +393,7 @@ export function Replay({ alarme }: { alarme: Alarme }) {
         <footer className="replay-foot">
           <ReplayChart c={c} t={t} onSeek={seek} />
           <div className="replay-controls">
-            <button className="btn sm primary" onClick={() => (fini ? restart() : setPlaying(!playing))} aria-label={playing ? 'Pause' : fini ? 'Revoir depuis le début' : 'Lecture'}>
+            <button data-autofocus className="btn sm primary" onClick={() => (fini ? restart() : setPlaying(!playing))} aria-label={playing ? 'Pause' : fini ? 'Revoir depuis le début' : 'Lecture'}>
               {playing ? <Pause /> : fini ? <RotateCcw /> : <Play />}
               <span>{playing ? 'Pause' : fini ? 'Revoir' : 'Lecture'}</span>
             </button>

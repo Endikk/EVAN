@@ -14,6 +14,7 @@ import { borneNiveaux } from '@/domain/niveaux';
 import { formatNumber, pointInPolygon, polygonCentroid, toLocal, type Frame, type XY } from '@/geo/geodesy';
 import { isReducedMotion } from '@/store/ui';
 import { useDispose } from './useDispose';
+import { couleurSelection } from './couleurs';
 
 const WALL_T = 0.3;
 
@@ -172,7 +173,7 @@ export function Building3D({ b, frame, dark, highlight, plan = false, satellite 
       {/* Pied de mur ; sur le plan, trait de mur à épaisseur constante à l'écran. */}
       <Line
         points={[...pts, pts[0]].map(([x, z]) => [x, plan ? 0.09 : 0.05, z] as [number, number, number])}
-        color={plan ? ink : highlight ? '#ff7a3d' : dark ? '#7f8ba0' : '#5d6878'}
+        color={plan ? ink : highlight ? couleurSelection(dark) : dark ? '#7f8ba0' : '#5d6878'}
         lineWidth={plan ? 3.2 : highlight ? 2.5 : 1.4}
       />
       <Line
@@ -190,7 +191,7 @@ export function Building3D({ b, frame, dark, highlight, plan = false, satellite 
           <Line
             key={`plancher${i}`}
             points={[...pts, pts[0]].map(([x, z]) => [x, ((i + 1) * b.hauteur) / niveaux, z] as [number, number, number])}
-            color={actif ? '#ff7a3d' : dark ? '#5b6679' : '#9aa5b5'}
+            color={actif ? couleurSelection(dark) : dark ? '#5b6679' : '#9aa5b5'}
             lineWidth={actif ? 2.2 : 1}
             transparent
             opacity={actif ? 1 : 0.6}

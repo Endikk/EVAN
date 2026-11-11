@@ -49,3 +49,12 @@ export function zoomPlan(k: number | 'fit') {
   }
   void c.zoomTo(cam.zoom * k, !isReducedMotion());
 }
+
+/**
+ * Recadre la vue sur ce qu'elle suit (l'usine, la machine ou l'organe choisis), en 3D comme sur le plan : après un
+ * zoom ou une rotation où l'on s'est perdu. Rejouer le focus courant relance sa transition de caméra.
+ */
+export function recadrer() {
+  const ui = useUi.getState();
+  ui.setFocus(ui.focus);
+}

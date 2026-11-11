@@ -8,7 +8,7 @@ import { machineModel, type MesureDef, type OrganeDef, type PanneDef } from '@/d
 import { useLive, pushSample, clearSeries, type DetectionTrace, type MachineLive, type PointLive, type TraceStep } from '@/store/live';
 import { useProject } from '@/store/project';
 import { RulesEngine } from './rules';
-import { getHistory } from './history';
+import { debutDePoste, getHistory, niveauUsure, type History } from './history';
 import { clamp, easeInOut, gauss, uid } from './random';
 import type { RealtimeSource, FaultResult } from '@/realtime/source';
 import type { Saisie } from '@/analytics/maintenance';
@@ -47,6 +47,25 @@ interface MachineRt {
 }
 
 const TICK_MS = 1000;
+/** Délai pendant lequel « Annuler » rouvre une alarme close (l'avis qui le propose reste 10 s). */
+const ANNULATION_MS = 12_000;
+/** Part de la vitesse normale en production, et en réglage : mêmes réglages que la boucle de simulation. */
+const FACTEUR_MARCHE = 0.92;
+const FACTEUR_CALAGE = 0.18;
+/** Part de la production jetée en marche (le reste du gâchis vient des réglages). */
+const GACHE_MARCHE = 0.015;
+
+/** Ce qu'une clôture a changé, pour pouvoir l'annuler dans les secondes qui suivent. */
+interface Cloture {
+  t: number;
+  machineId: string;
+  /** Les alarmes telles qu'elles étaient avant la clôture. */
+  alarmes: Alarme[];
+  /** Les défauts en cours sur les points de la machine, avant leur reprise. */
+  defauts: [PointRt, Fault][];
+  prod: MachineRt['prod'];
+  until: number;
+}
 // Latences typiques de la chaîne (ms) affichées dans la trace en mode simulé.
 const LAT = { automate: 8, passerelle: 250, mqtt: 18, ingestion: 6, regles: 2, signalr: 24 };
 
@@ -66,6 +85,7 @@ export class LocalSimulator implements RealtimeSource {
   private trace?: DetectionTrace;
   private startedAt = Date.now();
   private unsub?: () => void;
+  private cloture?: Cloture;
 
   constructor() {
     this.engine = new RulesEngine({
@@ -118,19 +138,23 @@ export class LocalSimulator implements RealtimeSource {
       }
       const model = machineModel(m, useProject.getState().perso[m.id]);
       const nominale = model.type?.vitesse.nominale ?? 100;
+      const facteurComptage = model.type?.vitesse.unite === 'm/min' ? 1 / 0.11 : 1;
+      // Compteurs repris au début du poste : « Étiquettes produites » se lit depuis la relève, pas depuis l'ouverture
+      // de la page.
+      const poste = productionDuPoste(getHistory(machines), m.id, Date.now(), nominale * facteurComptage);
       const rt: MachineRt = {
         machine: m,
         prod: 'marche',
         until: 0,
-        vitesse: nominale * 0.92,
+        vitesse: nominale * FACTEUR_MARCHE,
         nominale,
-        bonnes: 0,
-        gache: 0,
+        bonnes: poste.bonnes,
+        gache: poste.gache,
         depuis: Date.now() - (20 + index * 7) * 60_000,
         etat: 'marche',
         phase: index * 1.7,
         points: [],
-        facteurComptage: model.type?.vitesse.unite === 'm/min' ? 1 / 0.11 : 1,
+        facteurComptage,
       };
       // Ambiance : la ligne paravent n'a pas de travail planifié, une rotative est en calage.
       if (m.id === 'm-pv01') {
@@ -147,7 +171,7 @@ export class LocalSimulator implements RealtimeSource {
         for (const def of odef.mesures) {
           const point = model.points.find((p) => p.id === `${o.id}.${def.cle}`);
           if (!point) continue;
-          const p: PointRt = { point, def, organe: o, odef, value: initialValue(def, index) };
+          const p: PointRt = { point, def, organe: o, odef, value: initialValue(def, index, point.id) };
           // Démo : lampe UV de R04 en fin de vie, qui dérive doucement (détection par tendance).
           if (m.id === 'm-r04' && def.cle === 'puissance_uv') p.value = 76.5;
           rt.points.push(p);
@@ -193,8 +217,14 @@ export class LocalSimulator implements RealtimeSource {
       const facteur = rt.nominale ? rt.vitesse / rt.nominale : 0;
 
       for (const p of rt.points) {
+        const enReprise = !!p.fault?.recovering;
         p.value = this.nextValue(rt, p, now, dt, facteur, panne);
-        const niveau = this.engine.evaluate(p.point, p.value, now, enService);
+        // Après une intervention, la mesure revient vers sa valeur normale en quelques secondes : le moteur de règles ne
+        // la juge pas pendant ce retour (sinon une alarme « à surveiller » renaissait aussitôt sur la machine qu'on venait
+        // de réparer, et son organe passait « à surveiller »), puis repart d'une page blanche une fois la mesure revenue,
+        // sans lire la remontée comme une dérive.
+        if (enReprise && !p.fault) this.engine.forget(p.point.id);
+        const niveau = p.fault?.recovering ? 'ok' : this.engine.evaluate(p.point, p.value, now, enService);
         values[p.point.id] = { v: p.value, t: now, niveau };
         pushSample(p.point.id, now, p.value);
       }
@@ -273,8 +303,12 @@ export class LocalSimulator implements RealtimeSource {
     return v + (def.nominal - v) * 0.15 + gauss() * def.bruit;
   }
 
-  private onAlarm(a: Alarme, kind: 'raised' | 'cleared' | 'updated') {
-    const i = this.alarms.findIndex((x) => x.id === a.id);
+  private onAlarm(levee: Alarme, kind: 'raised' | 'cleared' | 'updated') {
+    const i = this.alarms.findIndex((x) => x.id === levee.id);
+    // Une alarme levée sur la machine de la panne injectée, après l'injection, vient de l'exercice : on le note sur
+    // l'alarme elle-même, pour qu'elle le reste même quand la trace de détection a disparu.
+    const exercice = i >= 0 ? this.alarms[i].exercice : this.vientDeLExercice(levee);
+    const a: Alarme = exercice ? { ...levee, exercice } : levee;
     if (i >= 0) {
       const prev = this.alarms[i];
       this.alarms[i] = kind === 'cleared' ? { ...prev, ...a, statut: 'resolue' } : { ...a, statut: prev.statut, acquitteePar: prev.acquitteePar, acquitteeLe: prev.acquitteeLe };
@@ -291,9 +325,16 @@ export class LocalSimulator implements RealtimeSource {
         titre: `${a.code} · ${name}`,
         texte: a.message,
         alarmeId: a.id,
+        exercice: a.exercice,
       });
       this.traceAlarm(a);
     }
+  }
+
+  /** Une alarme levée une seconde avant le début de la trace vient quand même de l'injection (horloges arrondies). */
+  private vientDeLExercice(a: Alarme): boolean {
+    const t = this.trace;
+    return !!t?.simule && t.machineId === a.machineId && a.horodatage >= t.debut - 1000;
   }
 
   /** Ajoute les étapes de la chaîne de détection à la trace en cours. */
@@ -414,23 +455,60 @@ export class LocalSimulator implements RealtimeSource {
     const a = this.alarms.find((x) => x.id === alarmId);
     if (!a) return;
     const now = Date.now();
+    const rt = this.machines.get(a.machineId);
+    this.cloture = {
+      t: now,
+      machineId: a.machineId,
+      alarmes: this.alarms.filter((x) => x.machineId === a.machineId && x.statut !== 'resolue'),
+      defauts: rt ? rt.points.filter((p) => p.fault).map((p) => [p, { ...p.fault!, recovering: undefined }] as [PointRt, Fault]) : [],
+      prod: rt?.prod ?? 'marche',
+      until: rt?.until ?? 0,
+    };
     for (const p of this.points.values()) if (p.point.machineId === a.machineId && p.fault) p.fault.recovering = now;
     this.engine.resolve(alarmId, now);
     // Les autres alarmes actives de la même machine sont closes avec l'intervention.
     for (const other of this.alarms.filter((x) => x.machineId === a.machineId && x.statut !== 'resolue')) this.engine.resolve(other.id, now);
     this.alarms = this.alarms.map((x) => (x.machineId === a.machineId && x.statut !== 'resolue' ? { ...x, statut: 'resolue', finLe: now } : x));
-    const rt = this.machines.get(a.machineId);
     if (rt) {
       rt.prod = 'calage';
       rt.until = now + 6000;
     }
     this.event({ type: 'action', machineId: a.machineId, horodatage: now, message: `Intervention terminée, ${a.code} résolue. Redémarrage.`, auteur: 'Maintenance (démo)' });
-    useLive.getState().pushToast({ gravite: 'succes', titre: `${a.code} résolue`, texte: `${rt?.machine.numero ?? ''} redémarre après calage.` });
+    // Un clic trop tôt se rattrape : l'avis de clôture propose de rouvrir l'alarme pendant 10 s.
+    useLive.getState().pushToast({
+      gravite: 'succes',
+      titre: `${a.code} résolue`,
+      texte: `${rt?.machine.numero ?? ''} redémarre après calage.`,
+      alarmeId: a.id,
+      // Un avis de réussite n'est pas une panne d'exercice, même quand l'alarme close en était une.
+      exercice: false,
+      action: { libelle: 'Annuler', faire: () => void this.reopen(a.id) },
+    });
     if (this.trace?.machineId === a.machineId) this.trace = undefined;
     useLive.setState({ alarms: [...this.alarms], events: [...this.events], trace: undefined });
   }
 
+  /** Annule la dernière clôture, dans les secondes qui la suivent : alarmes rouvertes, défaut et arrêt rétablis. */
+  async reopen(alarmId: string) {
+    const c = this.cloture;
+    if (!c || !c.alarmes.some((x) => x.id === alarmId) || Date.now() - c.t > ANNULATION_MS) return;
+    this.cloture = undefined;
+    const avant = new Map(c.alarmes.map((x) => [x.id, x]));
+    this.alarms = this.alarms.map((x) => avant.get(x.id) ?? x);
+    for (const x of c.alarmes) this.engine.restore(x);
+    for (const [p, f] of c.defauts) p.fault = f;
+    const rt = this.machines.get(c.machineId);
+    if (rt) {
+      rt.prod = c.prod;
+      rt.until = c.until;
+    }
+    const a = avant.get(alarmId)!;
+    this.event({ type: 'action', machineId: c.machineId, horodatage: Date.now(), message: `Clôture annulée, ${a.code} rouverte.`, auteur: 'Maintenance (démo)' });
+    useLive.setState({ alarms: [...this.alarms], events: [...this.events] });
+  }
+
   reset() {
+    this.cloture = undefined;
     this.alarms = [];
     this.events = [];
     this.trace = undefined;
@@ -447,7 +525,31 @@ export class LocalSimulator implements RealtimeSource {
   }
 }
 
-function initialValue(def: MesureDef, index: number): number {
+/**
+ * Bonnes étiquettes et gâchis d'une machine depuis le début du poste, d'après l'historique simulé : la marche produit
+ * à 92 % de la vitesse normale (1,5 % jeté), le réglage à 18 % (tout jeté). L'historique s'arrête à la dernière heure
+ * pleine ; depuis, la machine est comptée en marche (c'est ainsi que la simulation la démarre), sauf si l'atelier était
+ * fermé. `cadence` : étiquettes par minute à la vitesse normale.
+ */
+export function productionDuPoste(h: History, machineId: string, now: number, cadence: number): { bonnes: number; gache: number } {
+  const list = h.periodes[machineId] ?? [];
+  const debut = debutDePoste(now);
+  let marche = 0;
+  let calage = 0;
+  for (const p of list) {
+    const d = Math.max(0, Math.min(p.fin, now) - Math.max(p.debut, debut));
+    if (p.etat === 'marche') marche += d;
+    else if (p.etat === 'calage') calage += d;
+  }
+  const derniere = list[list.length - 1];
+  if (derniere && derniere.etat !== 'arret') marche += Math.max(0, now - Math.max(derniere.fin, debut));
+  const enMarche = (marche / 60_000) * cadence * FACTEUR_MARCHE;
+  return { bonnes: enMarche * (1 - GACHE_MARCHE), gache: enMarche * GACHE_MARCHE + (calage / 60_000) * cadence * FACTEUR_CALAGE };
+}
+
+function initialValue(def: MesureDef, index: number, pointId: string): number {
+  // Usure : la simulation part d'où l'historique s'arrête, sinon la supervision et le carnet montreraient deux compteurs.
+  if (def.type === 'usure') return niveauUsure(pointId, def.nominal);
   if (def.dynamique === 'decroit') {
     const low = (def.seuils.attentionBas ?? def.nominal * 0.2) * 1.2;
     return def.nominal - (def.nominal - low) * ((index * 0.37) % 0.8);

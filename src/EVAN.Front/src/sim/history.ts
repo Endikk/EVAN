@@ -58,6 +58,24 @@ function ouverture(dayStart: number, categorie: string): [number, number] | null
   return [dayStart + 5 * H, dayStart + 21 * H];
 }
 
+/** Relève des équipes : le matin commence à 5 h, l'après-midi à 13 h (heure locale). */
+const POSTES_H = [5, 13];
+
+/**
+ * Début du poste en cours (heure locale) : 5 h le matin, 13 h l'après-midi. Avant 5 h, c'est encore le poste
+ * d'après-midi de la veille qui compte : les chiffres de production se lisent « depuis le début du poste ».
+ */
+export function debutDePoste(now: number): number {
+  const d = new Date(now);
+  const h = d.getHours();
+  const poste = [...POSTES_H].reverse().find((p) => h >= p);
+  if (poste === undefined) {
+    d.setDate(d.getDate() - 1);
+    d.setHours(POSTES_H[POSTES_H.length - 1], 0, 0, 0);
+  } else d.setHours(poste, 0, 0, 0);
+  return d.getTime();
+}
+
 /** Quelques historiques en mémoire : l'usine active, et les autres pour la vue organisation. */
 const cache = new Map<string, History>();
 const CACHE_MAX = 6;
@@ -162,7 +180,9 @@ function generate(machines: Machine[], fin: number): History {
   }
 
   // Défaut répétitif scénarisé : casse d'échenillage sur la flexo, trois fois dans la dernière journée travaillée.
-  const flexo = machines.find((m) => m.type === 'flexo');
+  // Seulement sur une flexo qui a un historique : une presse posée pendant la session (creeLe) n'a pas de périodes,
+  // et le scénario ne s'y écrit pas (sinon « Terminer » plantait dès qu'une flexo venait d'être posée).
+  const flexo = machines.find((m) => m.type === 'flexo' && periodes[m.id]);
   if (flexo) {
     const model = machineModel(flexo);
     const ech = model.organes.find((o) => o.numero === 7);
@@ -270,6 +290,15 @@ export function periodAt(list: Periode[], t: number): Periode | undefined {
   return list[periodIndex(list, t)];
 }
 
+/**
+ * Usure atteinte à la fin de l'historique : le nominal du catalogue, à 30 % près selon la machine (tirage stable sur le
+ * point, même tirage que HistoriqueSimule.NiveauUsure côté back), pour que deux machines du même type ne montrent pas le
+ * même compteur. L'historique la fait croître jusque-là au même rythme ; la simulation en direct peut en partir.
+ */
+export function niveauUsure(pointId: string, nominal: number): number {
+  return nominal * (0.7 + hashNoise(hashString(pointId), 3) * 0.6);
+}
+
 /** Valeur historique d'une mesure à l'instant t (`panne` : la panne type de son organe, s'il en a une). */
 export function historicValue(h: History, machine: Machine, point: PointDeMesure, def: MesureDef, panne: PanneDef | undefined, t: number): number {
   const seed = hashString(point.id);
@@ -305,7 +334,7 @@ export function historicValue(h: History, machine: Machine, point: PointDeMesure
     const low = (def.seuils.attentionBas ?? def.nominal * 0.25) * 1.2;
     v = def.nominal - (def.nominal - low) * ph;
   } else if (def.dynamique === 'croit') {
-    if (def.type === 'usure') v = def.nominal - ((h.fin - t) / DAY) * (def.nominal * 0.015);
+    if (def.type === 'usure') v = niveauUsure(point.id, def.nominal) - ((h.fin - t) / DAY) * (def.nominal * 0.015);
     else {
       const cycle = 70 * MIN;
       const ph = ((t + seed * 1000) % cycle) / cycle;

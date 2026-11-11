@@ -4,15 +4,26 @@ import { Html, Line } from '@react-three/drei';
 import type { TypeZone, Zone } from '@/domain/types';
 import { polygonCentroid } from '@/geo/geodesy';
 import { useDispose } from './useDispose';
+import { useCouleurTrait } from './couleurs';
 
+/**
+ * Couleur d'une zone dans l'interface (pastilles, listes, guide du plan) : neutre pour tous les types. Les teintes
+ * d'autrefois (vert, ambre, bleu…) reprenaient exactement celles des états machine (marche, à surveiller, réglage),
+ * posées juste à côté des machines : une zone « Stock » se lisait comme une machine à surveiller. Le type se lit
+ * désormais à son nom. Valeur CSS (variable) : elle suit le thème.
+ */
 export const ZONE_COULEUR: Record<TypeZone, string> = {
-  atelier: '#4b8bff',
-  stock: '#f2a541',
-  expedition: '#34c38f',
-  prepresse: '#36c5d6',
-  faconnage: '#b89cff',
-  bureaux: '#9aa3ad',
+  atelier: 'var(--text-2)',
+  stock: 'var(--text-2)',
+  expedition: 'var(--text-2)',
+  prepresse: 'var(--text-2)',
+  faconnage: 'var(--text-2)',
+  bureaux: 'var(--text-2)',
 };
+
+/** Voile de la zone au sol, et contour pointillé (plein et plus épais quand elle est choisie). */
+const VOILE = { repos: 0.05, choisie: 0.12 };
+const CONTOUR = { repos: 0.55, choisie: 1 };
 
 export const ZONE_LIBELLE: Record<TypeZone, string> = {
   atelier: 'Atelier',
@@ -34,7 +45,8 @@ function ZoneMesh({ z, selected, onSelect, showLabel, plan }: { z: Zone; selecte
   const c = polygonCentroid(z.polygone);
   // Plan 2D : nom de zone dans le coin haut-gauche, comme sur un plan d'architecte (le centre reste aux machines).
   const corner: [number, number, number] = [Math.min(...z.polygone.map((p) => p[0])) + 0.7, 0.1, Math.min(...z.polygone.map((p) => p[1])) + 0.6];
-  const color = ZONE_COULEUR[z.type];
+  // Dessin three.js : la valeur en clair du jeton, ivoire la nuit, encre le jour.
+  const color = useCouleurTrait();
   return (
     <group>
       <mesh
@@ -49,7 +61,7 @@ function ZoneMesh({ z, selected, onSelect, showLabel, plan }: { z: Zone; selecte
             : undefined
         }
       >
-        <meshBasicMaterial color={color} transparent opacity={selected ? 0.34 : 0.17} depthWrite={false} />
+        <meshBasicMaterial color={color} transparent opacity={selected ? VOILE.choisie : VOILE.repos} depthWrite={false} />
       </mesh>
       <Line
         points={[...z.polygone, z.polygone[0]].map(([x, y]) => [x, 0.06, y] as [number, number, number])}
@@ -58,10 +70,12 @@ function ZoneMesh({ z, selected, onSelect, showLabel, plan }: { z: Zone; selecte
         dashed={!selected}
         dashSize={1}
         gapSize={0.6}
+        transparent
+        opacity={selected ? CONTOUR.choisie : CONTOUR.repos}
       />
       {/* Étiquette toujours montée (masquée en CSS) : démonter un <Html> en cours de rendu casse son portail. */}
       <Html position={plan ? corner : [c[0], 0.1, c[1]]} center={!plan} zIndexRange={[5, 0]} style={{ pointerEvents: 'none' }}>
-        <div className={`zone-tag ${plan ? 'plan' : ''}`} style={{ ['--c' as string]: color, visibility: showLabel ? 'visible' : 'hidden' }}>
+        <div className={`zone-tag ${plan ? 'plan' : ''} ${selected ? 'sel' : ''}`} style={{ visibility: showLabel ? 'visible' : 'hidden' }}>
           {z.nom}
         </div>
       </Html>

@@ -2,12 +2,19 @@
  * Fiche d'alarme, accrochée à l'organe dans la 3D (ou posée dans le panneau de la machine, en version compacte).
  * Elle se lit d'un coup d'œil : la gravité (forme et mot) et depuis quand, ce qui se passe, où, la mesure face à sa
  * limite dans une jauge (la zone hors limite est marquée), puis les trois étapes qui se cochent : prendre l'alarme en
- * charge, aller voir l'organe, signaler l'intervention terminée. Le reste (règle qui a levé l'alarme, heure exacte,
- * cause probable, réparation type) est dans les « ? ».
+ * charge, aller voir l'organe (ce qu'il faut y vérifier est écrit en clair), signaler l'intervention terminée. Une
+ * seule action en vermillon : celle de l'étape en cours. Le reste (règle qui a levé l'alarme, heure exacte, réparation
+ * type) est dans les bulles d'aide.
+ *
+ * Une fois l'alarme close, la fiche propose de consigner l'intervention au carnet (bon prérempli) et de revoir la panne.
+ *
+ * Le cramoisi (bord, valeur, zone hors limite) est réservé à la panne réelle. Une panne d'exercice (« Simuler une
+ * panne ») garde sa forme d'état, mais sa fiche est bordée d'un pointillé et dit « exercice » à côté de son code.
  */
-import { Hand, Ruler, Wrench } from 'lucide-react';
+import { ClipboardCheck, Hand, History as HistoryIcon, Ruler, Wrench } from 'lucide-react';
 import { useUi } from '@/store/ui';
 import { useLive } from '@/store/live';
+import { useCarnet } from '@/store/carnet';
 import type { Alarme } from '@/domain/types';
 import { useProject } from '@/store/project';
 import { machineModel } from '@/domain/catalog';
@@ -15,6 +22,7 @@ import { getSource } from '@/realtime/source';
 import { StatusIcon } from '@/ui/status';
 import { InfoTip } from '@/ui/InfoTip';
 import { fmtDuration, fmtHM, fmtValue } from '@/ui/format';
+import { estExercice } from './exercice';
 import './AlarmCard.css';
 
 /** Libellé court de la règle qui a levé l'alarme (aussi utilisé par l'historique : ne pas le modifier ici). */
@@ -32,6 +40,9 @@ const REGLE_EN_CLAIR: Record<Alarme['regle'], string> = {
   repetitif: 'un défaut répétitif',
   automate: 'un signal de l’automate',
 };
+
+/** Un bon daté à moins de dix minutes de la panne la consigne. */
+const AUTOUR_PANNE_MS = 10 * 60_000;
 
 /** Marge au-dessus de la plus grande des deux valeurs, pour que la limite ne colle pas au bord de la jauge. */
 const MARGE_JAUGE = 1.25;
@@ -83,6 +94,20 @@ function Coche({ faite }: { faite: boolean }) {
   );
 }
 
+/** Bon d'intervention prérempli d'après l'alarme close (même préremplissage que le rejeu). */
+function consigner(a: Alarme, compteRendu: string | undefined) {
+  useUi.getState().setSaisie({
+    machineId: a.machineId,
+    organeId: a.organeId,
+    type: 'curative',
+    date: a.horodatage,
+    // Une panne de la démo se règle en quelques secondes : le bon part d'une minute au moins.
+    duree: a.finLe ? Math.max(1, Math.round((a.finLe - a.horodatage) / 60_000)) : 30,
+    titre: `${a.code} · ${a.message}`,
+    compteRendu,
+  });
+}
+
 /** Fiche d'alarme : gravité, quoi, où, la mesure face à sa limite et les étapes à cocher. */
 export function AlarmCard({ a, compact, now: nowProp }: { a: Alarme; compact?: boolean; now?: number }) {
   const machine = useProject((s) => s.machines.find((m) => m.id === a.machineId));
@@ -98,16 +123,34 @@ export function AlarmCard({ a, compact, now: nowProp }: { a: Alarme; compact?: b
   const crit = a.gravite === 'critique';
   const prise = a.statut === 'acquittee';
   const ouvert = a.statut !== 'resolue';
-  const aideOrgane = !crit || a.cause || reparation || a.regle === 'repetitif';
+  const aideOrgane = !crit || reparation || a.regle === 'repetitif';
+  const exercice = estExercice(a);
+  // Déjà au carnet : un bon de la même machine, titré du code de l'alarme, daté autour de la panne (le bon arrondit
+  // l'heure à la minute, ou la recule de la durée de l'intervention).
+  const consignee = useCarnet(
+    (s) =>
+      !ouvert &&
+      s.saisies.some(
+        (x) => x.machineId === a.machineId && x.titre.startsWith(a.code) && x.date >= a.horodatage - AUTOUR_PANNE_MS && x.date <= (a.finLe ?? a.horodatage) + AUTOUR_PANNE_MS,
+      ),
+  );
+  // Une seule action vermillon : l'étape en cours. Avant la prise en charge, c'est elle ; ensuite, « Trouver la pièce »
+  // pour un défaut qui revient, sinon la fin de l'intervention.
+  const principale: 'prise' | 'piece' | 'fin' = !prise ? 'prise' : a.regle === 'repetitif' ? 'piece' : 'fin';
 
   return (
-    <article className={`alarm-fiche ${compact ? 'compact' : 'organ-card'} ${crit ? 'crit' : 'warn'}`} aria-label={`Alarme ${a.code} : ${a.message}`}>
+    <article
+      className={`alarm-fiche ${compact ? 'compact' : 'organ-card'} ${crit ? 'crit' : 'warn'} ${exercice ? 'exercice' : ''}`}
+      aria-label={`Alarme ${a.code}${exercice ? ' (exercice)' : ''} : ${a.message}`}
+    >
       <div className="af-tete">
         <span className={`af-gravite st st-${crit ? 'panne' : 'attention'}`}>
-          <StatusIcon etat={crit ? 'panne' : 'attention'} size={11} animate={crit && a.statut === 'active'} />
+          {/* Immobile : en panne, l'étiquette de la 3D et la phrase du bandeau battent déjà. */}
+          <StatusIcon etat={crit ? 'panne' : 'attention'} size={11} animate={false} />
           {crit ? 'Panne' : 'À surveiller'}
         </span>
         <span className="af-code mono">{a.code}</span>
+        {exercice && <span className="af-exercice">exercice</span>}
         {a.repetitions ? <span className="af-fois">{a.repetitions}ᵉ fois</span> : null}
         <span className="af-depuis num" title={`Levée à ${fmtHM(a.horodatage)}`}>
           {ouvert ? fmtDuration(now - a.horodatage) : `levée à ${fmtHM(a.horodatage)}`}
@@ -163,7 +206,7 @@ export function AlarmCard({ a, compact, now: nowProp }: { a: Alarme; compact?: b
                     {a.acquitteeLe ? `, ${fmtHM(a.acquitteeLe)}` : ''}
                   </span>
                 ) : (
-                  <button className="btn sm" onClick={() => void getSource()?.acknowledge(a.id)}>
+                  <button className={`btn sm ${principale === 'prise' ? 'primary' : ''}`} onClick={() => void getSource()?.acknowledge(a.id)}>
                     <Hand /> Je m’en occupe
                   </button>
                 )}
@@ -172,20 +215,26 @@ export function AlarmCard({ a, compact, now: nowProp }: { a: Alarme; compact?: b
             <li className={prise ? 'actuel' : ''}>
               <Coche faite={false} />
               <div>
+                {/* Une étape, pas un titre : son libellé ouvre lui-même la bulle, au lieu d'un « ? » de plus. */}
                 <span className="af-etape">
-                  Aller voir l’organe
-                  {aideOrgane && (
-                    <InfoTip label="Comprendre : aller voir l’organe">
+                  {aideOrgane ? (
+                    <InfoTip texte="Aller voir l’organe" label="Comprendre : aller voir l’organe">
                       {!crit && <p>Avant que la mesure atteigne sa limite d’alarme.</p>}
-                      {a.cause && <p>Cause probable : {a.cause}</p>}
                       {reparation && <p>Réparation type : {reparation}</p>}
                       {a.regle === 'repetitif' && <p>La même panne revient : « Trouver la pièce » mesure l’écart entre deux défauts sur la bande.</p>}
                     </InfoTip>
+                  ) : (
+                    'Aller voir l’organe'
                   )}
                 </span>
+                {a.cause && (
+                  <span className="af-verifier">
+                    <b>À vérifier :</b> {a.cause}
+                  </span>
+                )}
                 {a.regle === 'repetitif' && (
                   <button
-                    className="btn sm"
+                    className={`btn sm ${principale === 'piece' ? 'primary' : ''}`}
                     onClick={() => {
                       useUi.getState().selectMachine(a.machineId);
                       useUi.getState().setDiagnosticMachineId(a.machineId);
@@ -200,7 +249,7 @@ export function AlarmCard({ a, compact, now: nowProp }: { a: Alarme; compact?: b
               <Coche faite={false} />
               <div>
                 <span className="af-etape">Une fois réparé</span>
-                <button className="btn sm primary" onClick={() => void getSource()?.resolve(a.id)}>
+                <button className={`btn sm ${principale === 'fin' ? 'primary' : ''}`} onClick={() => void getSource()?.resolve(a.id)}>
                   <Wrench /> Intervention terminée
                 </button>
               </div>
@@ -208,9 +257,23 @@ export function AlarmCard({ a, compact, now: nowProp }: { a: Alarme; compact?: b
           </ol>
         </div>
       ) : (
-        <p className="af-close">
-          <Coche faite /> Réglée{a.finLe ? ` à ${fmtHM(a.finLe)}, en ${fmtDuration(a.finLe - a.horodatage)}` : ''}.
-        </p>
+        <div className="af-cloture">
+          <p className="af-close">
+            <Coche faite /> Réglée{a.finLe ? ` à ${fmtHM(a.finLe)}, en ${fmtDuration(a.finLe - a.horodatage)}` : ''}.
+          </p>
+          <div className="af-cloture-actions">
+            {consignee ? (
+              <span className="af-fait">Intervention consignée au carnet</span>
+            ) : (
+              <button className="btn sm primary" onClick={() => consigner(a, panneType?.action)}>
+                <ClipboardCheck /> Consigner l’intervention
+              </button>
+            )}
+            <button className="btn sm" onClick={() => useUi.getState().setReplay(a)}>
+              <HistoryIcon /> Revoir la panne
+            </button>
+          </div>
+        </div>
       )}
     </article>
   );

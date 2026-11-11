@@ -6,7 +6,7 @@
 import { useEffect } from 'react';
 import { useLive } from '@/store/live';
 import type { Evenement } from '@/domain/types';
-import type { Saisie } from '@/analytics/maintenance';
+import type { Prevue, Saisie } from '@/analytics/maintenance';
 
 export interface FaultResult {
   machineId: string;
@@ -21,11 +21,33 @@ export interface RealtimeSource {
   injectFault(machineId?: string, organeNumero?: number): Promise<FaultResult | null>;
   acknowledge(alarmId: string): Promise<void>;
   resolve(alarmId: string): Promise<void>;
+  /**
+   * Annule une clôture faite à l'instant (« Intervention terminée » cliquée trop tôt) : l'alarme redevient ouverte,
+   * avec la machine en panne. Le simulateur local et l'API d'EVAN (POST /api/alarms/{id}/reopen) savent le faire.
+   */
+  reopen?(alarmId: string): Promise<void>;
   /** Journalise une action utilisateur (autorisation d'écriture, acquittement…). */
   logEvent(e: Omit<Evenement, 'id'>): void;
   /** Intervention consignée au carnet de maintenance : journal de l'usine, et back s'il est branché. */
   logIntervention(s: Saisie, machineLabel: string): void;
+  /**
+   * Carnet tenu aussi par le serveur (API d'EVAN) : corrections, suppressions et interventions planifiées y partent
+   * pour que l'assistant et le serveur MCP voient le même carnet. Absent pour le simulateur local.
+   */
+  carnet?: CarnetDistant;
   reset(): void;
+}
+
+/** Écritures du carnet envoyées au serveur. Un échec est signalé par un avis ; le carnet du navigateur reste à jour. */
+export interface CarnetDistant {
+  corriger(s: Saisie): void;
+  supprimer(id: string): void;
+  /** Remet une saisie retirée (« Annuler » d'une suppression). */
+  restaurer(s: Saisie): void;
+  /** Planifie une intervention, ou la déplace (même identifiant). */
+  planifier(p: Prevue): void;
+  /** Annule une intervention planifiée, ou la retire une fois consignée. */
+  annulerPrevue(id: string): void;
 }
 
 let current: RealtimeSource | null = null;

@@ -37,6 +37,7 @@ const TOURNURES: Tournure[] = [
     re: /^Intervention terminée, (\S+) résolue\. Redémarrage\.$/,
     phrase: (m) => ({ texte: `a terminé l’intervention : l’alarme ${m[1]} est close, la machine redémarre.` }),
   },
+  { re: /^Clôture annulée, (\S+) rouverte\.$/, phrase: (m) => ({ texte: `a annulé la clôture : l’alarme ${m[1]} est de nouveau ouverte.` }) },
   { re: /^Intervention consignée · (.+?) · (.+)$/, phrase: (m) => ({ texte: `a consigné une intervention sur ${m[1]} : ${minusculeInitiale(m[2])}.` }) },
   { re: /^Configuration de l’usine ouverte$/, phrase: () => ({ texte: 'a ouvert la configuration de l’usine.' }) },
   { re: /^Configuration enregistrée \((\d+) machines?\)$/, phrase: (m) => ({ texte: `a enregistré la configuration (${m[1]} machines).` }) },

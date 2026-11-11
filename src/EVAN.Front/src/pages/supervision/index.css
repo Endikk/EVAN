@@ -4,139 +4,152 @@
    Formes des tons : celles des états de machine du plan (rond, triangle, carré), jamais la couleur seule.
    ============================================================ */
 
-/* ---------- Bandeau ---------- */
+/* Le gras de la supervision est un 500 : la hiérarchie vient de la taille et de la couleur, pas de la graisse. */
+.sv-bandeau b,
+.sv-panneau-corps b,
+.sv-volet b {
+  font-weight: var(--fw-medium);
+}
+/* Pointillé d'une panne d'exercice : un gris assez marqué pour se lire sur la carte comme sur la scène. */
+.sv-panneau-corps {
+  --bord-exercice: color-mix(in srgb, var(--text-3) 70%, transparent);
+}
+
+/* ---------- Bandeau ----------
+   La phrase mène, à la taille du verdict des autres écrans. À côté, un relevé compact : une ligne par repère, le
+   libellé, la valeur, son mot et son trait (bande des machines ou jauge) alignés en colonnes d'une ligne à l'autre,
+   comme sur un tableau de conduite. Aucun aplat de couleur : la forme d'état devant la phrase suffit. */
 .sv-bandeau {
   grid-area: kpis;
   position: relative;
-  overflow: hidden;
-  isolation: isolate;
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.8fr);
-  gap: 24px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 32px;
   align-items: center;
-  padding: 12px 16px;
+  padding: 16px 24px;
   border-bottom: 1px solid var(--border);
   background: var(--bg);
 }
-/* Panne : un aplat cramoisi très léger sur tout le bandeau, la phrase porte le reste. */
-.sv-bandeau.ton-crit {
-  background: color-mix(in srgb, var(--crit) 6%, var(--bg));
-}
-.sv-bandeau > .pixel-field {
-  left: auto;
-  width: 34%;
-  opacity: 0.45;
-  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 70%);
-  mask-image: linear-gradient(90deg, transparent 0%, #000 70%);
-}
 .sv-verdict,
 .sv-reperes {
-  position: relative;
-  z-index: 1;
   min-width: 0;
 }
 
 .sv-verdict {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
 }
 .sv-phrase {
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  gap: 12px;
   margin: 0;
-  font-size: clamp(16px, 0.75rem + 0.55vw, 19px);
-  line-height: 1.28;
-  font-weight: 640;
-  letter-spacing: -0.012em;
+  font-size: var(--fs-3xl);
+  line-height: 1.25;
+  font-weight: var(--fw-medium);
   color: var(--text);
   text-wrap: balance;
-  animation: sv-change 520ms var(--ease-out);
+  animation: sv-change var(--dur-entree) var(--ease-out);
 }
 /* La phrase change de ton (tout va bien, panne…) : elle se repose une fois, pour que le changement se voie. */
 @keyframes sv-change {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(4px);
   }
 }
+/* Repère d'état de 16 px, aligné sur la première ligne : le texte de la suite et les boutons s'alignent après lui. */
 .sv-glyphe {
   flex: none;
   display: inline-grid;
   place-items: center;
   width: 16px;
-  transform: translateY(1px);
 }
-/* Sous la phrase : la ligne « qui s'en occupe » (jamais coupée) et les boutons, qui passent dessous s'il le faut. */
+/* Sous la phrase, en retrait sur son texte : la ligne « qui s'en occupe » et, sur la même ligne quand la place le
+   permet, les boutons qu'elle appelle. Le bandeau reste bas. */
 .sv-verdict-bas {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px 16px;
+  padding-left: 28px;
 }
 .sv-suite {
-  margin: 0 0 0 24px;
-  font-size: 13px;
-  line-height: 1.4;
+  margin: 0;
+  font-size: var(--fs-base);
+  line-height: 1.5;
   color: var(--text-2);
-  white-space: nowrap;
 }
 .sv-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  margin-left: auto;
 }
 
+/* Le relevé : quatre colonnes partagées par les trois lignes (sous-grille), séparé de la phrase par un filet. */
 .sv-reperes {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  align-self: stretch;
-}
-/* Un repère du bandeau : le nom et son « ? », la valeur avec son mot à côté, puis un seul trait visuel (la bande des
-   machines ou la jauge). Rien d'écrit sous la valeur : le bandeau reste bas au-dessus de la 3D. */
-.repere.sv-rep {
-  flex-direction: row;
-  flex-wrap: wrap;
+  grid-template-columns: max-content max-content max-content minmax(96px, 160px);
+  column-gap: 16px;
+  row-gap: 4px;
   align-content: center;
-  align-items: baseline;
-  gap: 4px 8px;
-}
-/* Le mot passe sous la valeur quand la carte est trop étroite pour les deux. */
-.sv-rep .rp-titre,
-.sv-rep .rp-jauge,
-.sv-rep .rp-note {
-  flex-basis: 100%;
+  padding-left: 24px;
+  border-left: 1px solid var(--border);
 }
 .sv-bandeau .repere.sv-rep {
-  padding: 4px 16px;
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  align-items: baseline;
+  row-gap: 4px;
+  min-height: 32px;
+  margin: 0 -8px;
+  padding: 4px 8px;
   border: 0;
-  border-left: 1px solid var(--border);
-  border-radius: 0;
+  border-radius: var(--r-sm);
   background: none;
 }
 .sv-bandeau .repere.sv-rep.cliquable {
-  border-radius: 0 var(--r-md) var(--r-md) 0;
+  transition: background-color var(--dur) var(--ease);
 }
 .sv-bandeau .repere.sv-rep.cliquable:hover {
-  background: color-mix(in srgb, var(--surface-2) 70%, transparent);
+  background: var(--surface-2);
 }
-.sv-rep .rp-titre {
-  font-size: 12.5px;
+.sv-bandeau .repere.sv-rep.cliquable:focus-visible {
+  outline: 2px solid var(--accent-text);
+  outline-offset: 0;
 }
-.sv-rep .rp-valeur b {
-  font-size: 24px;
+.sv-bandeau .sv-rep .rp-titre {
+  grid-column: 1;
+  font-size: var(--fs-md);
 }
-.sv-rep .rp-valeur small {
-  font-size: 13px;
+.sv-bandeau .sv-rep .rp-valeur {
+  grid-column: 2;
+  font-variant-numeric: tabular-nums;
 }
-.sv-rep .rp-mot {
-  font-size: 12.5px;
+.sv-bandeau .sv-rep .rp-valeur b {
+  font-size: var(--fs-xl);
+  letter-spacing: 0;
 }
-.sv-rep .rp-jauge,
-.sv-rep .rp-note {
-  margin: 4px 0 0;
+.sv-bandeau .sv-rep .rp-valeur small {
+  font-size: var(--fs-sm);
+}
+.sv-bandeau .sv-rep .rp-mot {
+  grid-column: 3;
+  font-size: var(--fs-md);
+}
+.sv-bandeau .sv-rep .rp-jauge {
+  grid-column: 4;
+  align-self: center;
+  margin: 0;
+}
+/* La bande des machines prend la place du mot et de la jauge. */
+.sv-bandeau .sv-rep .rp-note {
+  grid-column: 3 / -1;
+  align-self: center;
+  margin: 0;
 }
 
 /* Une marque par machine : la bande se lit d'un coup d'œil, la forme dit l'état. */
@@ -148,51 +161,43 @@
 .sv-bande > span {
   display: inline-grid;
   place-items: center;
-  width: 13px;
-  height: 13px;
+  width: 12px;
+  height: 12px;
 }
 .sv-bande > span.hors-ligne {
   opacity: 0.5;
 }
 
-@media (max-width: 1180px) {
-  .sv-bandeau {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 8px;
-  }
-  .sv-bandeau .repere.sv-rep:first-child {
-    border-left: 0;
-    padding-left: 0;
-  }
-  .sv-bandeau > .pixel-field {
-    width: 50%;
+@media (max-width: 1280px) {
+  .sv-phrase {
+    font-size: var(--fs-2xl);
   }
 }
-@media (max-width: 600px) {
+@media (max-width: 1080px) {
   .sv-bandeau {
-    padding: 12px 16px;
-  }
-  .sv-suite {
-    margin-left: 0;
-    white-space: normal;
-  }
-  .sv-actions {
-    flex-wrap: wrap;
-    margin-left: 0;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
   }
   .sv-reperes {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    row-gap: 8px;
-  }
-  .sv-bandeau .repere.sv-rep {
-    padding: 0 0 0 12px;
-  }
-  .sv-bandeau .repere.sv-rep:first-child {
-    grid-column: 1 / -1;
-  }
-  .sv-bandeau .repere.sv-rep:nth-child(2) {
+    padding: 12px 0 0;
     border-left: 0;
-    padding-left: 0;
+    border-top: 1px solid var(--border);
+  }
+}
+/* Téléphone : trois colonnes ; la jauge passe sous le mot, la bande des machines sous la ligne. */
+@media (max-width: 600px) {
+  .sv-bandeau {
+    padding: 16px;
+  }
+  .sv-reperes {
+    grid-template-columns: max-content max-content minmax(0, 1fr);
+    column-gap: 12px;
+  }
+  .sv-bandeau .sv-rep .rp-jauge {
+    grid-column: 3;
+  }
+  .sv-bandeau .sv-rep .rp-note {
+    grid-column: 1 / -1;
   }
 }
 
@@ -216,7 +221,7 @@
 }
 .sv-volet-simule .chip {
   height: 22px;
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
 }
 .sv-volet-section {
   margin-top: 24px;
@@ -235,7 +240,7 @@
   align-items: center;
   gap: 4px 16px;
   margin: 8px 0 0;
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--text-2);
 }
 .sv-legende > span {
@@ -262,7 +267,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  font-size: 13px;
+  font-size: var(--fs-md);
 }
 .sv-volet-etats li {
   display: grid;
@@ -276,7 +281,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  font-size: 13px;
+  font-size: var(--fs-md);
 }
 .sv-schema-etats p {
   margin: 0;
@@ -288,14 +293,14 @@
   animation-delay: calc(200ms + var(--i, 0) * 80ms);
 }
 .sv-schema-etats p .faint {
-  font-size: 12px;
+  font-size: var(--fs-sm);
 }
 .sv-trs-legende {
   margin-top: 8px;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   color: var(--text-2);
 }
 .sv-trs-legende p {
@@ -361,8 +366,8 @@
 /* ---------- Panneau ---------- */
 .sv-panneau-tete h2 {
   margin: 0;
-  font-size: 18px;
-  letter-spacing: -0.01em;
+  font-size: var(--fs-xl);
+  letter-spacing: 0;
 }
 .sv-retour {
   margin: -4px 0 8px -8px;
@@ -376,33 +381,33 @@
   flex: 1;
   justify-content: center;
 }
-/* Compteur de l'onglet : un chiffre gris à côté du nom, sans pastille. Une panne en cours le passe en rouge. */
+/* Compteur de l'onglet : un chiffre gris à côté du nom, sans pastille. La gravité se lit dans la liste, par la forme. */
 .sv-compte {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  font-variant-numeric: tabular-nums;
   color: var(--text-3);
-}
-.sv-compte.crit {
-  color: var(--crit);
 }
 /* Le contenu du panneau change (onglet, machine choisie) : il glisse depuis la droite. */
 .sv-glisse {
-  animation: sv-glisse 320ms var(--ease-out) both;
+  animation: sv-glisse var(--dur-entree) var(--ease-out) both;
 }
 @keyframes sv-glisse {
   from {
     opacity: 0;
-    transform: translateX(14px);
+    transform: translateX(8px);
   }
 }
 .sv-vide {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--fs-md);
   line-height: 1.5;
 }
 
 /* Alarmes : une ligne compacte chacune. La forme dit la gravité, le quoi est en gras, le où et le code dessous,
-   depuis quand à droite, et ce qu'il faut faire en une ligne. */
+   depuis quand à droite, et ce qu'il faut faire en une ligne.
+   Le bord cramoisi est réservé à la panne réelle ; une panne d'exercice (« Simuler une panne ») a un bord en
+   pointillé, comme le bouton qui la déclenche. Un point à surveiller garde un bord neutre : son triangle suffit. */
 .sv-alarmes {
   list-style: none;
   margin: 0;
@@ -431,18 +436,21 @@
   font: inherit;
   cursor: pointer;
   transition:
-    background var(--dur) var(--ease),
-    border-color var(--dur) var(--ease);
+    background-color var(--dur) var(--ease),
+    border-color var(--dur) var(--ease),
+    transform var(--dur) var(--ease);
 }
 .sv-alarme:hover {
   background: var(--surface-2);
 }
-.sv-alarme.crit {
-  border-color: color-mix(in srgb, var(--crit) 50%, var(--border));
-  background: color-mix(in srgb, var(--crit-soft) 60%, var(--surface));
+.sv-alarme:active {
+  transform: scale(0.98);
 }
-.sv-alarme.warn {
-  border-color: color-mix(in srgb, var(--warn) 40%, var(--border));
+.sv-alarme.crit {
+  border-color: color-mix(in srgb, var(--crit) 55%, var(--border));
+}
+.sv-alarme.exercice {
+  border: 1px dashed var(--bord-exercice);
 }
 .sv-alarme-forme {
   grid-area: forme;
@@ -453,13 +461,13 @@
 .sv-alarme-quoi {
   grid-area: quoi;
   min-width: 0;
-  font-size: 13.5px;
+  font-size: var(--fs-base);
   line-height: 1.3;
-  font-weight: 650;
+  font-weight: var(--fw-medium);
 }
 .sv-alarme-depuis {
   grid-area: depuis;
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--text-2);
   white-space: nowrap;
 }
@@ -469,18 +477,18 @@
   align-items: baseline;
   gap: 8px;
   min-width: 0;
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--text-2);
 }
 .sv-alarme-ou b {
   color: var(--text);
-  font-weight: 650;
+  font-weight: var(--fw-medium);
 }
 .sv-alarme-code {
   flex: none;
   margin-left: auto;
   color: var(--text-3);
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
 }
 .sv-alarme-faire {
   grid-area: faire;
@@ -489,8 +497,8 @@
   gap: 8px;
   min-width: 0;
   margin-top: 4px;
-  font-size: 12.5px;
-  font-weight: 560;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
   color: var(--text);
 }
 .sv-alarme-faire svg {
@@ -500,7 +508,7 @@
   color: var(--text-3);
 }
 .sv-alarme.prise .sv-alarme-faire svg {
-  color: var(--accent-text);
+  color: var(--text-2);
 }
 .sv-alarme-voir {
   position: absolute;
@@ -512,39 +520,37 @@
   color: var(--text-3);
 }
 
-/* Sans alarme : une forme, un titre et son « ? », une ligne. */
+/* Sans alarme : une forme, un titre et son « ? », une ligne. Pas de cadre : le pointillé désigne l'exercice. */
 .sv-calme {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  padding: 24px 16px 16px;
-  border: 1px dashed var(--border-strong);
-  border-radius: var(--r-md);
+  padding: 32px 16px 24px;
   text-align: center;
 }
 .sv-calme-titre {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 15px;
+  font-size: var(--fs-lg);
 }
 .sv-calme p {
   margin: 0;
   max-width: 34ch;
-  font-size: 13px;
+  font-size: var(--fs-md);
   line-height: 1.5;
   color: var(--text-2);
 }
-/* Rien à signaler, c'est le normal : il reste calme, en gris (ISA-101). */
+/* Rien à signaler : la coche prend le vert de la marche, posé sur son lavis, sans clignoter. */
 .sv-calme-coche circle {
-  fill: var(--idle-soft);
-  stroke: var(--idle);
+  fill: var(--ok-soft);
+  stroke: var(--ok);
   stroke-width: 1.6;
 }
 .sv-calme-coche path {
   fill: none;
-  stroke: var(--idle);
+  stroke: var(--ok);
   stroke-width: 2.6;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -562,6 +568,7 @@
   background: var(--surface-3);
   color: var(--text-2);
 }
+/* En direct : la mesure suivie bat, en opacité seulement. */
 .sv-calme-suivi svg {
   width: var(--icon-lg);
   height: var(--icon-lg);
@@ -576,8 +583,8 @@
 }
 .sv-groupe {
   margin: 0 0 8px;
-  font-size: 12.5px;
-  font-weight: 650;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
   color: var(--text-2);
 }
 .sv-machines ul {
@@ -604,15 +611,22 @@
   font: inherit;
   cursor: pointer;
   transition:
-    background var(--dur) var(--ease),
-    border-color var(--dur) var(--ease);
+    background-color var(--dur) var(--ease),
+    border-color var(--dur) var(--ease),
+    transform var(--dur) var(--ease);
 }
 .sv-machine:hover {
   background: var(--surface-2);
 }
+.sv-machine:active {
+  transform: scale(0.98);
+}
+/* Même règle que les alarmes : cramoisi pour la panne réelle, pointillé pour l'exercice. */
 .sv-machine.crit {
-  border-color: color-mix(in srgb, var(--crit) 50%, var(--border));
-  background: color-mix(in srgb, var(--crit-soft) 60%, var(--surface));
+  border-color: color-mix(in srgb, var(--crit) 55%, var(--border));
+}
+.sv-machine.exercice {
+  border: 1px dashed var(--bord-exercice);
 }
 .sv-machine > .st {
   display: inline-grid;
@@ -620,17 +634,17 @@
 }
 .sv-machine-nom {
   min-width: 0;
-  font-size: 13px;
+  font-size: var(--fs-md);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .sv-machine-nom b {
-  font-weight: 700;
+  font-weight: var(--fw-medium);
 }
 .sv-machine-etat {
   display: block;
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--text-2);
 }
 .sv-vitesse {
@@ -639,7 +653,8 @@
   align-items: flex-end;
   gap: 4px;
   width: 92px;
-  font-size: 12px;
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
   color: var(--text-2);
 }
 .sv-vitesse i {
@@ -650,11 +665,12 @@
   background: var(--surface-3);
   overflow: hidden;
 }
+/* La vitesse rapportée à la normale : un trait neutre, l'état est déjà dit par la forme en tête de ligne. */
 .sv-vitesse i b {
   display: block;
   height: 100%;
   border-radius: var(--r-xs);
-  background: var(--c);
+  background: var(--text-3);
   transform-origin: left center;
   transition: transform 600ms var(--ease);
 }
@@ -679,10 +695,10 @@
   align-items: start;
   padding: 8px 0;
   border-bottom: 1px solid var(--border);
-  font-size: 13px;
+  font-size: var(--fs-md);
 }
 .sv-ev time {
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--text-3);
   font-variant-numeric: tabular-nums;
   padding-top: 1px;
@@ -695,11 +711,9 @@
   width: var(--icon);
   height: var(--icon);
 }
+/* Les icônes disent le genre d'événement, sans teinte ; une alarme ressort d'un palier de gris. */
 .sv-ev.alarme .sv-ev-icone {
-  color: var(--crit);
-}
-.sv-ev.action .sv-ev-icone {
-  color: var(--accent-text);
+  color: var(--text-2);
 }
 .sv-ev p {
   margin: 0;
@@ -708,7 +722,7 @@
 }
 .sv-ev p b {
   color: var(--text);
-  font-weight: 650;
+  font-weight: var(--fw-medium);
 }
 
 /* Ce qui se passe dans la machine. */
@@ -720,42 +734,69 @@
 }
 .sv-detail-tete h3 {
   margin: 0;
-  font-size: 16px;
+  font-size: var(--fs-lg);
 }
 .sv-detail-type {
   margin: 0 0 4px;
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--text-3);
 }
+/* La phrase de la machine, avec la forme de son état devant (pas de filet de couleur). */
 .sv-detail-phrase {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
   margin: 0;
-  padding-left: 8px;
-  border-left: 2px solid var(--border-strong);
-  font-size: 13.5px;
+  font-size: var(--fs-base);
   line-height: 1.5;
   color: var(--text);
 }
-.sv-detail-phrase.ton-crit {
-  border-left-color: var(--crit);
+.sv-detail-phrase > .st {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 12px;
 }
-.sv-detail-phrase.ton-warn {
-  border-left-color: var(--warn);
-}
+/* Vitesse et étiquettes jetées : une rangée de chiffres entre deux filets, pas deux cartes jumelles. La vitesse mène
+   (sa jauge sous la valeur), les étiquettes jetées suivent après un filet. */
 .sv-detail-reperes {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  gap: 0;
+  padding-block: 12px;
+  border-block: 1px solid var(--border);
 }
 .sv-detail-reperes .repere {
-  padding: 12px;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: baseline;
+  align-content: flex-start;
+  gap: 4px 8px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+.sv-detail-reperes .repere:first-child {
+  padding-left: 0;
+}
+.sv-detail-reperes .repere + .repere {
+  border-left: 1px solid var(--border);
+}
+.sv-detail-reperes .rp-titre,
+.sv-detail-reperes .rp-jauge,
+.sv-detail-reperes .rp-note {
+  flex-basis: 100%;
 }
 .sv-detail-reperes .rp-valeur b {
-  font-size: 24px;
+  font-size: var(--fs-3xl);
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
 }
 .sv-detail-organes .titre-carte {
   margin-bottom: 8px;
 }
 .sv-detail-organes .tc-titre {
-  font-size: 13.5px;
+  font-size: var(--fs-base);
 }
 .sv-detail-alarme {
   display: flex;
@@ -767,8 +808,8 @@
 .sv-detail-alarme.crit {
   border-color: color-mix(in srgb, var(--crit) 55%, var(--border));
 }
-.sv-detail-alarme.warn {
-  border-color: color-mix(in srgb, var(--warn) 45%, var(--border));
+.sv-detail-alarme.exercice {
+  border: 1px dashed var(--bord-exercice);
 }
 .sv-organes {
   list-style: none;
@@ -791,13 +832,16 @@
   text-align: left;
   font: inherit;
   cursor: pointer;
-  transition: background var(--dur) var(--ease);
+  transition: background-color var(--dur) var(--ease);
 }
 .sv-organe:hover {
   background: var(--surface-2);
 }
 .sv-organe.crit {
-  border-color: color-mix(in srgb, var(--crit) 50%, var(--border));
+  border-color: color-mix(in srgb, var(--crit) 55%, var(--border));
+}
+.sv-organe.exercice {
+  border: 1px dashed var(--bord-exercice);
 }
 .sv-organe-tete {
   display: flex;
@@ -806,23 +850,23 @@
   gap: 8px;
 }
 .sv-organe-nom {
-  font-size: 13px;
-  font-weight: 620;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
 }
 .sv-organe-etat {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   flex: none;
-  font-size: 12px;
-  font-weight: 650;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
 }
 .sv-point {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 78px minmax(64px, auto);
   gap: 8px;
   align-items: center;
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--text-2);
 }
 .sv-point-nom {
@@ -832,7 +876,8 @@
 }
 .sv-point-valeur {
   text-align: right;
-  font-weight: 650;
+  font-weight: var(--fw-medium);
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 /* Dernière alarme, dérive, prochain entretien : une rangée de chiffres, le détail dans les « ? ». */
@@ -852,10 +897,14 @@
 }
 
 /* ---------- Comment EVAN a repéré la panne ---------- */
+/* Détection d'une panne réelle : bord cramoisi ; d'une panne simulée : pointillé neutre. */
 .sv-detection {
   padding: 16px 16px 8px;
-  border-color: color-mix(in srgb, var(--crit) 35%, var(--border));
-  animation: sv-glisse 360ms var(--ease-out) both;
+  border-color: color-mix(in srgb, var(--crit) 40%, var(--border));
+  animation: sv-glisse var(--dur-entree) var(--ease-out) both;
+}
+.sv-detection.simule {
+  border: 1px dashed var(--bord-exercice);
 }
 .sv-detection .titre-carte {
   margin-bottom: 0;
@@ -865,7 +914,7 @@
   align-items: flex-start;
 }
 .sv-detection .tc-titre {
-  font-size: 14.5px;
+  font-size: var(--fs-base);
   line-height: 1.3;
 }
 .sv-detection .tc-actions {
@@ -873,7 +922,7 @@
 }
 .sv-detection .tc-lecon {
   margin-top: 4px;
-  font-size: 12.5px;
+  font-size: var(--fs-md);
 }
 .sv-etapes {
   list-style: none;
@@ -905,31 +954,24 @@
   width: var(--icon-sm);
   height: var(--icon-sm);
 }
+/* Un temps franchi s'allume en ivoire (l'encre le jour) : l'icône dit l'étape, la couleur ne dit que « fait ». */
 .sv-etape.allume .sv-etape-point {
   background: var(--accent-soft);
   color: var(--accent-text);
-  animation: sv-allume 520ms var(--ease-out);
+  animation: sv-allume var(--dur-entree) var(--ease-out);
 }
-.sv-etape.allume.alarme .sv-etape-point,
-.sv-etape.allume.ecran .sv-etape-point {
-  background: var(--crit-soft);
-  color: var(--crit);
-}
+/* Le temps attendu bat (en direct), en opacité seulement. */
 .sv-etape.en-cours .sv-etape-point {
   animation: sv-attente 1.2s var(--ease) infinite;
 }
 @keyframes sv-allume {
-  0% {
-    transform: scale(0.6);
-  }
-  60% {
-    transform: scale(1.15);
+  from {
+    opacity: 0.4;
   }
 }
 @keyframes sv-attente {
   50% {
     opacity: 0.45;
-    transform: scale(0.9);
   }
 }
 /* Le trait entre deux temps se remplit quand le temps suivant s'allume. */
@@ -962,26 +1004,26 @@
   min-width: 0;
   padding-top: 4px;
   opacity: 0.55;
-  transition: opacity 400ms var(--ease);
+  transition: opacity var(--dur-entree) var(--ease);
 }
 .sv-etape.allume .sv-etape-texte,
 .sv-etape.en-cours .sv-etape-texte {
   opacity: 1;
 }
 .sv-etape-texte b {
-  font-size: 13.5px;
-  font-weight: 650;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
 }
 .sv-etape-texte p {
   margin: 0;
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   line-height: 1.4;
   color: var(--text-2);
   font-variant-numeric: tabular-nums;
 }
 .sv-maillons-note {
   margin: 0 0 8px;
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--text-3);
 }
 .sv-detection .details {
@@ -1000,7 +1042,7 @@
   grid-template-columns: 20px minmax(0, 1fr) auto;
   gap: 8px;
   align-items: start;
-  font-size: 12.5px;
+  font-size: var(--fs-md);
 }
 .sv-maillon-point {
   display: grid;
@@ -1017,13 +1059,49 @@
 }
 .sv-maillons p {
   margin: 0;
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
   color: var(--text-2);
   word-break: break-word;
 }
 .sv-maillons time {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: var(--fs-xs);
   color: var(--text-3);
   white-space: nowrap;
+}
+
+/* ---------- Corrections UX (onglets, fiche close, journal, détection repliée) ---------- */
+/* Onglets du panneau (motif ARIA « tabs ») : l'onglet choisi porte le fond de l'élément enfoncé des groupes .seg. */
+.sv-onglets button[aria-selected='true'] {
+  background: var(--surface-3);
+  color: var(--text);
+  box-shadow: var(--shadow-1);
+}
+@media (pointer: coarse) {
+  .sv-onglets button {
+    height: 44px;
+  }
+}
+/* Détection repliée sous la fiche : le chevron dit le sens. */
+.sv-detection-deplier svg {
+  transition: transform var(--dur) var(--ease);
+}
+.sv-detection-deplier.ouvert svg {
+  transform: rotate(180deg);
+}
+/* Panne réglée à l'instant : sa fiche reste, sans le bord de la panne en cours. */
+.sv-detail-alarme.close {
+  border-color: var(--border);
+}
+/* « Revoir » au bout d'une ligne d'alarme du journal. */
+.sv-ev.revoir {
+  grid-template-columns: 40px 18px minmax(0, 1fr) auto;
+}
+.sv-ev-revoir {
+  margin-top: -4px;
+}
+@media (max-width: 600px) {
+  .sv-ev-revoir span {
+    display: none;
+  }
 }

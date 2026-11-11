@@ -164,7 +164,7 @@ export function verdictAtelier(a: EtatAtelier, alarmes: Alarme[], lieu: (al: Ala
       aSurveiller.length === 1
         ? `Aucune panne. Un point à surveiller sur ${l.numero}${cote(l)}.`
         : `Aucune panne. ${aSurveiller.length} points à surveiller, dont ${l.numero}${cote(l)}.`;
-    return { ton: 'warn', texte, alarmeId: w.id, action: 'Voir' };
+    return { ton: 'warn', texte, alarmeId: w.id, action: 'Voir le point à surveiller' };
   }
 
   if (a.horsLigne.length) {
@@ -173,14 +173,50 @@ export function verdictAtelier(a: EtatAtelier, alarmes: Alarme[], lieu: (al: Ala
   }
 
   if (!a.produisent) return { ton: 'neutre', texte: 'Aucune machine ne produit en ce moment, et aucune alarme.' };
-  const texte =
-    a.produisent === a.total
-      ? `Tout tourne : ${a.total > 1 ? `les ${a.total} machines produisent` : 'la machine produit'}, aucune alarme.`
-      : `Tout tourne : ${a.produisent} machine${a.produisent > 1 ? 's' : ''} sur ${a.total} ${a.produisent > 1 ? 'produisent' : 'produit'}, aucune alarme.`;
-  return { ton: 'ok', texte };
+  // Le repère « Machines qui produisent » donne déjà le compte : la phrase nomme plutôt celles qui ne produisent pas.
+  // « Tout tourne » n'est dit que si c'est vrai.
+  if (a.produisent === a.total) return { ton: 'ok', texte: 'Tout tourne, aucune alarme.' };
+  return { ton: 'ok', texte: `Aucune alarme. ${enumerer(arretees(a))}.` };
 }
 
-/** TRS instantané de l'atelier, et production cumulée depuis l'ouverture de la page. */
+/** Ce qui ne produit pas, en court pour la phrase du bandeau : « R06 en réglage », « PV01 à l'arrêt ». */
+const ETAT_COURT: Partial<Record<EtatMachine, string>> = { panne: 'en panne', calage: 'en réglage', arret: 'à l’arrêt' };
+
+function arretees(a: EtatAtelier): string[] {
+  return (['panne', 'calage', 'arret'] as const)
+    .filter((etat) => a.parEtat[etat].length)
+    .map((etat) => {
+      const ms = a.parEtat[etat];
+      const qui = ms.length <= 3 ? enumerer(ms.map((m) => m.numero)) : `${ms.length} machines`;
+      return `${qui} ${ETAT_COURT[etat]}`;
+    });
+}
+
+/** Part de la vitesse normale au-delà de laquelle la machine tourne « normalement ». */
+const VITESSE_NORMALE = 0.9;
+/** En dessous, la machine est arrêtée ; au-dessus, pendant une panne ou un arrêt, elle finit de ralentir. */
+const VITESSE_NULLE = 0.02;
+
+/**
+ * Le mot sous la vitesse d'une machine. Pendant une panne, la vitesse descend en quelques secondes : tant qu'elle
+ * n'est pas nulle, la machine « s'arrête » (dire « Arrêtée » à côté de 22 m/min se contredisait).
+ */
+export function motVitesse(etat: EtatMachine, facteur: number): { ton: Ton; mot: string } {
+  if (etat === 'panne' || etat === 'arret') return { ton: 'neutre', mot: facteur > VITESSE_NULLE ? 'S’arrête' : 'Arrêtée' };
+  if (etat === 'calage') return { ton: 'neutre', mot: 'Réglage' };
+  return facteur >= VITESSE_NORMALE ? { ton: 'ok', mot: 'Normale' } : { ton: 'warn', mot: 'Ralentie' };
+}
+
+/**
+ * Depuis quand comptent les compteurs de production, en clair. Le simulateur du navigateur les reprend au début du
+ * poste (5 h ou 13 h) ; branchés sur l'API, ce sont les compteurs que remontent les machines.
+ */
+export function depuisCompteurs(source: 'local' | 'api', debutPoste: number): string {
+  if (source === 'api') return 'selon les compteurs remontés par les machines';
+  return `depuis le début du poste (${new Date(debutPoste).getHours()} h)`;
+}
+
+/** TRS instantané de l'atelier, et production cumulée (depuis le début du poste en démonstration). */
 export function trsInstantane(machines: Machine[], live: Record<string, MachineLive | undefined>) {
   let trs = 0;
   let n = 0;

@@ -232,6 +232,29 @@ export class RulesEngine {
     return alarm;
   }
 
+  /**
+   * Oublie tout ce que le moteur sait d'un point (niveau, tampon de dérive) : après une intervention, la mesure qui
+   * revient à la normale repart d'une page blanche, sans que sa remontée soit lue comme une dérive.
+   */
+  forget(pointId: string) {
+    this.state.delete(pointId);
+  }
+
+  /**
+   * Remet une alarme sous la garde du moteur (clôture annulée) : il la tient de nouveau pour en cours sur son point,
+   * au lieu d'en lever une seconde au prochain échantillon hors limite.
+   */
+  restore(alarm: Alarme) {
+    if (!alarm.pointId) return;
+    const s = this.st(alarm.pointId);
+    if (alarm.regle === 'derive') s.drift = alarm;
+    else {
+      s.alarm = alarm;
+      s.niveau = alarm.gravite === 'critique' ? 'alarme' : 'attention';
+    }
+    s.okTicks = 0;
+  }
+
   /** Clôture manuelle (intervention terminée). */
   resolve(alarmId: string, t: number) {
     for (const s of this.state.values()) {

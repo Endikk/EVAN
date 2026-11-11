@@ -14,9 +14,9 @@ import demo from '@data/demo.json';
 import { machineModel } from '@/domain/catalog';
 import type { Machine } from '@/domain/types';
 import { bilanUsine, courbeDeCharge } from '@/analytics/energy';
-import { echeances, previsions } from '@/analytics/maintenance';
+import { echeances, previsions, type Saisie } from '@/analytics/maintenance';
 import { chronologie } from '@/analytics/timeline';
-import { getHistory, historicValue, H } from './history';
+import { getHistory, historicValue, H, niveauUsure } from './history';
 
 const FICHIER = fileURLToPath(new URL('../../../../data/tests/historique.json', import.meta.url));
 const MAINTENANT = Date.parse('2026-10-08T08:30:00Z');
@@ -49,6 +49,10 @@ function resumer() {
         const md = def.mesures.find((x) => x.cle === p.cle)!;
         for (const dt of [-180_000, -1000, 10_000]) valeurs.push({ point: p.id, t: a.horodatage + dt, v: historicValue(h, m, p, md, def.panne, a.horodatage + dt) });
       }
+      // Usure où l'historique s'arrête : les simulateurs en direct (navigateur et EVAN.Simulator) en partent aussi.
+      const usure = machines.flatMap((m) =>
+        machineModel(m).points.filter((p) => p.type === 'usure').map((p) => ({ point: p.id, v: niveauUsure(p.id, p.nominal) })),
+      );
       const energie = bilanUsine(h, machines, h.debut, MAINTENANT);
       const charge = courbeDeCharge(h, machines, h.debut, MAINTENANT, 30 * 60_000);
       const pic = charge.reduce((a, b) => (b.kw > a.kw ? b : a));
@@ -79,6 +83,7 @@ function resumer() {
         ),
         trs: Object.fromEntries(machines.map((m) => [m.id, (h.trs[m.id] ?? []).map((j) => j.trs)])),
         valeurs,
+        usure,
         maintenance: {
           echeances: machines.flatMap((m) =>
             echeances(h, m, MAINTENANT).map((e) => ({ id: e.id, compteur: e.compteur, statut: e.statut, echeance: e.echeance ?? null })),
@@ -86,6 +91,27 @@ function resumer() {
           previsions: machines.flatMap((m) =>
             previsions(h, m, MAINTENANT).map((p) => ({ pointId: p.pointId, valeur: p.valeur, pente: p.pente, niveau: p.niveau, franchissement: p.franchissement })),
           ),
+          // Chaque tâche du plan consignée deux heures plus tôt : compteurs repartis de zéro à la date de la saisie,
+          // systématiques comme conditionnelles (usure).
+          apresSaisie: machines.flatMap((m) => {
+            const saisies: Saisie[] = (machineModel(m).type?.maintenance ?? []).map((t) => ({
+              id: `s-${m.id}-${t.id}`,
+              machineId: m.id,
+              type: 'preventive',
+              date: MAINTENANT - 2 * H,
+              duree: t.duree,
+              titre: t.tache,
+              auteur: 'Contrat',
+              tacheId: t.id,
+            }));
+            return echeances(h, m, MAINTENANT, saisies).map((e) => ({
+              id: e.id,
+              compteur: e.compteur,
+              statut: e.statut,
+              echeance: e.echeance ?? null,
+              dernierPassage: e.dernierPassage ?? null,
+            }));
+          }),
         },
         energie: { kwh: energie.total.kwh, production: energie.total.production, pic: { t: pic.t, kw: pic.kw } },
         chronologies: h.alarmes.slice(0, 3).map((a) => {

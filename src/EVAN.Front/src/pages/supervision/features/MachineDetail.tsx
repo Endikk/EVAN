@@ -2,10 +2,11 @@
  * « Ce qui se passe dans cette machine » : son état (et, hors de la marche normale, une phrase courte qui dit depuis
  * quand et où), sa vitesse et ses étiquettes jetées, ses alarmes en cours, ses organes un par un avec leurs mesures en
  * direct, puis une rangée compacte : dernière alarme, dérive repérée, prochain entretien (le détail est dans les « ? »).
+ * Une panne close il y a peu garde sa fiche, qui propose de consigner l'intervention et de revoir la panne.
  * Le panneau s'ouvre sur un clic dans la liste des machines ou dans le plan 3D.
  */
 import { useMemo } from 'react';
-import { LocateFixed, PlugZap, Ruler, Wrench } from 'lucide-react';
+import { History as HistoryIcon, LocateFixed, PlugZap, Ruler, Wrench } from 'lucide-react';
 import type { Alarme, EtatMachine } from '@/domain/types';
 import { useProject } from '@/store/project';
 import { useUi } from '@/store/ui';
@@ -17,16 +18,17 @@ import { Sparkline } from '@/ui/Sparkline';
 import { SimulatedChip } from '@/ui/SimulatedChip';
 import { ChiffresSecondaires, Repere, TitreCarte, type ChiffreSecondaire } from '@/ui/explain';
 import { fmtDay, fmtDuration, fmtEcheance, fmtHM, fmtValue } from '@/ui/format';
-import { getHistory } from '@/sim/history';
+import { debutDePoste, getHistory } from '@/sim/history';
 import { echeances, previsions } from '@/analytics/maintenance';
 import { AlarmCard } from '@/widgets/pannes/AlarmCard';
 import { RepeatDefectTool } from '@/widgets/pannes/RepeatDefectTool';
-import { focusAlarm, openPage } from '@/widgets/shell/navigation';
-import { ETAT_MOT, minusculeInitiale, parUrgence, type Ton } from '../lib/atelier';
+import { estExercice } from '@/widgets/pannes/exercice';
+import { focusAlarm, openPage, openReplay } from '@/widgets/shell/navigation';
+import { depuisCompteurs, ETAT_MOT, minusculeInitiale, motVitesse, parUrgence, type Ton } from '../lib/atelier';
 
 const JOUR_MS = 86_400_000;
-/** Part de la vitesse normale au-delà de laquelle la machine tourne « normalement ». */
-const VITESSE_NORMALE = 0.9;
+/** Une panne close garde sa fiche dans le panneau ce temps-là : de quoi consigner l'intervention ou la revoir. */
+const FICHE_CLOSE_MS = 10 * 60_000;
 
 function quand(t: number, now: number): string {
   const jour = new Date(t).toDateString();
@@ -66,12 +68,6 @@ function phraseMachine(l: MachineLive | undefined, etat: EtatMachine, organeEnCa
   }
 }
 
-function motVitesse(etat: EtatMachine, facteur: number): { ton: Ton; mot: string } {
-  if (etat === 'panne' || etat === 'arret') return { ton: 'neutre', mot: 'Arrêtée' };
-  if (etat === 'calage') return { ton: 'neutre', mot: 'Réglage' };
-  return facteur >= VITESSE_NORMALE ? { ton: 'ok', mot: 'Normale' } : { ton: 'warn', mot: 'Ralentie' };
-}
-
 /** Couleur d'une mesure : calme quand elle est dans sa plage, ambre puis cramoisi quand elle en sort. */
 function couleurMesure(niveau: string | undefined): string {
   if (niveau === 'alarme') return 'var(--crit)';
@@ -86,6 +82,7 @@ export function MachineDetail({ id }: { id: string }) {
   const live = useLive((s) => s.machines[id]);
   const values = useLive((s) => s.values);
   const toutes = useLive((s) => s.alarms);
+  const source = useLive((s) => s.source);
   const focus = useUi((s) => s.focus);
   const diagnostic = useUi((s) => s.diagnosticMachineId === id);
   const saisies = useCarnet((s) => s.saisies);
@@ -116,6 +113,9 @@ export function MachineDetail({ id }: { id: string }) {
   const type = MACHINE_TYPES[machine.type];
   const etat = etatAffiche(live);
   const now = Date.now();
+  // Pannes réglées pendant la session, il y a moins de dix minutes : leur fiche reste, close.
+  const closes = toutes.filter((a) => a.machineId === id && a.statut === 'resolue' && a.gravite === 'critique' && a.finLe !== undefined && now - a.finLe < FICHE_CLOSE_MS);
+  const dernierePanne = suivi?.derniere && suivi.derniere.gravite === 'critique' && !closes.some((a) => a.id === suivi.derniere!.id) ? suivi.derniere : undefined;
   const enCause = alarmes[0] ? model.organes.find((o) => o.id === alarmes[0].organeId)?.nom : undefined;
   const phrase = phraseMachine(live, etat, enCause, now);
   const vitesse = motVitesse(etat, live?.facteur ?? 0);
@@ -165,7 +165,16 @@ export function MachineDetail({ id }: { id: string }) {
         <StatusPill etat={etat} label={live?.horsLigne ? LIBELLE_HORS_LIGNE : ETAT_MOT[etat]} />
       </header>
       {/* Une alarme en cours a sa fiche juste dessous, qui dit déjà quoi, où et depuis quand. */}
-      {phrase && !alarmes.length && <p className={`sv-detail-phrase ton-${phrase.ton}`}>{phrase.texte}</p>}
+      {phrase && !alarmes.length && (
+        <p className="sv-detail-phrase">
+          {live && (
+            <span className={`st st-${live.horsLigne ? 'attention' : etat}`}>
+              <StatusIcon etat={live.horsLigne ? 'attention' : etat} size={12} animate={false} />
+            </span>
+          )}
+          <span>{phrase.texte}</span>
+        </p>
+      )}
 
       <div className="reperes sv-detail-reperes">
         <Repere
@@ -186,14 +195,14 @@ export function MachineDetail({ id }: { id: string }) {
           valeur={jetees ?? '…'}
           format={(v) => v.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
           unite="%"
-          note="Depuis l’ouverture de la page."
+          note={`Part jetée ${depuisCompteurs(source, debutDePoste(now))}.`}
         />
       </div>
 
-      {alarmes.map((a) => (
-        <div key={a.id} className={`card sv-detail-alarme ${a.gravite === 'critique' ? 'crit' : 'warn'}`}>
+      {[...alarmes, ...closes].map((a) => (
+        <div key={a.id} className={`card sv-detail-alarme ${a.statut === 'resolue' ? 'close' : estExercice(a) ? 'exercice' : a.gravite === 'critique' ? 'crit' : ''}`}>
           <AlarmCard a={a} compact />
-          {!(focus.kind === 'organe' && focus.organeId === a.organeId) && (
+          {a.statut !== 'resolue' && !(focus.kind === 'organe' && focus.organeId === a.organeId) && (
             <button className="btn sm" onClick={() => focusAlarm(a.id)}>
               <LocateFixed /> Montrer l’organe sur le plan
             </button>
@@ -214,10 +223,11 @@ export function MachineDetail({ id }: { id: string }) {
             const horsPlage = pts.some((p) => values[p.id] && values[p.id].niveau !== 'ok');
             const e: EtatMachine = al?.gravite === 'critique' ? 'panne' : al || horsPlage ? 'attention' : 'marche';
             const mot = e === 'panne' ? 'En défaut' : e === 'attention' ? 'À surveiller' : 'Normal';
+            const exercice = !!al && estExercice(al);
             return (
               <li key={o.id}>
                 <button
-                  className={`sv-organe ${e === 'panne' ? 'crit' : ''}`}
+                  className={`sv-organe ${e === 'panne' && !exercice ? 'crit' : ''} ${exercice ? 'exercice' : ''}`}
                   onClick={() => useUi.getState().setFocus({ kind: 'organe', machineId: machine.id, organeId: o.id })}
                 >
                   <span className="sv-organe-tete">
@@ -226,7 +236,7 @@ export function MachineDetail({ id }: { id: string }) {
                     </span>
                     {/* Normal : la forme seule, calme. Hors de la normale : la forme et le mot. */}
                     <span className={`sv-organe-etat st st-${e}`} title={mot}>
-                      <StatusIcon etat={e} size={10} animate={e === 'panne'} />
+                      <StatusIcon etat={e} size={10} animate={false} />
                       {e === 'marche' ? <span className="sr-only">{mot}</span> : mot}
                     </span>
                   </span>
@@ -262,6 +272,11 @@ export function MachineDetail({ id }: { id: string }) {
       )}
 
       <div className="row wrap">
+        {dernierePanne && (
+          <button className="btn sm" onClick={() => openReplay(dernierePanne)}>
+            <HistoryIcon /> Revoir la dernière panne
+          </button>
+        )}
         <button className="btn sm" onClick={() => void openPage(8, machine.id)}>
           <Wrench /> Carnet de maintenance
         </button>

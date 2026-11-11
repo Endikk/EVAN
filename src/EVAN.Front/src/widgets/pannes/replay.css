@@ -1,8 +1,15 @@
 /* ============================================================
    « Revoir la panne » : le récit en trois temps (avant, la panne, après). Une étape passée se remplit et le fil
-   qui la relie à la suivante se trace ; l'étape en cours pulse ; les suivantes attendent, estompées. Sous la courbe,
-   le curseur de lecture avance par translation, sans redessiner le graphique.
+   qui la relie à la suivante se trace ; l'étape en cours est cerclée ; les suivantes attendent, estompées. Sous la
+   courbe, le curseur de lecture avance par translation, sans redessiner le graphique.
+   Une seule teinte dans le récit : le cramoisi de l'alarme (d'une panne réelle). Les autres étapes se remplissent en
+   ivoire (l'encre le jour) ; leur icône dit de quoi il s'agit.
    ============================================================ */
+
+/* Gras à 500 dans tout le rejeu. */
+.rp b {
+  font-weight: var(--fw-medium);
+}
 
 /* Une seule colonne qui ne s'élargit jamais au-delà de l'écran, même si un bouton est long. La plage normale de la
    courbe reste grise (var(--idle-soft), comme dans l'historique) : seuls les seuils d'alarme prennent la couleur. */
@@ -15,14 +22,14 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
   margin: 4px 0 0;
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   line-height: 1.4;
 }
 /* Noms propres au rejeu : .rp-titre et .rp-valeur sont ceux du repère (explain.css), dont la valeur fait 32 px. */
 .rp-cote-titre {
   margin: 0 0 8px;
-  font-size: 13px;
-  font-weight: 650;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
   color: var(--text-2);
 }
 .rp-recit + .rp-cote-titre {
@@ -45,13 +52,13 @@
 }
 .rp-phase h4 {
   margin: 0;
-  font-size: 13.5px;
-  font-weight: 700;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
   color: var(--text);
 }
 .rp-phase-phrase {
   margin: 0;
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   color: var(--text-3);
 }
 .rp-etapes {
@@ -59,8 +66,16 @@
   margin: 8px 0 0;
   padding: 0;
 }
-.rp-etape {
+.rp-etapes .rp-etape {
+  --c: var(--accent-text);
   position: relative;
+}
+.rp-etapes .rp-etape.ton-crit {
+  --c: var(--crit);
+}
+/* Rejeu d'une panne d'exercice : pas de cramoisi, même pour l'alarme. */
+.rp.exercice .rp-etapes .rp-etape.ton-crit {
+  --c: var(--accent-text);
 }
 /* Le fil entre deux étapes : gris, puis rempli de la couleur de l'étape quand la lecture l'a dépassée. */
 .rp-etape:not(:last-child)::before,
@@ -98,8 +113,8 @@
   text-align: left;
   cursor: pointer;
   transition:
-    opacity 300ms var(--ease),
-    background var(--dur) var(--ease);
+    opacity var(--dur) var(--ease),
+    background-color var(--dur) var(--ease);
 }
 .rp-etape button:hover {
   background: var(--surface-2);
@@ -110,6 +125,7 @@
 .rp-etape.courant button {
   background: var(--surface-2);
 }
+/* Une étape pas encore atteinte reste grise ; atteinte, elle prend sa couleur. */
 .rp-point {
   position: relative;
   z-index: 1;
@@ -120,11 +136,15 @@
   height: 26px;
   margin-left: 2px;
   border-radius: 50%;
+  color: var(--text-3);
+  background: var(--surface-3);
+  transition:
+    background-color var(--dur-entree) var(--ease),
+    color var(--dur-entree) var(--ease);
+}
+.rp-etape.courant .rp-point {
   color: var(--c);
   background: color-mix(in srgb, var(--c) 16%, var(--surface));
-  transition:
-    background 300ms var(--ease),
-    color 300ms var(--ease);
 }
 .rp-point svg {
   width: var(--icon-sm);
@@ -134,32 +154,22 @@
   background: var(--c);
   color: var(--surface);
 }
+/* L'étape en cours est cerclée, sans battre : un rejeu n'est pas du direct. */
 .rp-etape.courant .rp-point::after {
   content: '';
   position: absolute;
-  inset: -3px;
+  inset: -4px;
   border-radius: 50%;
   border: 2px solid var(--c);
-  animation: rp-pouls 1.6s var(--ease-out) infinite;
-}
-@keyframes rp-pouls {
-  from {
-    transform: scale(0.85);
-    opacity: 0.9;
-  }
-  to {
-    transform: scale(1.45);
-    opacity: 0;
-  }
 }
 /* L'étape qui vient d'être atteinte s'annonce une fois. */
 .rp-etape.courant .rp-etape-texte {
-  animation: rp-arrive 480ms var(--ease-out);
+  animation: rp-arrive var(--dur-entree) var(--ease-out);
 }
 @keyframes rp-arrive {
   from {
     opacity: 0.4;
-    transform: translateX(-6px);
+    transform: translateX(-4px);
   }
 }
 .rp-etape-texte {
@@ -169,12 +179,12 @@
   min-width: 0;
 }
 .rp-etape-texte b {
-  font-size: 13px;
-  font-weight: 650;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
   color: var(--text);
 }
 .rp-etape-texte time {
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
   color: var(--text-3);
 }
 
@@ -184,15 +194,15 @@
   inset: 70px 16px auto;
   margin: 0;
   max-width: 420px;
-  font-size: 13px;
+  font-size: var(--fs-md);
   line-height: 1.5;
   color: var(--text-2);
 }
 
 /* ---------- Bandeau de l'étape en cours, sur la 3D ---------- */
 .rp-now-phase {
-  font-size: 11.5px;
-  font-weight: 650;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
   color: var(--text-2);
 }
 
@@ -204,13 +214,13 @@
   flex: none;
 }
 .rp-mesure small {
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
   color: var(--text-3);
 }
 .replay-value.niv-attention .rp-mesure small,
 .replay-value.niv-alarme .rp-mesure small {
   color: var(--c);
-  font-weight: 650;
+  font-weight: var(--fw-medium);
 }
 
 /* ---------- Courbe et curseur de lecture ---------- */
@@ -266,7 +276,7 @@
 }
 .rp-quand,
 .rp-vitesse-label {
-  font-size: 12px;
+  font-size: var(--fs-sm);
 }
 .rp-quand {
   min-width: 130px;

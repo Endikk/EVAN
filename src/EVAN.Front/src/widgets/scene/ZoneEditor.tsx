@@ -12,7 +12,7 @@ import { useUi } from '@/store/ui';
 import type { TypeZone, Zone } from '@/domain/types';
 import { formatArea, formatNumber, signedArea, type XY } from '@/geo/geodesy';
 import { addZoneFromPolygon } from './zones';
-import { ZONE_COULEUR } from './Zones3D';
+import { useCouleurSelection } from './couleurs';
 import { sceneHandle, snap, useSceneUi } from './sceneState';
 import { groundPointFromClient, worldPerPixel } from './sol';
 import { useDispose } from './useDispose';
@@ -86,7 +86,8 @@ function RectPreview({ poly, color }: { poly: XY[]; color: string }) {
 /** Tracé d'une zone rectangulaire (outil actif). Reste monté, inerte sans outil. */
 export function ZoneDrawer({ type, center, size }: { type: TypeZone | null; center: XY; size: XY }) {
   const [rect, setRect] = useState<XY[] | null>(null);
-  const color = type ? ZONE_COULEUR[type] : '#888';
+  // Tracé en cours : il prend la couleur de sélection (vermillon) ; une zone posée redevient neutre (Zones3D.tsx).
+  const color = useCouleurSelection();
   const down = (e: ThreeEvent<PointerEvent>) => {
     if (e.button !== 0 || !type) return;
     e.stopPropagation();
@@ -180,16 +181,17 @@ function Corner({ p, color, onDown }: { p: XY; color: string; onDown(e: ThreeEve
 /** Coins et déplacement de la zone sélectionnée. Reste monté, inerte sans zone. */
 export function ZoneHandles({ zone }: { zone?: Zone }) {
   const [live, setLive] = useState<XY[] | null>(null);
+  const color = useCouleurSelection();
   return (
     <group>
       {zone && <ZoneHandlesFor zone={zone} live={live} setLive={setLive} />}
-      <Dims poly={live} color={zone ? ZONE_COULEUR[zone.type] : '#888'} />
+      <Dims poly={live} color={color} />
     </group>
   );
 }
 
 function ZoneHandlesFor({ zone, live, setLive }: { zone: Zone; live: XY[] | null; setLive(p: XY[] | null): void }) {
-  const color = ZONE_COULEUR[zone.type];
+  const color = useCouleurSelection();
   const poly = live ?? zone.polygone;
 
   const startCorner = (index: number) => (e: ThreeEvent<PointerEvent>) => {

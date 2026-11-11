@@ -20,9 +20,10 @@ import { Building3D } from './Building3D';
 import { SatelliteGround } from './SatelliteGround';
 import { Zones3D } from './Zones3D';
 import { GhostMachine, Machine3D, type OrganFocus } from './Machine3D';
-import { CameraRig } from './CameraRig';
+import { CameraRig, overviewDistance } from './CameraRig';
 import { sceneHandle, snap, useSceneUi } from './sceneState';
 import { OrganBeacon } from './OrganBeacon';
+import { couleurSelection } from './couleurs';
 import { ZoneDrawer, ZoneHandles } from './ZoneEditor';
 
 /** Vitesse d'une machine lue à chaque image dans le store, sans abonnement React (un getter stable par machine). */
@@ -128,8 +129,7 @@ export function SceneCanvas(props: SceneProps) {
   const view = useUi((s) => s.view);
   const plan = view === '2d' && props.step >= 2 && props.step <= 6;
   const planFond = useSceneUi((s) => s.planFond);
-  const fog = FOG[dark ? 'dark' : 'light'];
-  const bg = plan && planFond === 'plan' ? PLAN_BG[dark ? 'dark' : 'light'] : fog[0];
+  const bg = plan && planFond === 'plan' ? PLAN_BG[dark ? 'dark' : 'light'] : FOG[dark ? 'dark' : 'light'][0];
   return (
     <Canvas
       frameloop={props.paused ? 'never' : 'always'}
@@ -144,8 +144,6 @@ export function SceneCanvas(props: SceneProps) {
       style={{ touchAction: 'none' }}
     >
       <color attach="background" args={[bg]} />
-      {/* Pas de brouillard sur le plan : la caméra orthographique est haute, tout doit rester net. */}
-      {!plan && <fog attach="fog" args={fog} />}
       <CanvasHandle />
       <SceneContent {...props} dark={dark} plan={plan} planFond={planFond} />
     </Canvas>
@@ -163,6 +161,7 @@ function SceneContent({ step, organFocus, organCard, onMachineSelect, onFloorCli
   const zones = useMemo(() => (etages ? toutesZones.filter((z) => niveauDe(z) === niveau) : toutesZones), [toutesZones, etages, niveau]);
   const machines = useMemo(() => (etages ? toutesMachines.filter((m) => niveauDe(m) === niveau) : toutesMachines), [toutesMachines, etages, niveau]);
   const perso = useProject((s) => s.perso);
+  const connexions = useProject((s) => s.connexions);
   const selectedMachineId = useUi((s) => s.selectedMachineId);
   const selectedZoneId = useUi((s) => s.selectedZoneId);
   const showLabels = useUi((s) => s.showLabels);
@@ -190,8 +189,14 @@ function SceneContent({ step, organFocus, organCard, onMachineSelect, onFloorCli
 
   const rings = useMemo(() => (site ? batiments.map((b) => b.contour.map((p) => toLocal(site.repere, p))) : []), [site, batiments]);
   const bounds = useMemo(() => siteBounds(rings.flat()), [rings]);
+  const vp = useThree((s) => s.size);
 
   if (!site || switching || !connected) return null;
+  // Brouillard à l'échelle du site : il commence au-delà du milieu de l'usine vue d'ensemble. Sur un grand bâtiment, la
+  // vue reculée plaçait toutes les machines dans le voile, et elles disparaissaient.
+  const [teinte, pres, loin] = FOG[dark ? 'dark' : 'light'];
+  const recul = overviewDistance(bounds.size, vp.width / Math.max(1, vp.height)) + Math.max(bounds.size[0], bounds.size[1]) / 2;
+  const brouillard: [string, number, number] = [teinte, Math.max(pres, recul), Math.max(loin, recul * 2.5)];
   const half: XY = [bounds.size[0] / 2, bounds.size[1] / 2];
   const editable = step === 3;
   const rotatable = step >= 3 && step <= 5;
@@ -204,7 +209,8 @@ function SceneContent({ step, organFocus, organCard, onMachineSelect, onFloorCli
     return o ? { numero: o.numero, kind: organFocus.kind } : undefined;
   };
 
-  const faultSpots = step >= 4 ? machines.filter((m) => etats[m.id] === 'panne').map(footprintCenter) : [];
+  const branchee = (id: string) => !(step === 4 || step === 5) || connexions[id]?.etat === 'connectee';
+  const faultSpots = step >= 4 ? machines.filter((m) => etats[m.id] === 'panne' && branchee(m.id)).map(footprintCenter) : [];
   const focusMachine = organFocus ? machines.find((m) => m.id === organFocus.machineId) : undefined;
   const focusOrgan = focusMachine ? machineModel(focusMachine, perso[focusMachine.id]).organes.find((o) => o.id === organFocus!.organeId) : undefined;
   let beaconPos: [number, number, number] | undefined;
@@ -216,6 +222,8 @@ function SceneContent({ step, organFocus, organCard, onMachineSelect, onFloorCli
 
   return (
     <>
+      {/* Pas de brouillard sur le plan : la caméra orthographique est haute, tout doit rester net. */}
+      {!plan && <fog attach="fog" args={brouillard} />}
       <hemisphereLight args={[dark ? '#9fb3d9' : '#ffffff', dark ? '#1b1f27' : '#8a8f99', dark ? 0.75 : 1.0]} />
       <directionalLight position={[60, 120, 40]} intensity={dark ? 1.4 : 2.0} />
       <directionalLight position={[-80, 60, -50]} intensity={0.35} />
@@ -306,13 +314,18 @@ function SceneContent({ step, organFocus, organCard, onMachineSelect, onFloorCli
       <Suspense fallback={null}>
         {machines.map((m) => {
           const code = alarms.find((x) => x.machineId === m.id && x.gravite === 'critique' && x.statut !== 'resolue')?.code;
+          // Configuration (organes, connexion) : une machine pas encore branchée n'a pas d'état de production à montrer.
+          // Elle reste éteinte, « Non branchée », au lieu d'afficher la marche ou le réglage de la simulation.
+          const nonBranchee = !branchee(m.id);
+          const enDirect = step >= 4 && !nonBranchee;
           return (
             <Machine3D
               key={m.id}
               machine={m}
-              etat={step >= 4 ? (etats[m.id] ?? 'marche') : 'arret'}
-              horsLigne={step >= 4 && horsLigne.includes(m.id)}
-              facteur={step >= 4 ? liveFacteur(m.id) : 0}
+              etat={enDirect ? (etats[m.id] ?? 'marche') : 'arret'}
+              horsLigne={enDirect && horsLigne.includes(m.id)}
+              nonBranchee={nonBranchee}
+              facteur={enDirect ? liveFacteur(m.id) : 0}
               selected={m.id === selectedMachineId}
               focus={focusOf(m.id)}
               editable={editable}
@@ -332,7 +345,11 @@ function SceneContent({ step, organFocus, organCard, onMachineSelect, onFloorCli
       </Suspense>
       {ghost && <GhostMachine type={ghost.type} pos={ghost.pos} valid={ghost.valid} />}
       {beaconPos && (
-        <OrganBeacon position={beaconPos} color={organFocus?.kind === 'defaut' ? '#ff3d6e' : '#ff7a3d'}>
+        <OrganBeacon
+          position={beaconPos}
+          color={organFocus?.kind === 'defaut' ? ETAT_COULEUR.panne : couleurSelection(dark)}
+          bat={organFocus?.kind === 'defaut'}
+        >
           {organCard}
         </OrganBeacon>
       )}

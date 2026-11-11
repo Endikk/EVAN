@@ -1,6 +1,6 @@
 /**
  * « Plus de chiffres » : ce qui ne tient pas dans le bandeau sans l'encombrer. Une rangée compacte de chiffres
- * (production et étiquettes jetées depuis l'ouverture de la page, cadence, arrêts sur panne du jour, efficacité de la
+ * (production et étiquettes jetées depuis le début du poste, cadence, arrêts sur panne du jour, efficacité de la
  * semaine), chacun avec son « ? » ; la courbe de l'efficacité des dernières minutes face à sa moyenne de la semaine ;
  * la répartition des machines par état.
  */
@@ -11,7 +11,9 @@ import { StatusIcon } from '@/ui/status';
 import { SimulatedChip } from '@/ui/SimulatedChip';
 import { fmtDuration, pct } from '@/ui/format';
 import type { EtatMachine } from '@/domain/types';
-import { ETAT_MOT, MOT_HORS_LIGNE, type EtatAtelier } from '../lib/atelier';
+import { useLive } from '@/store/live';
+import { debutDePoste } from '@/sim/history';
+import { depuisCompteurs, ETAT_MOT, MOT_HORS_LIGNE, type EtatAtelier } from '../lib/atelier';
 import { Volet } from './Volet';
 
 export interface PointTendance {
@@ -59,16 +61,18 @@ export function ChiffresVolet({ fermer, atelier, bonnes, gache, cadence, arretsJ
   const total = bonnes + gache;
   const bas = tendance.length ? Math.max(0, Math.floor((Math.min(...tendance.map((p) => p.v), trs7j * 100) - 8) / 10) * 10) : 0;
   const etats = ORDRE.filter((e) => atelier.parEtat[e].length > 0);
+  const source = useLive((s) => s.source);
+  const depuis = depuisCompteurs(source, debutDePoste(Date.now()));
 
   const chiffres: ChiffreSecondaire[] = [
-    { label: 'Étiquettes produites', valeur: nf.format(bonnes), aide: 'Bonnes étiquettes, comptées depuis l’ouverture de la page.' },
+    { label: 'Étiquettes produites', valeur: nf.format(bonnes), aide: `Bonnes étiquettes, comptées ${depuis}.` },
     ...(cadence > 0 ? [{ label: 'Cadence', valeur: nf.format(cadence), unite: '/ h', aide: 'Étiquettes par heure, sur la dernière minute.' }] : []),
     {
       label: 'Étiquettes jetées',
       terme: 'gache',
       valeur: total > 0 ? (Math.round((gache / total) * 1000) / 10).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : '…',
       unite: '%',
-      aide: 'Part de la production jetée, réglages compris, depuis l’ouverture de la page.',
+      aide: `Part de la production jetée, réglages compris, ${depuis}.`,
     },
     { label: 'Arrêts sur panne', valeur: fmtDuration(arretsJour), aide: `Aujourd’hui, toutes machines confondues, depuis minuit. ${HISTORIQUE_SIMULE}` },
     { label: 'Efficacité 7 jours', terme: 'trs', valeur: Math.round(trs7j * 100), unite: '%', aide: `Pour comparer avec le moment. ${HISTORIQUE_SIMULE}` },
