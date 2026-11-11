@@ -2,12 +2,19 @@
  * Tourne une courte vidéo d'un écran réel de la démo, avec un curseur visible, pour « Comment ça marche »
  * (src/pages/landing/features/Parcours.tsx). Le serveur de développement doit tourner (npm run dev).
  *
- *   node parcours/tournage.mjs parcours/plans/6-supervision.mjs ../../src/EVAN.Front/public/parcours
+ *   node parcours/tournage.mjs parcours/plans/6-supervision.mjs ../../src/EVAN.Front/public/parcours [nuit|jour]
  *
- * Un plan exporte { nom, url, cadre: {x,y,w,h}, prepare?(outils), scene(outils) }. Images prises par le screencast de
- * Chrome (horodatées), assemblées par ffmpeg en 30 images par seconde ; sortie : <nom>.mp4, <nom>-debut.webp,
- * <nom>-fin.webp et <nom>.json (durée, à reporter dans src/pages/landing/lib/clips.ts). Options : EVAN_URL (défaut
- * http://localhost:5173).
+ * Un plan exporte { nom, url, cadre: {w, x?, y?}, prepare?(outils), scene(outils) }. La page est rendue en entier
+ * (1280 × 800, densité 2), mais la vidéo n'en garde qu'un cadre de `w` pixels de large au format 16:10 : une caméra
+ * virtuelle qui suit le geste. `cadrer(cible, ms)` la déplace pendant la scène, sans l'attendre, vers un point
+ * { x, y } ou le centre d'un élément ; dans `prepare`, elle la pose sans mouvement. Plus le cadre est étroit, plus le
+ * texte de l'écran reste lisible une fois la vidéo réduite dans le volet (environ 740 px de large sur grand écran,
+ * 360 px sur téléphone).
+ *
+ * Images prises par le screencast de Chrome (horodatées), assemblées par ffmpeg en 30 images par seconde ; sortie :
+ * <nom>.mp4, <nom>-debut.webp, <nom>-fin.webp et <nom>.json (durée, à reporter dans src/pages/landing/lib/clips.ts),
+ * suffixés de -jour pour le thème jour. Options : EVAN_URL (défaut http://localhost:5173), EVAN_NAVIGATEUR (canal
+ * Playwright, défaut chrome : le Chrome installé).
  */
 import { createRequire } from 'node:module';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
@@ -18,15 +25,21 @@ const ici = dirname(fileURLToPath(import.meta.url));
 const require = createRequire(join(ici, '../package.json'));
 const { chromium } = require('@playwright/test');
 
-const [,, planFichier, sortie] = process.argv;
+const [,, planFichier, sortie, ambiance = 'nuit'] = process.argv;
 const plan = (await import(resolve(planFichier))).default;
-const nom = plan.nom;
+const jour = ambiance === 'jour';
+const nom = jour ? `${plan.nom}-jour` : plan.nom;
 const tmp = join(sortie, `_${nom}`);
 rmSync(tmp, { recursive: true, force: true });
 mkdirSync(tmp, { recursive: true });
 
 const W = 1280, H = 800, DPR = 2;
-const browser = await chromium.launch({ args: ['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist'] });
+// Sans --force-device-scale-factor, le screencast de Chrome sans fenêtre rend des images à la taille CSS (1280 × 800),
+// densité ignorée : un cadre resserré serait agrandi, donc flou.
+const browser = await chromium.launch({
+  channel: process.env.EVAN_NAVIGATEUR ?? 'chrome',
+  args: ['--use-angle=metal', '--enable-gpu', '--ignore-gpu-blocklist', `--force-device-scale-factor=${DPR}`],
+});
 const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: DPR, locale: 'fr-FR', reducedMotion: 'no-preference' });
 await ctx.addInitScript((theme) => {
   localStorage.setItem('evan.theme', theme);
@@ -46,7 +59,7 @@ await ctx.addInitScript((theme) => {
   };
   if (document.readyState === 'loading') addEventListener('DOMContentLoaded', poser);
   else poser();
-}, plan.theme ?? 'dark');
+}, jour ? 'light' : 'dark');
 const page = await ctx.newPage();
 page.on('pageerror', (e) => console.log('pageerror', e.message));
 
@@ -103,7 +116,22 @@ async function molette(dy, ms = 700) {
     await attendre(12);
   }
 }
-const outils = { page, aller, cliquer, glisser, molette, attendre, centre, W, H };
+// Caméra virtuelle : un cadre de largeur fixe (16:10) dont la position suit le geste. Chaque déplacement est noté
+// avec son heure de départ et sa durée, puis rejoué par ffmpeg (filtre crop dont x et y dépendent du temps).
+const CW = plan.cadre?.w ?? 640;
+const CH = Math.round((CW * 10) / 16);
+const borne = (v, max) => Math.round(Math.min(max, Math.max(0, v)));
+const cadres = [{ t: 0, d: 0, x: borne(plan.cadre?.x ?? (W - CW) / 2, W - CW), y: borne(plan.cadre?.y ?? (H - CH) / 2, H - CH) }];
+let t0 = null;
+async function cadrer(cible, ms = 900) {
+  const c = typeof cible?.boundingBox === 'function' ? await centre(cible) : cible;
+  const x = borne(c.x - CW / 2, W - CW);
+  const y = borne(c.y - CH / 2, H - CH);
+  // Avant la scène, le cadre se pose sans bouger : c'est celui de la première image.
+  if (t0 === null) cadres.splice(0, cadres.length, { t: 0, d: 0, x, y });
+  else cadres.push({ t: (Date.now() - t0) / 1000, d: Math.max(0.05, ms / 1000), x, y });
+}
+const outils = { page, aller, cliquer, glisser, molette, attendre, centre, cadrer, W, H };
 
 await page.goto(`${process.env.EVAN_URL ?? 'http://localhost:5173'}${plan.url}`, { waitUntil: 'load' });
 await plan.prepare?.(outils);
@@ -117,11 +145,16 @@ cdp.on('Page.screencastFrame', async (f) => {
   try { await cdp.send('Page.screencastFrameAck', { sessionId: f.sessionId }); } catch {}
 });
 await cdp.send('Page.startScreencast', { format: 'jpeg', quality: 92, maxWidth: W * DPR, maxHeight: H * DPR, everyNthFrame: 1 });
-const t0 = Date.now();
+t0 = Date.now();
+// Un rechargement pendant la scène (le serveur de développement recharge la page quand un fichier change) ruinerait la
+// prise sans erreur visible : il arrête le tournage.
+let recharge = false;
+page.on('load', () => (recharge = true));
 await plan.scene(outils);
 const duree = (Date.now() - t0) / 1000;
 await cdp.send('Page.stopScreencast');
 await browser.close();
+if (recharge) throw new Error(`${nom} : la page s'est rechargée pendant la scène, prise à refaire`);
 
 // Images et durées pour le démuxeur concat de ffmpeg ; la dernière tient jusqu'à la fin de la scène.
 const debut = images[0].t;
@@ -134,13 +167,33 @@ images.forEach((im, i) => {
 });
 liste += `file 'f${String(images.length - 1).padStart(5, '0')}.jpg'\n`;
 writeFileSync(join(tmp, 'liste.txt'), liste);
-const { x, y, w, h } = plan.cadre;
 const OUT_W = 1120, OUT_H = 700;
-// Le screencast peut rendre des images plus petites que la page en pixels réels : le cadre suit leur taille.
-const filtre = `crop=iw*${w / W}:ih*${h / H}:iw*${x / W}:ih*${y / H},scale=${OUT_W}:${OUT_H}:flags=lanczos,fps=30,format=yuv420p`;
+/**
+ * Position du cadre au temps t (en pixels de la page) : la première, plus chaque déplacement pondéré par son
+ * avancement adouci (smoothstep). Expression ffmpeg, évaluée à chaque image.
+ */
+function trajet(axe) {
+  let expr = String(cadres[0][axe]);
+  for (let i = 1; i < cadres.length; i++) {
+    const { t, d } = cadres[i];
+    const ecart = cadres[i][axe] - cadres[i - 1][axe];
+    if (ecart) expr += `+(${ecart})*(st(0,clip((t-${t.toFixed(3)})/${d.toFixed(3)},0,1));ld(0)*ld(0)*(3-2*ld(0)))`;
+  }
+  return expr;
+}
+// Le screencast peut rendre des images plus petites que la page en pixels réels : le cadre suit leur taille. Le
+// passage en RGB avant le recadrage évite que la chrominance arrondisse x et y au pixel pair (le cadre tremblerait).
+const filtre = [
+  'format=rgb24',
+  `crop=w=iw*${CW / W}:h=ih*${CH / H}:x='(${trajet('x')})*iw/${W}':y='(${trajet('y')})*ih/${H}'`,
+  `scale=${OUT_W}:${OUT_H}:flags=lanczos`,
+  'fps=30',
+  'format=yuv420p',
+].join(',');
 const mp4 = join(sortie, `${nom}.mp4`);
-execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', join(tmp, 'liste.txt'), '-vf', filtre, '-c:v', 'libx264', '-preset', 'slow', '-crf', String(plan.crf ?? 24), '-tune', 'animation', '-movflags', '+faststart', '-an', mp4]);
-// Affiche : l'état final de la scène, pour l'attente du chargement et les animations réduites.
+// La dernière image est répétée pour que le démuxeur tienne sa durée ; ffmpeg prête à la copie la même durée, la vidéo
+// s'allongerait d'autant (une fin figée de plusieurs secondes) : -t la coupe à la durée réelle de la scène.
+execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', join(tmp, 'liste.txt'), '-t', duree.toFixed(3), '-vf', filtre, '-c:v', 'libx264', '-preset', 'slow', '-crf', String(plan.crf ?? 26), '-tune', 'animation', '-movflags', '+faststart', '-an', mp4]);
 // Affiches : la première image (pendant le chargement de la vidéo) et la dernière (animations réduites).
 execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', mp4, '-frames:v', '1', join(tmp, 'debut.png')]);
 execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-sseof', '-0.2', '-i', mp4, '-frames:v', '1', join(tmp, 'fin.png')]);

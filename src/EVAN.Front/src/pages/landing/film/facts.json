@@ -59,8 +59,8 @@
     {
       "texte": "Commencer avec mon usine",
       "nature": "action",
-      "source": "{saved ? 'Reprendre mon usine' : 'Commencer avec mon usine'}",
-      "url": "src/EVAN.Front/src/pages/landing/features/Actions.tsx"
+      "source": "libelle: 'Commencer avec mon usine'",
+      "url": "src/EVAN.Front/src/pages/landing/lib/actions.ts"
     },
     {
       "texte": "0",

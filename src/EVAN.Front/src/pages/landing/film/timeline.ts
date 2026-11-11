@@ -65,7 +65,7 @@ export function bezier(x1: number, y1: number, x2: number, y2: number): (x: numb
 
 /** Le vocabulaire de mouvement du film (docs/film-accueil/brief.md, « Bible de style »). */
 export const COURBES = {
-  /** Arrivée : part vite, se pose longuement. Même courbe que --lp-ease de l'accueil. */
+  /** Arrivée : part vite, se pose longuement. */
   arrivee: bezier(0.2, 0.9, 0.1, 1),
   /** Traversée : démarre lentement, file au milieu, atterrit en douceur. */
   traversee: bezier(0.65, 0, 0.15, 1),

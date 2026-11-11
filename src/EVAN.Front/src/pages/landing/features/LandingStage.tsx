@@ -6,7 +6,7 @@
  * n'est dessinée. Pendant le film d'ouverture, la caméra, la lumière, la vitesse et l'état de la presse suivent
  * l'horloge du film (../film/).
  */
-import { Suspense, useEffect, useMemo, useRef, type ReactNode } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState, type ReactNode, type Ref } from 'react';
 import * as THREE from 'three';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { ContactShadows, Html, Line, useGLTF } from '@react-three/drei';
@@ -15,7 +15,8 @@ import type { Horloge } from '../film/horloge';
 import type { Phase } from '../film/timeline';
 import { frontScan, planifier, poseDuFilm, projeter, type Sujets } from '../film/camera';
 import type { EtatMachine } from '@/domain/types';
-import { CODE_PANNE, PRESSE, PRESSE_DIM, VERIF_DORURE, nomCourt, type VueId } from '../lib/sections';
+import { CODE_PANNE, PRESSE, PRESSE_DIM, VERIF_DORURE, nomCourt, numeroPiece, type VueId } from '../lib/sections';
+import { etiquettesLisibles, type Etiquette } from '../lib/reperes';
 import { EcransPresse } from './EcransPresse';
 import { EclairagePresse, REGLAGE_REPOS, type Reglage } from './EclairagePresse';
 import { bande, centrer, hauteur, largeur, type Cadrage, type Pt, type Rect } from '../lib/cadrage';
@@ -39,9 +40,16 @@ interface Props {
   /** Faux quand la presse est cachée (volet ouvert par-dessus) : la boucle de rendu s'arrête. */
   actif: boolean;
   onReady(): void;
+  /** Première image de la presse dessinée (avant même d'être prête) : pendant le film, elle remplace le chargement. */
+  onPremiereImage?(): void;
   /** Film d'ouverture en cours, et sa phase (la presse casse, la pièce s'allume). */
   film?: Horloge | null;
   phaseFilm?: Phase;
+  /**
+   * Vue des pièces : vrai quand leurs noms ne tiennent pas côte à côte sur la presse (écran étroit). Les étiquettes ne
+   * gardent que le numéro, la page affiche la légende des noms.
+   */
+  onPiecesCompactes?(compactes: boolean): void;
 }
 
 /** Couleurs de la scène lues dans les jetons du thème (styles/jetons.css), pour que la 3D suive le jour et la nuit. */
@@ -213,11 +221,20 @@ function dureeTrajet(a: PoseCamera, b: PoseCamera): number {
   return 0.95 + Math.min(0.9, ecart);
 }
 
+/** Pose visée pour une vue, sans le balancement : celle où la caméra se pose. */
+interface Visee {
+  view: View;
+  az: number;
+  el: number;
+  but: Cadrage;
+  balance: boolean;
+}
+
 /**
- * Caméra : interpolation douce vers la vue de la puce, léger suivi du pointeur. Le cadrage n'est recalculé que si la
- * vue, la taille de la toile ou les obstacles changent, jamais à chaque image.
+ * Pose visée pour la vue montrée. Le cadrage n'est recalculé que si la vue, la taille de la toile ou les obstacles
+ * changent, jamais à chaque image. La caméra (Rig) s'y rend ; les étiquettes des pièces (Pieces) s'y mesurent.
  */
-function Rig({ vue, cadre, reduced, film }: { vue: VueId; cadre: Cadre | null; reduced: boolean; film: Horloge | null }) {
+function useVisee(vue: VueId, cadre: Cadre | null, reduced: boolean): Visee {
   const { camera, size } = useThree();
   const fov = (camera as THREE.PerspectiveCamera).fov;
   const view = VIEWS[vue];
@@ -228,6 +245,27 @@ function Rig({ vue, cadre, reduced, film }: { vue: VueId; cadre: Cadre | null; r
   const az = view.az + (biais ? BIAIS_AZ * Math.sign(view.az || 1) : 0);
   const el = view.el + (biais ? BIAIS_EL : 0);
   const but = useMemo(() => viser(view, az, el, size.width, size.height, fov, cadre, balance), [view, az, el, size.width, size.height, fov, cadre, balance]);
+  return useMemo(() => ({ view, az, el, but, balance }), [view, az, el, but, balance]);
+}
+
+/** Caméra posée sur la visée, comme Rig la pose au repos : pour projeter un point là où il sera à l'écran. */
+function cameraVisee({ view, az, el, but }: Visee, w: number, h: number, fov: number): THREE.PerspectiveCamera {
+  const cam = new THREE.PerspectiveCamera(fov, w / h, 0.1, 200);
+  const aa = az * D2R;
+  const ea = el * D2R;
+  const [tx, ty, tz] = view.target;
+  cam.position.set(Math.sin(aa) * Math.cos(ea), Math.sin(ea), Math.cos(aa) * Math.cos(ea)).multiplyScalar(but.dist).add(new THREE.Vector3(tx, ty, tz));
+  cam.lookAt(tx, ty, tz);
+  cam.setViewOffset(w, h, but.ox, but.oy, w, h);
+  cam.updateMatrixWorld();
+  return cam;
+}
+
+/** Caméra : interpolation douce vers la visée de la vue, léger suivi du pointeur. */
+function Rig({ vue, visee, reduced, film }: { vue: VueId; visee: Visee; reduced: boolean; film: Horloge | null }) {
+  const { camera, size } = useThree();
+  const fov = (camera as THREE.PerspectiveCamera).fov;
+  const { view, az, el, but, balance } = visee;
   const cur = useRef<PoseCamera>({ az, el, dist: but.dist, tx: view.target[0], ty: view.target[1], tz: view.target[2], ox: but.ox, oy: but.oy });
   const first = useRef(true);
   // Trajet en cours vers une nouvelle vue : la pose de départ, et l'heure de départ (fixée à la première image).
@@ -321,8 +359,9 @@ function Rig({ vue, cadre, reduced, film }: { vue: VueId; cadre: Cadre | null; r
  * Signale que la presse est prête (même Suspense que le modèle) : ses shaders compilés d'avance (realisme/Studio.tsx),
  * puis ses trois premières images dessinées. En relecture, rien ne se dessine seul : la compilation suffit.
  */
-function Ready({ onReady, immediat }: { onReady(): void; immediat: boolean }) {
+function Ready({ onReady, onPremiereImage, immediat }: { onReady(): void; onPremiereImage?(): void; immediat: boolean }) {
   const images = useRef(0);
+  const premiere = useRef(false);
   const compile = useRef(false);
   const precompiler = usePrecompiler();
   useEffect(() => {
@@ -340,6 +379,10 @@ function Ready({ onReady, immediat }: { onReady(): void; immediat: boolean }) {
     };
   }, [precompiler, onReady, immediat]);
   useFrame(() => {
+    if (!premiere.current) {
+      premiere.current = true;
+      onPremiereImage?.();
+    }
     if (compile.current && ++images.current === 3 && !immediat) onReady();
   });
   return null;
@@ -369,11 +412,29 @@ function Beacon({ position, color, reduced }: { position: [number, number, numbe
   );
 }
 
-/** Étiquette HTML ancrée dans la scène. */
-function Pin({ position, tone, children, delay = 0 }: { position: [number, number, number]; tone: 'crit' | 'accent' | 'piece'; children: ReactNode; delay?: number }) {
+/**
+ * Étiquette HTML ancrée dans la scène. Muette pour les lecteurs d'écran : posée dans la toile, elle précéderait le
+ * titre de la page ; la page annonce elle-même ce que la vue montre (lib/sections.ts, annonceVue).
+ */
+function Pin({
+  position,
+  tone,
+  children,
+  delay = 0,
+  cachee = false,
+  noeud,
+}: {
+  position: [number, number, number];
+  tone: 'crit' | 'accent' | 'piece';
+  children: ReactNode;
+  delay?: number;
+  /** En place mais invisible : le temps de la mesurer. */
+  cachee?: boolean;
+  noeud?: Ref<HTMLDivElement>;
+}) {
   return (
     <Html position={position} center zIndexRange={[5, 0]} style={{ pointerEvents: 'none' }}>
-      <div className={`lp-pin tone-${tone}`} style={{ animationDelay: `${delay}ms` }}>
+      <div ref={noeud} className={`lp-pin tone-${tone} ${cachee ? 'is-cachee' : ''}`} style={{ animationDelay: `${delay}ms` }} aria-hidden="true">
         {children}
       </div>
     </Html>
@@ -397,6 +458,8 @@ function Repere({
   ton,
   reduced,
   children,
+  cachee,
+  noeud,
 }: {
   pied: [number, number, number];
   hauteur: number;
@@ -406,6 +469,8 @@ function Repere({
   ton: 'crit' | 'accent' | 'piece';
   reduced: boolean;
   children: ReactNode;
+  cachee?: boolean;
+  noeud?: Ref<HTMLDivElement>;
 }) {
   const tige = useRef<THREE.Group>(null);
   const t0 = useRef<number | null>(null);
@@ -434,13 +499,93 @@ function Repere({
           depthTest={false}
         />
       </group>
-      <Pin position={[0, h, 0]} tone={ton} delay={reduced ? 0 : delai + MONTEE * 800}>
+      <Pin position={[0, h, 0]} tone={ton} delay={reduced ? 0 : delai + MONTEE * 800} cachee={cachee} noeud={noeud}>
         {children}
       </Pin>
     </group>
   );
 }
 
+/**
+ * Taille de l'étiquette de chaque pièce avec son nom (px), par numéro de pièce. Mesurée une fois, à la première vue des
+ * pièces : la police ne change pas ensuite, et une étiquette réduite à son numéro ne dit plus la largeur de son nom.
+ */
+const TAILLES = new Map<number, { w: number; h: number }>();
+
+/**
+ * Repères des pièces surveillées. Avant de montrer leurs noms, la scène vérifie qu'ils se lisent là où la caméra va se
+ * poser (lib/reperes.ts) : sur un écran étroit, les noms se chevaucheraient. Les étiquettes ne gardent alors que le
+ * numéro, et la page affiche la légende. Le temps de la première mesure, elles restent invisibles.
+ */
+function Pieces({
+  visee,
+  couleur,
+  trait,
+  reduced,
+  onCompactes,
+}: {
+  visee: Visee;
+  couleur: string;
+  trait: string;
+  reduced: boolean;
+  onCompactes?(compactes: boolean): void;
+}) {
+  const { camera, size } = useThree();
+  const fov = (camera as THREE.PerspectiveCamera).fov;
+  const noeuds = useRef(new Map<number, HTMLDivElement>());
+  // null : pas encore décidé.
+  const [compactes, setCompactes] = useState<boolean | null>(null);
+  const derniere = useRef('');
+  const p = useMemo(() => new THREE.Vector3(), []);
+
+  useEffect(() => {
+    if (compactes !== null) onCompactes?.(compactes);
+  }, [compactes, onCompactes]);
+
+  useFrame(() => {
+    // Les étiquettes montent dans leur propre arbre React (drei <Html>) : on attend qu'elles soient là pour les mesurer.
+    if (MARQUES.some((m) => !TAILLES.has(m.numero))) {
+      for (const [n, el] of noeuds.current) if (el.offsetWidth > 0) TAILLES.set(n, { w: el.offsetWidth, h: el.offsetHeight });
+      if (MARQUES.some((m) => !TAILLES.has(m.numero))) return;
+    }
+    // Une décision par visée et par taille de toile, pas à chaque image.
+    const cle = `${size.width}|${size.height}|${visee.az}|${visee.el}|${visee.but.dist}|${visee.but.ox}|${visee.but.oy}`;
+    if (cle === derniere.current) return;
+    derniere.current = cle;
+    const cam = cameraVisee(visee, size.width, size.height, fov);
+    const etiquettes: Etiquette[] = MARQUES.map((m) => {
+      p.set(m.pied[0], m.haut, m.pied[2]).project(cam);
+      const t = TAILLES.get(m.numero)!;
+      return { x: ((p.x + 1) / 2) * size.width, y: ((1 - p.y) / 2) * size.height, w: t.w, h: t.h };
+    });
+    setCompactes(!etiquettesLisibles(etiquettes, size.width));
+  });
+
+  return (
+    <>
+      {MARQUES.map((m, i) => (
+        <Repere
+          key={m.numero}
+          pied={m.pied}
+          hauteur={m.haut - m.pied[1]}
+          delai={300 + i * 70}
+          couleur={couleur}
+          trait={trait}
+          ton="piece"
+          reduced={reduced}
+          cachee={compactes === null}
+          noeud={(el) => {
+            if (el) noeuds.current.set(m.numero, el);
+            else noeuds.current.delete(m.numero);
+          }}
+        >
+          <b>{numeroPiece(m.numero)}</b>
+          {!compactes && <span>{m.nom}</span>}
+        </Repere>
+      ))}
+    </>
+  );
+}
 
 /** En relecture image par image, l'horloge du film fait dessiner la scène à l'instant demandé. */
 function BrancheFilm({ film }: { film: Horloge | null }) {
@@ -453,7 +598,8 @@ function BrancheFilm({ film }: { film: Horloge | null }) {
   return null;
 }
 
-function Scene({ vue, cadre, dark, reduced, onReady, film = null, phaseFilm = 'fin' }: Omit<Props, 'actif'>) {
+function Scene({ vue, cadre, dark, reduced, onReady, onPremiereImage, film = null, phaseFilm = 'fin', onPiecesCompactes }: Omit<Props, 'actif'>) {
+  const visee = useVisee(vue, cadre, reduced);
   // Film : la presse tourne ; la lumière du film la balaie et l'allume (EclairagePresse).
   const st = film ? { ...STATE.accueil, focus: undefined } : STATE[vue];
   const facteur = film ? () => film.canaux().facteur : st.facteur;
@@ -487,7 +633,7 @@ function Scene({ vue, cadre, dark, reduced, onReady, film = null, phaseFilm = 'f
   );
   return (
     <>
-      <Rig vue={vue} cadre={cadre} reduced={reduced} film={film} />
+      <Rig vue={vue} visee={visee} reduced={reduced} film={film} />
       <BrancheFilm film={film} />
       <Studio dark={dark} film={!!film && film.mode !== 'capture'}>
         <Suspense fallback={null}>
@@ -502,7 +648,7 @@ function Scene({ vue, cadre, dark, reduced, onReady, film = null, phaseFilm = 'f
               habillage={HABILLAGE_PRESSE}
             />
           </group>
-          <Ready onReady={onReady} immediat={film?.mode === 'capture'} />
+          <Ready onReady={onReady} onPremiereImage={onPremiereImage} immediat={film?.mode === 'capture'} />
           {film && <EclairagePresse presse={presse} piece={DORURE} rayon={0.2} alerte={c.crit} reglage={eclairage} />}
           <EcransPresse etat={ecrans} amorti={!film} />
 
@@ -515,21 +661,7 @@ function Scene({ vue, cadre, dark, reduced, onReady, film = null, phaseFilm = 'f
               </Repere>
             </>
           )}
-          {vue === 'pieces' &&
-            MARQUES.map((m, i) => (
-              <Repere
-                key={m.numero}
-                pied={m.pied}
-                hauteur={m.haut - m.pied[1]}
-                delai={300 + i * 70}
-                couleur={c.braise}
-                trait={c.texte}
-                ton="piece"
-                reduced={reduced}
-              >
-                <b>{String(m.numero).padStart(2, '0')}</b> {m.nom}
-              </Repere>
-            ))}
+          {vue === 'pieces' && <Pieces visee={visee} couleur={c.braise} trait={c.texte} reduced={reduced} onCompactes={onPiecesCompactes} />}
           {/* Ombre de contact calculée une fois, machine chargée : la presse ne se déplace pas, inutile de la redessiner à chaque image. */}
           <ContactShadows
             position={[0, 0.002, 0]}

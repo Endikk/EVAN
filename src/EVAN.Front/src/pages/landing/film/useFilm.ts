@@ -11,6 +11,7 @@ import timing from './timing.json';
 import { variables, type Boite, type Mesures } from './geometrie';
 import { creerHorloge, type Horloge, type Mode } from './horloge';
 import type { Phase } from './timeline';
+import { webglDisponible } from '../lib/webgl';
 
 /** Une fois par navigateur et par version du film : un outil qu'on rouvre chaque matin ne rejoue pas son ouverture. */
 const CLE = `evan.accueil.film.v${timing.version}`;
@@ -32,24 +33,13 @@ declare global {
   }
 }
 
-/** Sans WebGL, pas de presse : le film n'aurait rien à montrer. */
-function webgl(): boolean {
-  try {
-    const gl = document.createElement('canvas').getContext('webgl2');
-    // Le contexte d'essai est rendu tout de suite : le navigateur n'en accorde qu'un petit nombre.
-    gl?.getExtension('WEBGL_lose_context')?.loseContext();
-    return !!gl;
-  } catch {
-    return false;
-  }
-}
-
 function decider(reduit: boolean): Mode | null {
   if (typeof window === 'undefined') return null;
   const q = new URLSearchParams(window.location.search).get('film');
   // La relecture image par image fige la page : elle n'existe qu'en développement.
   if (q === 'capture' && import.meta.env.DEV) return 'capture';
-  if (q === '0' || q === 'capture' || reduit || !webgl()) return null;
+  // Sans WebGL, pas de presse : le film n'aurait rien à montrer.
+  if (q === '0' || q === 'capture' || reduit || !webglDisponible()) return null;
   if (q === '1') return 'lecture';
   try {
     if (window.localStorage.getItem(CLE)) return null;

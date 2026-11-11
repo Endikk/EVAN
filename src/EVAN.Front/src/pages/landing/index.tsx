@@ -11,17 +11,21 @@
  * À la première visite, un film de 5,5 s ouvre la page (film/, docs/film-accueil/) : un travelling le long de la presse
  * que la lumière d'EVAN balaie et met en route, jusqu'au dernier rouleau, dont le point devient celui du titre. Le moindre
  * geste le termine.
+ *
+ * Sans WebGL (ou si la presse ne se charge pas), la page reste lisible : un message prend la place de la presse, et les
+ * vues, qui n'auraient rien à montrer, disparaissent.
  */
 import { Component, lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { Moon, Sun } from 'lucide-react';
 import { EvanLogo } from '@/ui/EvanLogo';
 import { setTabStatus } from '@/ui/brand';
-import { PixelField } from '@/ui/PixelField';
 import { useIsDark, useReducedMotion, useUi } from '@/store/ui';
 import { hasSavedAssistant } from '@/store/project';
 import { useSession } from '@/store/session';
-import { CODE_PANNE, type VueId } from './lib/sections';
+import { CODE_PANNE, PIECES, annonceVue, numeroPiece, type VueId } from './lib/sections';
+import { actionUsine } from './lib/actions';
+import { webglDisponible } from './lib/webgl';
 import { Actions } from './features/Actions';
 import { Vues } from './features/Vues';
 import { VoletParcours } from './features/VoletParcours';
@@ -35,12 +39,27 @@ const LandingStage = lazy(() => import('./features/LandingStage'));
 
 /** Écran étroit ou en portrait : le titre, la presse, puis les commandes, empilés. Mêmes bornes que index.css. */
 const EMPILE = '(max-width: 860px), (max-aspect-ratio: 1/1)';
-/** Téléphone : les libellés courts des vues. */
-const TELEPHONE = '(max-width: 520px)';
+/**
+ * Libellés courts des vues : sur téléphone, et sur un écran de largeur moyenne où les vues partagent la ligne des
+ * actions (au-delà de 1180 px, les libellés entiers tiennent à côté des deux boutons).
+ */
+const LIBELLES_COURTS = '(max-width: 520px), (min-width: 861px) and (max-width: 1180px) and (min-aspect-ratio: 1/1)';
+
+/** Deuxième ligne du titre : son dernier mot reste collé au point d'état quand la ligne se coupe sur téléphone. */
+const LIGNE_2 = 'Jusqu’au dernier rouleau';
+const COUPE = LIGNE_2.lastIndexOf(' ') + 1;
 
 const cascade = (i: number) => ({ '--i': i }) as CSSProperties;
 
-/** Sans WebGL, la page reste lisible : seul le modèle 3D disparaît (et le film d'ouverture rend la main). */
+/** Presse qui ne s'affiche pas : WebGL absent du navigateur, ou erreur au chargement du modèle. */
+type Echec3D = 'webgl' | 'erreur';
+
+const MESSAGE_3D: Record<Echec3D, string> = {
+  webgl: 'La presse en 3D ne peut pas s’afficher. Ce navigateur n’a pas WebGL.',
+  erreur: 'La presse en 3D n’a pas pu se charger. Rechargez la page pour réessayer.',
+};
+
+/** Presse qui échoue en cours de route (contexte WebGL refusé, modèle introuvable) : la page le dit à sa place, et le film d'ouverture rend la main. */
 class StageBoundary extends Component<{ children: ReactNode; fallback: ReactNode; onError?(): void }, { failed: boolean }> {
   state = { failed: false };
   static getDerivedStateFromError() {
@@ -57,10 +76,19 @@ class StageBoundary extends Component<{ children: ReactNode; fallback: ReactNode
 export function Landing() {
   const [vue, setVue] = useState<VueId>('accueil');
   const [ready, setReady] = useState(false);
+  // La presse a dessiné sa première image : pendant le film, elle est déjà à l'écran (sans fondu d'entrée).
+  const [dessinee, setDessinee] = useState(false);
   const [parcours, setParcours] = useState(false);
+  const [echec3D, setEchec3D] = useState<Echec3D | null>(() => (webglDisponible() ? null : 'webgl'));
+  // Vue des pièces sur un écran étroit : numéros seuls sur la presse, noms dans la légende (LandingStage, Pieces).
+  const [piecesCompactes, setPiecesCompactes] = useState(false);
+  // Ce que le lecteur d'écran entend quand la vue change : rien au chargement, la vue de départ est décrite par le titre.
+  const [annonce, setAnnonce] = useState('');
+  const vueAnnoncee = useRef<VueId>('accueil');
   const sceneRef = useRef<HTMLDivElement>(null);
   const texteRef = useRef<HTMLDivElement>(null);
   const vuesRef = useRef<HTMLDivElement>(null);
+  const legendeRef = useRef<HTMLOListElement>(null);
   const lpRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLElement>(null);
   const pointRef = useRef<HTMLElement>(null);
@@ -70,7 +98,7 @@ export function Landing() {
   const reduit = useReducedMotion();
   const nuit = useIsDark();
   const empile = useMedia(EMPILE);
-  const telephone = useMedia(TELEPHONE);
+  const court = useMedia(LIBELLES_COURTS);
   const saved = hasSavedAssistant();
   const filmRefs = useMemo(
     () => ({ lp: lpRef, hero: heroRef, scene: sceneRef, point: pointRef, puce: panneRef, carte: sansCarte, pastille: sansCarte }),
@@ -84,8 +112,8 @@ export function Landing() {
   // Avec un serveur EVAN derrière, l'accès au compte de son organisation ; sans serveur, il n'y a pas de compte.
   const session = useSession((s) => s.etat);
   useEffect(() => void useSession.getState().verifier(), []);
-  // Une usine déjà commencée dans ce navigateur se reprend : ?nouveau=1 repartirait d'une usine vierge.
-  const assistantTo = saved ? '/assistant' : '/assistant?nouveau=1';
+  // Compte connecté : ses usines, sur le serveur. Sinon, l'usine du navigateur (lib/actions.ts).
+  const usine = actionUsine(session, saved);
 
   // Une vue déjà montrée, choisie de nouveau, ramène à l'ensemble.
   const choisir = useCallback((v: VueId) => setVue((avant) => (avant === v ? 'accueil' : v)), []);
@@ -94,7 +122,7 @@ export function Landing() {
     // Volet ouvert : Échap le ferme, lui seul (il écoute de son côté).
     if (parcours) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setVue('accueil');
+      if (e.key === 'Escape' && !e.defaultPrevented) setVue('accueil');
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -104,14 +132,30 @@ export function Landing() {
   const panne = vue === 'panne';
   useEffect(() => setTabStatus(panne ? 'crit' : 'ok', panne ? `Panne ${CODE_PANNE}` : undefined), [panne]);
   useEffect(() => () => setTabStatus('ok'), []);
+  useEffect(() => {
+    if (vueAnnoncee.current === vue) return;
+    vueAnnoncee.current = vue;
+    setAnnonce(annonceVue(vue));
+  }, [vue]);
 
-  const obstacles = useMemo(() => [texteRef, vuesRef], []);
-  const cadre = useCadre(sceneRef, obstacles, String(empile));
+  const legende = vue === 'pieces' && piecesCompactes && !echec3D;
+
+  // La légende des pièces, quand elle est là, se pose sous la presse : la caméra la laisse libre.
+  const obstacles = useMemo(() => [texteRef, vuesRef, legendeRef], []);
+  const cadre = useCadre(sceneRef, obstacles, `${empile}|${legende}`);
   const onReady = useCallback(() => {
     setReady(true);
     horloge?.signalerPret();
   }, [horloge]);
   const fermerParcours = useCallback(() => setParcours(false), []);
+  const premiereImage = useCallback(() => setDessinee(true), []);
+  // Hors film, la presse n'apparaît qu'une fois prête (fondu de .lp-toile) : le chargement reste jusque-là. Pendant le
+  // film, la toile est visible tout de suite : le chargement s'efface dès que la presse s'y dessine.
+  const chargement = !ready && !echec3D && !(film && dessinee);
+  const presseEnPanne = useCallback(() => {
+    setEchec3D('erreur');
+    horloge?.passer();
+  }, [horloge]);
 
   return (
     <div ref={lpRef} className={`lp ${panne ? 'is-panne' : ''} ${filmJoue ? 'film-joue' : ''} ${film ? 'is-film' : ''}`}>
@@ -130,30 +174,41 @@ export function Landing() {
           )}
           <button
             type="button"
-            className="lp-rond"
+            className="btn icon ghost lp-theme"
             onClick={() => useUi.getState().setTheme(nuit ? 'light' : 'dark')}
             aria-label={nuit ? 'Passer en thème jour' : 'Passer en thème nuit'}
             title={nuit ? 'Thème jour' : 'Thème nuit'}
           >
-            {nuit ? <Sun size={17} aria-hidden="true" /> : <Moon size={17} aria-hidden="true" />}
+            {nuit ? <Sun aria-hidden="true" /> : <Moon aria-hidden="true" />}
           </button>
         </div>
       </header>
 
       <main ref={heroRef} className="lp-hero" aria-labelledby="lp-titre">
-        <div className="lp-nuage" aria-hidden="true">
-          <PixelField placement="hero" intensite={1.25} motif="spires" />
-        </div>
-
         <div className="lp-scene" ref={sceneRef}>
-          <div className={`lp-toile ${ready ? 'is-ready' : ''}`}>
-            <StageBoundary fallback={null} onError={() => horloge?.passer()}>
-              <Suspense fallback={null}>
-                <LandingStage vue={vue} cadre={cadre} dark={nuit} reduced={reduit} actif={!parcours} onReady={onReady} film={film} phaseFilm={phaseFilm} />
-              </Suspense>
-            </StageBoundary>
-          </div>
-          {!ready && (
+          {echec3D ? (
+            <p className="lp-sans3d">{MESSAGE_3D[echec3D]}</p>
+          ) : (
+            <div className={`lp-toile ${ready ? 'is-ready' : ''}`}>
+              <StageBoundary fallback={null} onError={presseEnPanne}>
+                <Suspense fallback={null}>
+                  <LandingStage
+                    vue={vue}
+                    cadre={cadre}
+                    dark={nuit}
+                    reduced={reduit}
+                    actif={!parcours}
+                    onReady={onReady}
+                    onPremiereImage={premiereImage}
+                    film={film}
+                    phaseFilm={phaseFilm}
+                    onPiecesCompactes={setPiecesCompactes}
+                  />
+                </Suspense>
+              </StageBoundary>
+            </div>
+          )}
+          {chargement && (
             <div className="lp-chargement" role="status">
               <i aria-hidden="true">
                 <b />
@@ -175,8 +230,11 @@ export function Landing() {
               {/* Le point final est le point d'état du logo : vert, rouge quand on montre la panne. */}
               <span className="lp-ligne lp-ligne-2">
                 <span>
-                  Jusqu’au dernier rouleau
-                  <i ref={pointRef} className="lp-point" aria-hidden="true" />
+                  {LIGNE_2.slice(0, COUPE)}
+                  <span className="lp-insecable">
+                    {LIGNE_2.slice(COUPE)}
+                    <i ref={pointRef} className="lp-point" aria-hidden="true" />
+                  </span>
                 </span>
               </span>
             </h1>
@@ -185,11 +243,23 @@ export function Landing() {
             </p>
           </div>
           <div className={`lp-actions ${entree}`} style={cascade(3)}>
-            <Actions assistantTo={assistantTo} saved={saved} />
+            <Actions usine={usine} />
           </div>
         </div>
 
-        <Vues ref={vuesRef} panneRef={panneRef} vue={vue} onChange={choisir} court={telephone} className={entree} style={cascade(4)} />
+        {!echec3D && <Vues ref={vuesRef} panneRef={panneRef} vue={vue} onChange={choisir} court={court} className={entree} style={cascade(4)} />}
+        {legende && (
+          <ol ref={legendeRef} className="lp-legende" aria-label="Pièces surveillées">
+            {PIECES.map((p) => (
+              <li key={p.numero}>
+                <b>{numeroPiece(p.numero)}</b> {p.nom}
+              </li>
+            ))}
+          </ol>
+        )}
+        <p className="sr-only" aria-live="polite">
+          {annonce}
+        </p>
 
         {filmJoue && (
           <span className="lp-film-point" aria-hidden="true">
@@ -198,7 +268,7 @@ export function Landing() {
         )}
       </main>
 
-      {parcours && <VoletParcours fermer={fermerParcours} assistantTo={assistantTo} saved={saved} />}
+      {parcours && <VoletParcours fermer={fermerParcours} usine={usine} />}
     </div>
   );
 }

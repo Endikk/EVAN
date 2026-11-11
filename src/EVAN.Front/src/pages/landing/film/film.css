@@ -95,11 +95,16 @@
 }
 
 /* ---------- La scène ---------- */
+/* Le film attend la presse sur sa première image, où rien ne se voit encore : sur une machine lente, l'écran resterait
+   noir. Le chargement s'y montre, en fondu et après un court délai pour ne pas clignoter quand la presse arrive vite. Il
+   disparaît dès qu'elle est prête, au moment où le film démarre. */
 .lp.is-film .lp-chargement {
-  opacity: 0;
+  animation: lp-film-chargement var(--dur-entree) var(--ease) 400ms both;
 }
-.lp.is-film .lp-nuage {
-  opacity: var(--f-nuage);
+@keyframes lp-film-chargement {
+  from {
+    opacity: 0;
+  }
 }
 .lp.is-film .lp-texte::before {
   opacity: var(--f-voile);
@@ -115,9 +120,9 @@
   opacity: var(--f-actions);
   transform: translateY(calc((1 - var(--f-actions)) * 14px));
 }
-/* Les vues de la presse montent opaques, découvertes par le bas : posées sur le nuage, leur texte ne passe jamais par
-   un fondu à faible contraste. */
+/* Les vues de la presse montent opaques, découvertes par le bas : leur texte ne passe jamais par un fondu à faible
+   contraste. */
 .lp.is-film .lp-vues {
-  clip-path: inset(calc((1 - var(--f-puces)) * 100%) 0 0 0 round var(--lp-r));
+  clip-path: inset(calc((1 - var(--f-puces)) * 100%) 0 0 0 round var(--r-lg));
   transform: translateY(calc((1 - var(--f-puces)) * 14px));
 }

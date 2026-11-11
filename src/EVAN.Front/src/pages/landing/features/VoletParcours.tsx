@@ -3,54 +3,30 @@
  * depuis la droite par-dessus la presse ; lui seul défile si sa hauteur ne suffit pas. En pied, ce qui était plus bas
  * sur l'ancienne page : la démo se visite sans compte, et les langages d'automate qu'EVAN sait lire.
  *
- * Échap ou un clic sur le voile le ferment ; le focus y entre à l'ouverture, y reste (tabulation en boucle) et revient
- * au bouton d'origine à la fermeture.
+ * Échap ou un clic sur le voile le ferment ; le focus y entre à l'ouverture (sur « Fermer »), y reste (tabulation en
+ * boucle) et revient au bouton d'origine à la fermeture.
  */
-import { useEffect, useId, useRef } from 'react';
+import { useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Route, X } from 'lucide-react';
 import { Term } from '@/ui/explain';
+import { usePiegeFocus } from '@/ui/usePiegeFocus';
+import type { ActionUsine } from '../lib/actions';
 import { PROTOCOLES } from '../lib/sections';
 import { Actions } from './Actions';
 import { Parcours, TITRE_PARCOURS } from './Parcours';
 
 interface Props {
   fermer(): void;
-  assistantTo: string;
-  saved: boolean;
+  usine: ActionUsine;
 }
 
-const FOCUSABLES = 'button:not([disabled]), [href], input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])';
-
-export function VoletParcours({ fermer, assistantTo, saved }: Props) {
+export function VoletParcours({ fermer, usine }: Props) {
   const titreId = useId();
   const volet = useRef<HTMLElement>(null);
-  const fermerRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    const avant = document.activeElement as HTMLElement | null;
-    fermerRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') return fermer();
-      if (e.key !== 'Tab' || !volet.current) return;
-      const els = [...volet.current.querySelectorAll<HTMLElement>(FOCUSABLES)];
-      if (!els.length) return;
-      const premier = els[0];
-      const dernier = els[els.length - 1];
-      if (e.shiftKey && document.activeElement === premier) {
-        e.preventDefault();
-        dernier.focus();
-      } else if (!e.shiftKey && document.activeElement === dernier) {
-        e.preventDefault();
-        premier.focus();
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => {
-      window.removeEventListener('keydown', onKey);
-      avant?.focus();
-    };
-  }, [fermer]);
+  // Piège de focus commun aux fenêtres : une bulle d'aide ouverte dans le volet (« automate ») consomme Échap avant
+  // lui, et seule la bulle se ferme.
+  usePiegeFocus(volet, true, fermer);
 
   return createPortal(
     <div className="guide-fond" onMouseDown={fermer}>
@@ -63,7 +39,7 @@ export function VoletParcours({ fermer, assistantTo, saved }: Props) {
             <p className="guide-sur">Comment ça marche</p>
             <h2 id={titreId}>{TITRE_PARCOURS}</h2>
           </div>
-          <button ref={fermerRef} type="button" className="btn sm icon ghost" onClick={fermer} aria-label="Fermer">
+          <button type="button" className="btn sm icon ghost" onClick={fermer} aria-label="Fermer" data-autofocus>
             <X />
           </button>
         </header>
@@ -75,7 +51,7 @@ export function VoletParcours({ fermer, assistantTo, saved }: Props) {
               se visite sans compte.
             </p>
             <div className="lp-actions">
-              <Actions assistantTo={assistantTo} saved={saved} />
+              <Actions usine={usine} />
             </div>
             <p className="lp-protocoles">
               Pour brancher vos machines, EVAN lit leur <Term k="automate">automate</Term>, dans le <Term k="protocole">langage</Term> qu’il

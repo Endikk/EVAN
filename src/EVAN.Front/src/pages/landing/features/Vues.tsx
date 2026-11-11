@@ -9,7 +9,7 @@ import { VUES, type VueId } from '../lib/sections';
 interface Props {
   vue: VueId;
   onChange(v: VueId): void;
-  /** Téléphone : les libellés courts. */
+  /** Téléphone ou écran moyen : les libellés courts. */
   court: boolean;
   /** La page mesure le contrôle : la caméra garde la presse au-dessus. */
   ref?: Ref<HTMLDivElement>;
@@ -39,7 +39,7 @@ export function Vues({ vue, onChange, court, ref, panneRef, className = '', styl
           className={`lp-vue ${vue === v.id ? 'on' : ''} ${v.id === 'panne' ? 'is-crit' : ''}`}
           onClick={() => onChange(v.id)}
         >
-          <v.icon size={15} aria-hidden="true" />
+          <v.icon aria-hidden="true" />
           {court ? v.court : v.label}
         </button>
       ))}

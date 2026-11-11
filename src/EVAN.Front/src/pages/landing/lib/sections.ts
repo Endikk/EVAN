@@ -31,6 +31,29 @@ export const CODE_PANNE = dorure.alarme?.code ?? 'CF-02';
 /** Nom court d'une pièce, pour l'étiquette posée dessus : « Groupe flexo (servo direct) » devient « Groupe flexo ». */
 export const nomCourt = (nom: string) => nom.split(/ \(| et /)[0];
 
+/** Pièces surveillées de la presse, par numéro, avec leur nom court : la légende des numéros posés sur la presse. */
+export const PIECES = PRESSE.organes
+  .filter((o) => o.position)
+  .map((o) => ({ numero: o.numero, nom: nomCourt(o.nom) }))
+  .sort((a, b) => a.numero - b.numero);
+
+/** Numéro d'une pièce tel qu'il est posé sur la presse : « 01 ». */
+export const numeroPiece = (n: number) => String(n).padStart(2, '0');
+
+const minuscule = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
+
+/**
+ * Ce qu'un lecteur d'écran entend quand on change de vue : la presse le montre en 3D, sans rien dire à qui ne la voit
+ * pas. Les étiquettes posées sur la presse, elles, restent muettes (elles précéderaient le titre de la page).
+ */
+export function annonceVue(vue: VueId): string {
+  if (vue === 'panne') {
+    return `Panne ${CODE_PANNE} provoquée : la presse s’arrête. Pièce en cause : ${minuscule(NOM_DORURE)}. À vérifier : ${minuscule(VERIF_DORURE)}.`;
+  }
+  if (vue === 'pieces') return `Les ${PIECES.length} pièces surveillées : ${PIECES.map((p) => `${p.numero} ${p.nom}`).join(', ')}.`;
+  return 'Vue d’ensemble : la presse tourne.';
+}
+
 /** Langages d'automate qu'EVAN sait lire (passerelle de l'atelier). */
 export const PROTOCOLES = ['OPC UA', 'Modbus TCP', 'Siemens S7', 'MQTT', 'JDF/JMF'];
 
