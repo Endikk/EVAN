@@ -11,14 +11,11 @@
 </p>
 
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/media/presse-sombre.avif">
-    <img src="docs/media/presse-clair.avif" width="100%" alt="La presse flexo Gallus Labelmaster 440 en 3D. Les rouleaux tournent, puis la presse s'arrête : le reste de la machine s'estompe et l'organe 7, l'échenillage, passe au rouge avec l'étiquette « Casse d'échenillage qui arrête la machine ».">
-  </picture>
+  <img src="docs/media/film.avif" width="100%" alt="Film de présentation d'EVAN, 55 secondes. Quatorze machines tournent, l'une s'arrête. Viennent ensuite les cinq étapes de configuration sur les écrans réels, les huit machines du kit en 3D, les neuf organes de la presse Gallus Labelmaster 440 dont l'échenillage qui passe au rouge, la panne suivie en direct dans la supervision jusqu'à l'organe, puis l'historique, la maintenance, l'énergie et la vue de plusieurs usines.">
 </p>
 
 <p align="center"><sub>
-  La Gallus Labelmaster 440 du kit, rendue par Three.js. Le point du logo suit l'atelier : vert en marche, rouge en panne.<br>
+  Les écrans sont ceux de la démo, les machines sont les modèles du kit, rendus par Three.js.<br>
   <a href="docs/media/presse-flexo.stl">Faire tourner la presse en 3D</a>
 </sub></p>
 
@@ -42,7 +39,7 @@ temps réel.
 
 ## Le trajet d'une panne
 
-La casse d'échenillage de l'animation est le scénario de la démo. Elle suit le chemin d'une vraie panne :
+La casse d'échenillage du film est le scénario de la démo. Elle suit le chemin d'une vraie panne :
 
 | Étape | Ce qui se passe |
 |:---|:---|
