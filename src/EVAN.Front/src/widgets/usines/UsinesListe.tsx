@@ -88,8 +88,10 @@ export function UsinesListe({ apres }: { apres?: () => void }) {
                 }}
                 title={[u.nom, u.adresse].filter(Boolean).join(', ')}
               >
+                {/* Seule l'usine ouverte a un état en direct : les autres n'ont pas de repère. L'anneau neutre qu'elles
+                    portaient se confondait avec la machine à l'arrêt (rond creux) de la vue d'ensemble. */}
                 <span className={`side-icone side-etat ton-${ton}`} aria-hidden>
-                  <TonGlyph ton={ton} />
+                  {direct && <TonGlyph ton={ton} />}
                 </span>
                 <span className="side-txt">
                   <b className="truncate">{u.nom}</b>

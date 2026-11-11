@@ -1,18 +1,70 @@
 /* ============================================================
-   Vue d'ensemble de l'organisation : la phrase, trois repères et leur rangée de chiffres, une carte par usine,
-   la comparaison. Ce qui est normal reste gris ; seuls la panne (cramoisi) et l'alerte (ambre) prennent de la couleur.
+   Vue d'ensemble de l'organisation : la phrase, l'efficacité qui mène et les chiffres qui l'accompagnent, une carte
+   par usine, la comparaison. Tout est gris ; seuls les repères d'état des machines (carré cramoisi pour la panne,
+   triangle ambre pour l'alerte) prennent la couleur. Une usine n'a pas de teinte propre : sa forme (rond, carré)
+   la distingue dans les graphiques.
    Toutes les règles partent de .organisation pour passer devant celles de app.css sans les modifier.
    ============================================================ */
 
-/* ---------- Repères de l'organisation ---------- */
+/* ---------- Le chiffre qui mène, et ceux qui l'accompagnent ----------
+   Une seule carte, l'efficacité de toute l'organisation ; à côté, sans fond, deux chiffres moyens (pannes,
+   retards) puis la rangée des chiffres de second rang. Trois tailles (32, 24, 18), trois rangs. */
 .organisation .org-haut {
-  margin-bottom: 16px;
+  margin-bottom: 24px;
+}
+.org-tete-chiffres {
+  display: grid;
+  grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+  gap: 16px;
+}
+.organisation .org-mene {
+  justify-content: center;
+  padding: 20px 24px;
+}
+.org-cote {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
 }
 .organisation .org-reperes {
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  flex: 1;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+}
+.org-cote .repere {
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 20px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+.org-cote .repere + .repere {
+  border-left: 1px solid var(--border);
+}
+.org-cote .rp-valeur {
+  flex-wrap: wrap;
+}
+.org-cote .rp-valeur b {
+  font-size: var(--fs-3xl);
+  white-space: nowrap;
 }
 .organisation .org-chiffres-sec {
-  margin-top: 12px;
+  padding: 8px 0;
+  border-bottom: 0;
+}
+.org-cote .cs-item {
+  padding: 4px 20px;
+}
+.org-cote .cs-item:first-child {
+  padding-left: 20px;
+}
+@media (max-width: 1100px) {
+  .org-tete-chiffres {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 /* ---------- Une carte par usine ---------- */
@@ -36,27 +88,14 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 16px;
-  border-top: 1px solid var(--border);
+  padding: 20px;
 }
+/* Le nom, son « ? », et le bouton pour ouvrir l'usine : un bouton ordinaire, l'action principale de l'écran
+   n'est pas d'ouvrir une usine plutôt qu'une autre. */
 .org-usine-tete {
   display: flex;
   align-items: center;
   gap: 12px;
-}
-.org-usine-icone {
-  flex: none;
-  width: 42px;
-  height: 42px;
-  border-radius: var(--r-md);
-  display: grid;
-  place-items: center;
-  color: var(--usine);
-  background: color-mix(in srgb, var(--usine) 14%, transparent);
-}
-.org-usine-icone svg {
-  width: var(--icon-lg);
-  height: var(--icon-lg);
 }
 .org-usine-nom {
   flex: 1;
@@ -65,10 +104,11 @@
 .organisation .org-usine-nom h3 {
   display: flex;
   align-items: center;
+  gap: 4px;
   margin: 0;
-  font-size: 18px;
-  font-weight: 650;
-  letter-spacing: -0.01em;
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0;
 }
 .org-ouvrir {
   flex: none;
@@ -79,14 +119,15 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: 8px 12px;
   margin: 0;
-  font-size: 14px;
+  font-size: var(--fs-base);
   line-height: 1.4;
   color: var(--text-2);
 }
-/* Un repère par machine, avec les formes des états (ui/status) : rond gris, elle produit ; carré cramoisi, en
-   panne ; triangle ambre, à surveiller ; anneau, en réglage ; rond pâle, à l'arrêt. */
+/* Un repère par machine, avec les formes des états de la scène (ui/status) : rond plein gris, elle produit ; carré
+   cramoisi, en panne ; triangle ambre, à surveiller ; losange, en réglage ; rond creux, à l'arrêt. Le rond pâle de
+   l'arrêt se perdait sur la carte, et l'anneau du réglage se confondait avec les autres anneaux de l'écran. */
 .org-pips {
   display: inline-flex;
   flex-wrap: wrap;
@@ -101,8 +142,6 @@
   background: color-mix(in srgb, var(--text-3) 80%, transparent);
 }
 .org-pips i.panne {
-  width: 9px;
-  height: 9px;
   border-radius: 2px;
   background: var(--crit);
 }
@@ -114,11 +153,21 @@
   clip-path: polygon(50% 0, 100% 100%, 0 100%);
 }
 .org-pips i.reglage {
-  background: none;
-  box-shadow: inset 0 0 0 1.5px var(--text-3);
+  width: 9px;
+  height: 9px;
+  border-radius: 1px;
+  transform: rotate(45deg) scale(0.85);
 }
 .org-pips i.arret {
-  background: var(--surface-3);
+  background: none;
+  box-shadow: inset 0 0 0 1.5px var(--text-2);
+}
+/* Dernier relevé de l'historique : la panne est passée, son carré reste gris. */
+.org-pips i.panne.passe {
+  background: var(--text-2);
+}
+.org-etat-passe {
+  color: var(--text-2);
 }
 .org-etat-texte {
   display: inline-flex;
@@ -127,15 +176,12 @@
   gap: 4px 8px;
   font-variant-numeric: tabular-nums;
 }
-.org-etat-texte .infotip {
-  margin-left: -4px;
-}
 .org-etat-panne {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-weight: 620;
-  color: var(--crit);
+  font-weight: var(--fw-medium);
+  color: var(--text);
 }
 .org-etat-panne .ton-glyph {
   width: 14px;
@@ -145,6 +191,7 @@
   width: 12px;
   height: 12px;
 }
+/* La source de l'état : une puce, car c'est un état (en direct ou relevé à telle heure). */
 .org-direct,
 .org-releve {
   display: inline-flex;
@@ -153,23 +200,24 @@
   height: 24px;
   padding: 0 8px;
   border-radius: 999px;
-  font-size: 12px;
-  font-weight: 620;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
 }
 .org-direct {
-  color: var(--accent-text);
-  background: var(--accent-soft);
+  color: var(--text);
+  background: var(--surface-3);
 }
 .org-releve {
+  font-weight: var(--fw-regular);
   color: var(--text-2);
-  background: var(--surface-2);
   border: 1px solid var(--border);
 }
-/* Le direct respire : un anneau qui s'élargit autour du point, pour dire que la donnée arrive en continu. */
+/* Le direct respire : un anneau qui s'élargit autour du point, parce que la donnée arrive vraiment en continu.
+   C'est la seule boucle de l'écran. */
 .org-direct i {
   position: relative;
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: currentColor;
 }
@@ -179,7 +227,7 @@
   inset: 0;
   border-radius: 50%;
   border: 1.5px solid currentColor;
-  animation: org-direct 2s var(--ease-out) infinite;
+  animation: org-direct 2s var(--ease) infinite;
 }
 @keyframes org-direct {
   from {
@@ -192,55 +240,63 @@
   }
 }
 
-/* Trois repères compacts, côte à côte tant que la carte est assez large. */
+/* Les trois chiffres de l'usine : une rangée sans cases, des filets entre eux. La carte n'empile pas de cartes. */
 .organisation .org-usine-reperes {
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+  gap: 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
 }
-/* Côte à côte jusqu'à une carte étroite (les noms passent à la ligne), l'un sous l'autre sur téléphone. */
-@container (max-width: 560px) {
-  .organisation .repere.compact {
-    padding: 8px 12px;
-  }
+.organisation .org-usine .repere.compact {
+  gap: 4px;
+  padding: 12px 16px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+.organisation .org-usine .repere.compact:first-child {
+  padding-left: 0;
+}
+.organisation .org-usine .repere.compact + .repere.compact {
+  border-left: 1px solid var(--border);
+}
+.organisation .org-usine .repere.compact .rp-valeur b {
+  font-size: var(--fs-3xl);
 }
 @container (max-width: 440px) {
   .organisation .org-usine-reperes {
     grid-template-columns: minmax(0, 1fr);
   }
-}
-.organisation .repere.compact {
-  padding: 12px 16px;
-  gap: 4px;
-}
-.organisation .repere.compact .rp-titre {
-  font-size: 13px;
-}
-.organisation .repere.compact .rp-valeur b {
-  font-size: 26px;
+  .organisation .org-usine .repere.compact {
+    padding: 12px 0;
+  }
+  .organisation .org-usine .repere.compact + .repere.compact {
+    border-left: 0;
+    border-top: 1px solid var(--border);
+  }
 }
 
-/* Le point qui demande de l'attention : la forme, le mot, puis le bouton qui mène au bon écran. */
+/* Le point qui demande de l'attention : un palier de surface, le repère d'état, le mot, puis le bouton qui mène
+   au bon écran. Pas de cadre teinté : le repère dit déjà s'il s'agit d'une panne ou d'un retard. */
 .org-attention {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 4px 12px;
-  padding: 12px 16px;
+  padding: 8px 8px 8px 16px;
   border-radius: var(--r-md);
-  border: 1px solid var(--border);
   background: var(--surface-2);
 }
-.org-attention.ton-warn {
-  border-color: color-mix(in srgb, var(--warn) 40%, var(--border));
-  background: color-mix(in srgb, var(--warn) 8%, var(--surface));
+.org-attention .ton-glyph {
+  width: 16px;
+  height: 16px;
 }
-.org-attention.ton-crit {
-  border-color: color-mix(in srgb, var(--crit) 50%, var(--border));
-  background: color-mix(in srgb, var(--crit) 10%, var(--surface));
+.org-attention .ton-glyph svg {
+  width: 14px;
+  height: 14px;
 }
-/* Rien à signaler : le cadre reste gris, seul le petit rond dit que tout va bien. */
+/* Rien à signaler : seul le petit rond dit que tout va bien, les mots restent en second rang. */
 .org-attention.ton-ok .org-attention-texte b {
-  font-weight: 560;
   color: var(--text-2);
 }
 .org-attention-texte {
@@ -248,34 +304,39 @@
   flex-direction: column;
   gap: 4px;
   min-width: 0;
-  font-size: 14px;
+  padding: 4px 0;
+  font-size: var(--fs-base);
   line-height: 1.45;
 }
 .org-attention-texte b {
   display: flex;
   align-items: center;
-  font-weight: 640;
+  font-weight: var(--fw-medium);
 }
 .org-attention-texte span {
-  font-size: 13px;
+  font-size: var(--fs-md);
   color: var(--text-2);
 }
 @container (max-width: 440px) {
   .org-attention {
     grid-template-columns: auto minmax(0, 1fr);
+    padding: 8px 16px 12px;
   }
   .org-attention .btn {
     grid-column: 2;
     justify-self: start;
-    margin-top: 8px;
   }
 }
 
-/* Plan des pannes : son titre et son « ? », le plan. */
+/* Plan des pannes : son titre et son « ? », le plan. Le plan lui-même est le composant partagé (HeatPlan) : seul
+   son conteneur se règle ici. */
 .organisation .org-usine-plan .tc-titre {
-  margin: 4px 0 8px;
-  font-size: 14px;
-  font-weight: 640;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 0 8px;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
 }
 .organisation .org-usine-plan .heatplan-box {
   min-height: 240px;
@@ -290,7 +351,7 @@
   padding: 4px 4px 4px 12px;
 }
 .organisation .org-usine .cs-item:first-child {
-  padding-left: 4px;
+  padding-left: 0;
 }
 @container (max-width: 560px) {
   .organisation .org-usine .chiffres-sec {
@@ -321,32 +382,66 @@
   margin: 0;
 }
 .organisation .org-section-tete .tc-titre {
-  font-size: 21px;
-  letter-spacing: -0.01em;
+  font-size: var(--fs-2xl);
+  letter-spacing: 0;
 }
+/* Le graphique de l'efficacité mène : la colonne large, à côté de la liste des pannes, et il prend la hauteur de
+   cette liste (sa courbe s'étire) ; la comparaison des mêmes machines passe dessous, sur toute la largeur. Empilés à
+   gauche, l'efficacité et les mêmes machines laissaient un grand vide sous la liste des pannes. Dans le document,
+   l'ordre reste celui des blocs (efficacité, pannes, mêmes machines) pour le clavier et les lecteurs d'écran. */
 .org-comparer-grille {
   display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  align-items: start;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  align-items: stretch;
   gap: 16px;
 }
 .organisation .org-bloc {
   container-type: inline-size;
-  grid-column: span 6;
-  padding: 16px;
+  padding: 20px;
+}
+.organisation .org-efficacite {
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+}
+.organisation .org-efficacite .org-courbe {
+  flex: 1 1 auto;
+  min-height: 320px;
+}
+.organisation .org-arrets-bloc {
+  grid-column: 2;
+  grid-row: 1;
+}
+.organisation .org-memes {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+/* Sur toute la largeur, la règle des mêmes machines garde une longueur lisible. */
+.organisation .org-memes .org-ecarts,
+.organisation .org-memes .org-ecart-regle {
+  max-width: 960px;
 }
 .organisation .org-bloc .tc-titre {
-  font-size: 16px;
+  font-size: var(--fs-lg);
 }
 .organisation .org-bloc .titre-carte {
   margin-bottom: 8px;
 }
-.organisation .org-memes {
-  grid-column: span 12;
-}
 @media (max-width: 1100px) {
-  .organisation .org-bloc {
-    grid-column: span 12;
+  .org-comparer-grille {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  /* Empilés, les blocs ne partagent plus de rangée : la courbe reprend sa hauteur fixe. */
+  .organisation .org-efficacite .org-courbe {
+    flex: none;
+    min-height: 0;
+  }
+  .organisation .org-efficacite,
+  .organisation .org-arrets-bloc,
+  .organisation .org-memes {
+    grid-column: 1;
+    grid-row: auto;
   }
 }
 
@@ -358,7 +453,7 @@
   gap: 8px 16px;
   margin: 0 0 8px;
   padding: 0;
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   color: var(--text-2);
 }
 .org-legende li {
@@ -368,15 +463,16 @@
 }
 .org-legende-ref i {
   width: 20px;
-  border-top: 2px dashed var(--text-3);
+  border-top: 2px dashed var(--border-strong);
 }
 .org-forme {
   flex: none;
   display: inline-block;
   vertical-align: -1px;
 }
+/* Le graphique principal de l'écran : le plus grand. */
 .org-courbe {
-  height: 250px;
+  height: 320px;
 }
 .org-tip-ligne {
   display: flex;
@@ -394,7 +490,7 @@
 }
 .org-arrets li {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(70px, 30%) 52px;
+  grid-template-columns: minmax(0, 1fr) minmax(64px, 26%) 48px;
   align-items: center;
   gap: 4px 12px;
   padding: 8px 0;
@@ -410,14 +506,14 @@
   min-width: 0;
 }
 .org-arret-texte b {
-  font-size: 13.5px;
-  font-weight: 600;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
 }
 .org-arret-texte > span {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--text-3);
 }
 .org-arret-texte .org-forme {
@@ -438,7 +534,7 @@
   /* Des heures passées, pas une panne en cours : la barre reste grise (le cramoisi est réservé à l'anomalie). */
   background: color-mix(in srgb, var(--text-3) 75%, var(--surface-3));
   transform-origin: left center;
-  animation: org-barre 800ms var(--ease-out) backwards;
+  animation: org-barre var(--dur-entree) var(--ease) backwards;
   animation-delay: calc(420ms + var(--i, 0) * 60ms);
 }
 @keyframes org-barre {
@@ -448,9 +544,11 @@
 }
 .org-arret-h {
   text-align: right;
-  font-size: 13.5px;
+  font-size: var(--fs-base);
 }
-@container (max-width: 460px) {
+/* La barre reste sur la ligne de sa panne tant que la carte le permet (la colonne étroite de la comparaison en fait
+   partie) ; elle passe dessous seulement sur téléphone. */
+@container (max-width: 360px) {
   .org-arrets li {
     grid-template-columns: minmax(0, 1fr) 52px;
   }
@@ -480,8 +578,8 @@
   border-top: 0;
 }
 .org-ecart-type {
-  font-size: 13.5px;
-  font-weight: 560;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
 }
 .org-ecart-piste {
   position: relative;
@@ -517,7 +615,7 @@
 .org-ecart-point svg {
   width: 14px;
   height: 14px;
-  animation: org-point 500ms var(--ease-out) backwards;
+  animation: org-point var(--dur-entree) var(--ease) backwards;
   animation-delay: 500ms;
 }
 @keyframes org-point {
@@ -528,12 +626,12 @@
 }
 .org-ecart-valeur {
   text-align: right;
-  font-size: 13px;
+  font-size: var(--fs-md);
   color: var(--text-2);
 }
 .org-ecart-regle {
   margin-top: 4px;
-  font-size: 11px;
+  font-size: var(--fs-xs);
   color: var(--text-3);
 }
 .org-ecart-regle > span:nth-child(1) {
@@ -573,13 +671,13 @@
 }
 .org-table th[scope='row'] {
   text-align: left;
-  font-weight: 600;
+  font-weight: var(--fw-medium);
 }
 
 /* ---------- Schémas du guide ---------- */
 .org-schema-legende {
   margin: 8px 0 0;
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   line-height: 1.45;
   color: var(--text-3);
 }
@@ -588,8 +686,8 @@
   height: 30px;
   border-radius: var(--r-sm);
   overflow: hidden;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
 }
 .org-schema-barre span {
   display: grid;
@@ -598,7 +696,7 @@
   white-space: nowrap;
   overflow: hidden;
   transform-origin: left center;
-  animation: org-barre 700ms var(--ease-out) backwards;
+  animation: org-barre var(--dur-entree) var(--ease) backwards;
 }
 .org-schema-barre .utile {
   flex: 5;
@@ -626,7 +724,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px 16px;
-  font-size: 13px;
+  font-size: var(--fs-md);
   color: var(--text-2);
 }
 .org-schema-formes span {
@@ -645,7 +743,7 @@
   border-radius: var(--r-xs);
   border: 1.5px solid var(--crit);
   background: color-mix(in srgb, var(--crit) calc(22% + var(--v) * 78%), transparent);
-  animation: org-point 420ms var(--ease-out) backwards;
+  animation: org-point var(--dur-entree) var(--ease) backwards;
   animation-delay: calc(200ms + var(--v) * 400ms);
 }
 .org-schema-plan > span:first-child {
@@ -680,7 +778,7 @@
   border-radius: 2px;
   background: var(--text-3);
   transform-origin: left center;
-  animation: org-barre 700ms var(--ease-out) backwards 300ms;
+  animation: org-barre var(--dur-entree) var(--ease) backwards 300ms;
 }
 .org-schema-piste span {
   position: absolute;
@@ -692,17 +790,27 @@
 .org-schema-piste .forme-0 {
   left: 30%;
   border-radius: 50%;
-  background: var(--series-1);
+  background: var(--text);
 }
 .org-schema-piste .forme-1 {
   left: 70%;
   border-radius: var(--r-xs);
-  background: var(--series-2);
-  animation: org-point 420ms var(--ease-out) backwards 800ms;
+  background: var(--text-3);
+  animation: org-point var(--dur-entree) var(--ease) backwards 800ms;
 }
 
 /* ---------- Téléphone ---------- */
 @media (max-width: 600px) {
+  .org-cote .repere {
+    padding: 12px 16px;
+  }
+  .org-cote .rp-valeur b {
+    font-size: var(--fs-2xl);
+  }
+  .org-cote .cs-item,
+  .org-cote .cs-item:first-child {
+    padding: 4px 16px;
+  }
   .organisation .org-usine,
   .organisation .org-bloc {
     padding: 16px;
@@ -717,6 +825,6 @@
     min-height: 40px;
   }
   .org-courbe {
-    height: 220px;
+    height: 240px;
   }
 }

@@ -43,7 +43,9 @@ function OrganisationForm({ onboarding, initial }: { onboarding: boolean; initia
     input.current?.select();
     if (onboarding) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') close();
+      if (e.key !== 'Escape' || e.defaultPrevented) return;
+      e.preventDefault();
+      close();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);

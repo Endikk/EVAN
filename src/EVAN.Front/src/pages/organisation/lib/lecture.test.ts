@@ -65,7 +65,8 @@ describe('état des machines en une phrase', () => {
 
   it('dit l’état en quelques mots, les pannes à part', () => {
     expect(motEtat(etat({}), true)).toEqual({ mot: '12 sur 14 produisent' });
-    expect(motEtat(etat({ produisent: 11, panne: ['R03'] }), false)).toEqual({ mot: '11 sur 14 produisaient', panne: 'R03 en panne' });
+    expect(motEtat(etat({ produisent: 11, panne: ['R03'] }), false)).toEqual({ mot: '11 sur 14 produisaient', panne: 'R03 était en panne' });
+    expect(motEtat(etat({ produisent: 11, panne: ['R04'] }), false, '12 h').panne).toBe('R04 était en panne à 12 h');
     expect(motEtat(etat({ produisent: 0, panne: ['R01', 'R02', 'R03'] }), true)).toEqual({ mot: 'Aucune ne produit', panne: '3 en panne' });
     expect(motEtat(etat({ total: 0 }), true).mot).toBe('Aucune machine suivie');
   });
@@ -114,6 +115,16 @@ describe('verdict de l’organisation', () => {
     ]);
     expect(v.verdict).toBe('Tours tourne, Crissey est à l’arrêt. Rien ne demande d’attention.');
     expect(v.ton).toBe('ok');
+  });
+
+  it('dit au passé l’état d’une usine connue seulement par son dernier relevé', () => {
+    const v = verdictOrganisation([
+      { court: 'Tours', tourne: true, point: OK },
+      { court: 'Crissey', tourne: true, point: OK, releve: true },
+    ]);
+    expect(v.verdict).toBe('Tours tourne, Crissey tournait au dernier relevé. Rien ne demande d’attention.');
+    const seule = verdictOrganisation([{ court: 'Crissey', tourne: false, point: OK, releve: true }]);
+    expect(seule.verdict).toBe('Crissey était à l’arrêt au dernier relevé. Rien ne demande d’attention.');
   });
 
   it('prend le ton de la pire usine quand plusieurs demandent de l’attention', () => {

@@ -87,13 +87,16 @@ export const GUIDE_ORGANISATION: GuideEcran = {
       schema: <SchemaFormes />,
     },
     {
-      titre: 'Les trois repères de l’organisation',
+      titre: 'Les chiffres de l’organisation',
       cible: 'org-reperes',
       texte: (
         <>
-          <p>L’efficacité des machines, le temps perdu en pannes et les entretiens en retard, toutes usines réunies.</p>
-          <p>La petite barre verticale sur la jauge marque 85 %, le niveau d’une usine de pointe.</p>
-          <p>Dessous, une rangée de chiffres de second rang. Le « ? » à côté de chaque nom dit ce qu’il mesure.</p>
+          <p>
+            Le grand chiffre, à gauche, est l’efficacité des machines, toutes usines réunies. La petite barre verticale sur la jauge marque 85 %, le niveau
+            d’une usine de pointe.
+          </p>
+          <p>À côté, le temps perdu en pannes et les entretiens en retard ; dessous, une rangée de chiffres de second rang.</p>
+          <p>Un clic sur le nom de chaque chiffre dit ce qu’il mesure.</p>
         </>
       ),
       schema: <SchemaEfficacite />,
@@ -104,10 +107,14 @@ export const GUIDE_ORGANISATION: GuideEcran = {
       texte: (
         <>
           <p>
-            Son nom (le « ? » donne l’adresse et la taille), puis un petit repère par machine : rond gris, elle produit ; carré rouge, elle est en
-            panne. L’usine ouverte est suivie en direct ; pour les autres, l’état vient du dernier relevé de l’historique.
+            Son nom (le « ? » donne l’adresse et la taille), puis un petit repère par machine, avec les formes de la supervision : rond plein, elle
+            produit ; losange, en réglage ; rond creux, à l’arrêt ; carré rouge, elle est en panne. L’usine ouverte est suivie en direct ; pour les
+            autres, l’état vient du dernier relevé de l’historique, et une panne de ce relevé reste grise : elle est passée.
           </p>
-          <p>Le cadre dit ce qui demande de l’attention, avec un bouton qui mène au bon écran. Les autres chiffres de l’usine ferment la carte.</p>
+          <p>
+            Une ligne dit ce qui demande de l’attention, avec un bouton qui mène au bon écran. « Ouvrir l’usine » mène à sa supervision. Les autres
+            chiffres de l’usine ferment la carte.
+          </p>
         </>
       ),
     },
@@ -117,7 +124,7 @@ export const GUIDE_ORGANISATION: GuideEcran = {
       texte: (
         <p>
           Le bâtiment vu de dessus, chaque machine à sa place. Plus elle est rouge, plus elle a été en panne cette semaine : une rotative offset rouge
-          vif a passé plus de temps arrêtée que la refendeuse grise à côté.
+          vif a passé plus de temps arrêtée que la refendeuse grise à côté. Les plans de toutes les usines partagent la même échelle.
         </p>
       ),
       schema: <SchemaPlan />,

@@ -12,10 +12,10 @@
   line-height: 1.3;
 }
 .niveaux-bat-texte b {
-  font-size: 13.5px;
-  font-weight: 600;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
 }
 .niveaux-bat-texte small {
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--text-2);
 }

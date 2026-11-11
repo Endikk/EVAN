@@ -65,6 +65,26 @@ export interface Saisie {
   tacheId?: string;
 }
 
+/**
+ * Une intervention planifiée, pas encore faite : elle attend son jour dans « À faire » et n'entre au journal qu'une fois
+ * consignée (elle devient alors une Saisie). Rattachée à la tâche du plan du même organe quand il y en a une.
+ */
+export interface Prevue {
+  id: string;
+  machineId: string;
+  organeId?: string;
+  /** Tâche du plan qu'elle réalisera : la consigner remettra son compteur à zéro. */
+  tacheId?: string;
+  titre: string;
+  /** Début prévu. */
+  date: number;
+  /** min */
+  duree: number;
+  auteur?: string;
+  /** Point de mesure en dérive qui l'a fait planifier. */
+  pointId?: string;
+}
+
 export type TypeIntervention = 'curative' | 'preventive' | 'observation';
 
 export const TYPE_INTERVENTION_LIBELLE: Record<TypeIntervention, string> = {
@@ -124,10 +144,15 @@ export function heuresParJour(h: History, machineId: string): number {
   return jours > 0 ? heuresMarche(h, machineId, h.debut, h.fin) / jours : 0;
 }
 
-/** Passage de maintenance ramené à une heure ouvrée : 13 h, entre les deux équipes, jamais le dimanche. */
-function heureOuvree(t: number, now: number): number {
+/**
+ * Passage de maintenance ramené à une heure ouvrée, jamais le dimanche ni dans le futur. L'heure, entre 6 h et 19 h 45
+ * au quart d'heure, est tirée de l'identifiant de la tâche (même tirage que HeureOuvree côté back) : les entretiens ne
+ * tombent plus tous à 13 h.
+ */
+function heureOuvree(cle: string, t: number, now: number): number {
+  const minutes = 6 * 60 + Math.floor(hashNoise(hashString(cle), 13) * 14 * 4) * 15;
   const d = new Date(t);
-  d.setHours(13, 0, 0, 0);
+  d.setHours(0, minutes, 0, 0);
   if (d.getDay() === 0) d.setDate(d.getDate() - 1);
   while (d.getTime() > now) d.setDate(d.getDate() - 1);
   return d.getTime();
@@ -191,6 +216,11 @@ export function serieTendance(h: History, machine: Machine, point: PointDeMesure
   return out;
 }
 
+/** Dernière saisie d'une tâche du plan sur une machine, avant `now`. */
+function dernierPassageSaisi(saisies: Saisie[], machineId: string, tacheId: string, now: number): Saisie | undefined {
+  return saisies.filter((s) => s.machineId === machineId && s.tacheId === tacheId && s.date <= now).sort((a, b) => b.date - a.date)[0];
+}
+
 /** Échéances du plan de maintenance d'une machine. */
 export function echeances(h: History, machine: Machine, now: number, saisies: Saisie[] = []): Echeance[] {
   const type = MACHINE_TYPES[machine.type];
@@ -213,8 +243,14 @@ export function echeances(h: History, machine: Machine, now: number, saisies: Sa
       const point = model.points.find((p) => p.organeId === base.organeId && p.cle === t.point);
       const seuil = point?.seuils.alarmeHaut ?? point?.seuils.alarmeBas ?? 0;
       const tend = point ? tendance(h, machine, point, now) : null;
-      const valeur = tend?.valeur ?? point?.nominal ?? 0;
-      const echeance = tend && tend.pente > 0 && seuil > valeur ? now + ((seuil - valeur) / tend.pente) * DAY : undefined;
+      // Les points suivis par le plan sont des compteurs d'usure (heures de blanchet, mètres d'outil) : une fois la
+      // pièce changée et consignée, le compteur repart de zéro à la date de la saisie et reprend au rythme de la
+      // tendance. Sans cela, la tâche consignée restait « en retard » sur une mesure que le simulateur ne remet pas
+      // à zéro.
+      const fait = dernierPassageSaisi(saisies, machine.id, t.id, now);
+      const pente = tend && tend.pente > 0 ? tend.pente : 0;
+      const valeur = fait ? (pente * (now - fait.date)) / DAY : (tend?.valeur ?? point?.nominal ?? 0);
+      const echeance = pente && seuil > valeur ? now + ((seuil - valeur) / pente) * DAY : undefined;
       const progression = seuil ? valeur / seuil : 0;
       const attention = point?.seuils.attentionHaut;
       return {
@@ -226,15 +262,16 @@ export function echeances(h: History, machine: Machine, now: number, saisies: Sa
         progression,
         statut: valeur >= seuil ? 'en_retard' : (attention !== undefined && valeur >= attention) ? 'a_planifier' : statutPar(progression, echeance, now),
         echeance,
+        dernierPassage: fait?.date,
         pointId: point?.id,
       } satisfies Echeance;
     }
     // Systématique : dernier passage tiré de l'identifiant (stable d'une visite à l'autre), sauf saisie plus récente.
     const intervalle = t.intervalle ?? 1;
     const unite = t.unite ?? 'h';
-    const fait = saisies.filter((s) => s.machineId === machine.id && s.tacheId === t.id && s.date <= now).sort((a, b) => b.date - a.date)[0];
+    const fait = dernierPassageSaisi(saisies, machine.id, t.id, now);
     const consomme = (0.15 + hashNoise(hashString(base.id), 7) * 0.97) * intervalle;
-    const dernierPassage = fait?.date ?? heureOuvree(now - (unite === 'j' ? consomme : consomme / hpj) * DAY, now);
+    const dernierPassage = fait?.date ?? heureOuvree(base.id, now - (unite === 'j' ? consomme : consomme / hpj) * DAY, now);
     const compteur =
       unite === 'j' ? (now - dernierPassage) / DAY : dernierPassage >= h.debut ? heuresMarche(h, machine.id, dernierPassage, now) : fait ? 0 : consomme;
     const restant = intervalle - compteur;

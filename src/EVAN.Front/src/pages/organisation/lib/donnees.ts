@@ -9,8 +9,12 @@ import { getHistory, periodAt, type History } from '@/sim/history';
 import { resumeExploitation, trsParJour, type ResumeExploitation } from '@/analytics/organisation';
 import { echeances, previsions, type Saisie } from '@/analytics/maintenance';
 
-/** Une couleur par usine, dans l'ordre de l'organisation (la couleur suit l'usine, pas son rang). */
-export const COULEURS_USINES = ['var(--series-1)', 'var(--series-2)', 'var(--series-3)', 'var(--series-4)'];
+/**
+ * Une encre par usine, dans l'ordre de l'organisation (elle suit l'usine, pas son rang) : la première au vermillon
+ * EVAN, comme la série qui mène les autres graphiques, les suivantes en paliers de gris. Aucune teinte d'état : la
+ * forme de chaque usine (rond, carré, losange, triangle) et le tracé des lignes font la différence.
+ */
+export const COULEURS_USINES = ['var(--accent-2)', 'var(--text-2)', 'var(--text-3)', 'var(--idle)'];
 
 const H = 3_600_000;
 

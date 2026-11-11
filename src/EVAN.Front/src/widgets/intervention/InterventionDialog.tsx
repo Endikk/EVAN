@@ -1,16 +1,21 @@
 /**
  * Consigner une intervention (bon de travail clos) : réparation après panne, entretien (une tâche du plan réalisée
  * repart de zéro) ou simple observation. Préremplie depuis l'écran d'origine : tâche à planifier, panne résolue,
- * machine.
+ * machine. Le même bon corrige une saisie faite à l'écran (« Corriger » dans le journal).
  *
- * Le formulaire se lit en quatre étapes visibles (quoi, où, ce qui a été fait, quand et qui). Une aide reste sous un
- * champ seulement si elle sert à le remplir juste (un exemple, une conséquence) : un libellé clair suffit aux autres.
- * Une erreur dit quel champ pose problème et pourquoi, l'envoi se voit et la confirmation redit ce qui a été
- * enregistré. Pendant la visite guidée, le bon se ferme dès l'envoi, comme avant.
+ * Le formulaire se lit en quatre étapes visibles (quoi, où, ce qui a été fait, quand et qui). Prérempli, le type et la
+ * machine se résument en une ligne qu'un clic rouvre : le bouton d'envoi reste ainsi à portée, et il reste collé au
+ * bas de la fenêtre quand elle défile. Une aide reste sous un champ seulement si elle sert à le remplir juste ; une
+ * erreur dit quel champ pose problème et pourquoi, dans l'ordre du formulaire ; l'envoi se voit et la confirmation
+ * redit ce qui a été enregistré. Une fois le bon fermé, un avis laisse dix secondes pour annuler.
+ *
+ * Fenêtre modale : le focus y entre et y reste. Un clic à côté ne la ferme plus quand un champ a changé, et Échap
+ * demande d'abord si l'on veut perdre la saisie. Pendant la visite guidée, le bon se ferme dès l'envoi, comme avant.
  */
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode, type RefObject } from 'react';
 import { AlertTriangle, ClipboardCheck, LoaderCircle, X } from 'lucide-react';
 import { useUi, type PreSaisie } from '@/store/ui';
+import { usePiegeFocus } from '@/ui/usePiegeFocus';
 import { useProject } from '@/store/project';
 import { useCarnet } from '@/store/carnet';
 import { useLive } from '@/store/live';
@@ -20,6 +25,10 @@ import { getSource } from '@/realtime/source';
 import { InfoTip } from '@/ui/InfoTip';
 import { fmtDuration, fmtNombre } from '@/ui/format';
 import { Select } from '@/ui/Select';
+import { ecrireDuree, lireDuree } from './duree';
+import { debutPropose, DUREE_DEFAUT, NOM_CHAMP, ORDRE, TITRE_MIN, verifier, type Champ, type Erreurs, type Valeurs } from './bon';
+import { QuestionQuitter, useGardeSaisie } from './Garde';
+import { useRetourFocus } from './retourFocus';
 import './intervention.css';
 
 export function InterventionDialog() {
@@ -35,10 +44,6 @@ const TYPES: { id: TypeIntervention; titre: string; terme?: 'curatif' | 'prevent
   { id: 'observation', titre: 'Observation', aide: 'Un constat sans intervention : bruit, fuite.' },
 ];
 
-const DUREE_MAX_MIN = 24 * 60;
-const TITRE_MIN = 3;
-/** Petite tolérance sur l'heure saisie, pour une horloge de poste un peu en avance. */
-const AVANCE_TOLEREE_MS = 5 * 60_000;
 /** Le temps de voir que l'envoi part, sans faire attendre. */
 const ENVOI_MS = 350;
 
@@ -49,35 +54,6 @@ function versChamp(t: number) {
   const d = new Date(t);
   d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
   return d.toISOString().slice(0, 16);
-}
-
-type Champ = 'machine' | 'titre' | 'duree' | 'date';
-type Erreurs = Partial<Record<Champ, string>>;
-
-const NOM_CHAMP: Record<Champ, string> = { machine: 'machine', titre: 'ce qui a été fait', duree: 'durée', date: 'date' };
-
-interface Valeurs {
-  machineId: string;
-  titre: string;
-  duree: string;
-  date: string;
-}
-
-/** Contrôle du bon avant enregistrement : chaque message dit quoi corriger. */
-function verifier(v: Valeurs, machineExiste: boolean, now: number): Erreurs {
-  const e: Erreurs = {};
-  if (!v.machineId || !machineExiste) e.machine = 'Choisissez la machine sur laquelle vous êtes intervenu.';
-  const titre = v.titre.trim();
-  if (!titre) e.titre = 'Écrivez en quelques mots ce qui a été fait.';
-  else if (titre.length < TITRE_MIN) e.titre = `L’intitulé est trop court : au moins ${TITRE_MIN} caractères.`;
-  const brut = v.duree.trim();
-  const d = Number(brut);
-  if (!brut || !/^\d+$/.test(brut)) e.duree = 'En minutes et en chiffres, par exemple 45.';
-  else if (d > DUREE_MAX_MIN) e.duree = `Une intervention dure au plus 24 h (${fmtNombre(DUREE_MAX_MIN)} min). Au-delà, consignez-en une par jour.`;
-  const t = new Date(v.date).getTime();
-  if (!v.date || Number.isNaN(t)) e.date = 'Indiquez la date et l’heure de l’intervention.';
-  else if (t > now + AVANCE_TOLEREE_MS) e.date = 'Cette date est dans le futur : on consigne ce qui a déjà été fait.';
-  return e;
 }
 
 function Coche({ faite }: { faite: boolean }) {
@@ -135,45 +111,74 @@ const decrit = (id: string, erreur?: string, aide = true) => (erreur ? `${id}-er
 function InterventionForm({ initial }: { initial: PreSaisie }) {
   const machines = useProject((s) => s.machines);
   const perso = useProject((s) => s.perso);
-  const [machineId, setMachineId] = useState(initial.machineId ?? machines[0]?.id ?? '');
+  // Saisie corrigée depuis le journal : le bon la remplace au lieu d'en ajouter une.
+  const [correction, setCorrection] = useState(() => {
+    const id = useCarnet.getState().enCorrection;
+    return id ? useCarnet.getState().saisies.find((x) => x.id === id) : undefined;
+  });
+  // Sans machine désignée par l'écran d'origine, le bon n'en choisit aucune : l'étape reste à remplir.
+  const [machineId, setMachineId] = useState(initial.machineId ?? '');
   const [type, setType] = useState<TypeIntervention>(initial.type ?? 'curative');
   const [tacheId, setTacheId] = useState(initial.tacheId ?? '');
   const [organeId, setOrganeId] = useState(initial.organeId ?? '');
   const [titre, setTitre] = useState(initial.titre ?? '');
   const [compteRendu, setCompteRendu] = useState(initial.compteRendu ?? '');
-  const [duree, setDuree] = useState(String(initial.duree ?? 30));
+  // Une panne réparée en moins d'une minute arrive avec une durée nulle : on propose la minute entière.
+  const [duree, setDuree] = useState(() => ecrireDuree(Math.max(1, initial.duree ?? DUREE_DEFAUT)));
   const [auteur, setAuteur] = useState(initial.auteur ?? 'Maintenance');
-  const [date, setDate] = useState(() => versChamp(initial.date ?? Date.now()));
+  const [date, setDate] = useState(() => versChamp(initial.date ?? debutPropose(Date.now(), initial.duree ?? DUREE_DEFAUT)));
+  // Tant qu'on n'a pas touché au début, il suit la durée : maintenant moins la durée.
+  const [dateTouchee, setDateTouchee] = useState(initial.date !== undefined);
+  // Les valeurs de départ : un bon qui n'en a pas changé se ferme sans question.
+  const [depart, setDepart] = useState(() => ({ machineId, type, tacheId, organeId, titre, compteRendu, duree, auteur, date }));
+  // Prérempli (type et machine connus), le début du bon se résume en une ligne.
+  const [resume, setResume] = useState(() => !!(initial.machineId && initial.type && machines.some((m) => m.id === initial.machineId)));
   const [tente, setTente] = useState(false);
   const [envoi, setEnvoi] = useState(false);
   const [fait, setFait] = useState<Saisie | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
   const premier = useRef<HTMLInputElement>(null);
   const fermerRef = useRef<HTMLButtonElement>(null);
   const timer = useRef<number | undefined>(undefined);
-  const close = () => useUi.getState().setSaisie(null);
 
   const machine = machines.find((m) => m.id === machineId);
   const model = useMemo(() => (machine ? machineModel(machine, perso[machine.id]) : null), [machine, perso]);
   const plan = machine ? (MACHINE_TYPES[machine.type]?.maintenance ?? []) : [];
   const valeurs: Valeurs = { machineId, titre, duree, date };
+  const modifie =
+    !fait &&
+    (machineId !== depart.machineId ||
+      type !== depart.type ||
+      tacheId !== depart.tacheId ||
+      organeId !== depart.organeId ||
+      titre !== depart.titre ||
+      compteRendu !== depart.compteRendu ||
+      duree !== depart.duree ||
+      auteur !== depart.auteur ||
+      (dateTouchee && date !== depart.date));
 
-  // Focus sur la première étape à l'ouverture, retour à l'élément d'origine à la fermeture.
-  useEffect(() => {
-    const avant = document.activeElement as HTMLElement | null;
-    premier.current?.focus();
-    // Une liste de choix ouverte traite Échap elle-même (et le marque) : elle se ferme, le bon reste ouvert.
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && !e.defaultPrevented && close();
-    window.addEventListener('keydown', onKey);
-    return () => {
-      window.removeEventListener('keydown', onKey);
-      window.clearTimeout(timer.current);
-      avant?.focus?.();
-    };
-  }, []);
+  /** Ferme le bon. Après un enregistrement, un avis laisse dix secondes pour revenir dessus. */
+  const close = () => {
+    useUi.getState().setSaisie(null);
+    useCarnet.getState().setEnCorrection(null);
+    if (fait) avisApres(fait, machine?.numero ?? '', correction);
+  };
+  const garde = useGardeSaisie(modifie, close);
+
+  // Le focus entre dans le bon et y reste ; il revient à l'élément d'origine, ou à sa voisine s'il a disparu.
+  useRetourFocus();
+  usePiegeFocus(formRef, true, fait ? close : garde.echap);
+  useEffect(() => () => window.clearTimeout(timer.current), []);
 
   useEffect(() => {
     if (fait) fermerRef.current?.focus();
   }, [fait]);
+
+  const changerDuree = (v: string) => {
+    setDuree(v);
+    const d = lireDuree(v);
+    if (!dateTouchee && d) setDate(versChamp(debutPropose(Date.now(), d)));
+  };
 
   // Les erreurs ne s'affichent qu'après un premier envoi, puis suivent les corrections à mesure qu'on tape.
   const erreurs: Erreurs = tente ? verifier(valeurs, !!machine, Date.now()) : {};
@@ -184,23 +189,25 @@ function InterventionForm({ initial }: { initial: PreSaisie }) {
     if (!t || !machine) return;
     setTitre(t.tache);
     setOrganeId(`${machine.id}.o${t.organe}`);
-    setDuree(String(t.duree));
+    changerDuree(ecrireDuree(t.duree));
   };
 
   const enregistrer = (): Saisie | null => {
     if (!machine) return null;
-    const s = useCarnet.getState().ajouter({
+    const contenu = {
       machineId: machine.id,
       organeId: organeId || undefined,
       type,
       // Une heure saisie un peu en avance (horloge du poste) est ramenée à maintenant : le carnet ne connaît pas le futur.
       date: Math.min(new Date(date).getTime() || Date.now(), Date.now()),
-      duree: Math.max(0, Number(duree) || 0),
+      duree: Math.max(1, lireDuree(duree) ?? DUREE_DEFAUT),
       titre: titre.trim(),
       compteRendu: compteRendu.trim() || undefined,
       auteur: auteur.trim() || 'Maintenance',
       tacheId: type === 'preventive' && tacheId ? tacheId : undefined,
-    });
+    };
+    if (correction) return useCarnet.getState().corriger(correction.id, contenu) ?? null;
+    const s = useCarnet.getState().ajouter(contenu);
     getSource()?.logIntervention(s, `${machine.numero} ${machine.nom}`);
     return s;
   };
@@ -210,7 +217,7 @@ function InterventionForm({ initial }: { initial: PreSaisie }) {
     if (envoi) return;
     const errs = verifier(valeurs, !!machine, Date.now());
     setTente(true);
-    const fautif = (Object.keys(errs) as Champ[])[0];
+    const fautif = ORDRE.find((c) => errs[c]);
     if (fautif) {
       document.getElementById(`iv-${fautif}`)?.focus();
       return;
@@ -230,12 +237,23 @@ function InterventionForm({ initial }: { initial: PreSaisie }) {
   };
 
   const recommencer = () => {
+    useCarnet.getState().setEnCorrection(null);
+    setCorrection(undefined);
+    const nouvelleDate = versChamp(debutPropose(Date.now(), lireDuree(duree) ?? DUREE_DEFAUT));
     setFait(null);
     setTente(false);
+    setResume(false);
     setTacheId('');
     setTitre('');
     setCompteRendu('');
-    setDate(versChamp(Date.now()));
+    setDateTouchee(false);
+    setDate(nouvelleDate);
+    setDepart({ machineId, type, tacheId: '', organeId, titre: '', compteRendu: '', duree, auteur, date: nouvelleDate });
+    window.setTimeout(() => premier.current?.focus(), 0);
+  };
+
+  const rouvrir = () => {
+    setResume(false);
     window.setTimeout(() => premier.current?.focus(), 0);
   };
 
@@ -243,10 +261,15 @@ function InterventionForm({ initial }: { initial: PreSaisie }) {
   const etape3 = titre.trim().length >= TITRE_MIN;
   const quand = verifier(valeurs, true, Date.now());
   const etape4 = !quand.duree && !quand.date;
+  const typeChoisi = TYPES.find((t) => t.id === type)!;
+  const organeNom = model?.organes.find((o) => o.id === organeId)?.nom;
+  const tacheNom = type === 'preventive' && tacheId ? plan.find((t) => t.id === tacheId)?.tache : undefined;
+  const avecResume = resume && !!machine && !fait;
 
   return (
-    <div className="modal-backdrop" onMouseDown={close}>
+    <div className="modal-backdrop" onMouseDown={fait ? close : garde.fond}>
       <form
+        ref={formRef}
         className="modal wide iv"
         role="dialog"
         aria-modal="true"
@@ -261,65 +284,101 @@ function InterventionForm({ initial }: { initial: PreSaisie }) {
           <X />
         </button>
         {fait && machine ? (
-          <Confirmation s={fait} machineLabel={`${machine.numero} ${machine.nom}`} organe={model?.organes.find((o) => o.id === fait.organeId)?.nom} plan={plan} fermer={close} recommencer={recommencer} fermerRef={fermerRef} />
+          <Confirmation
+            s={fait}
+            corrigee={!!correction}
+            machineLabel={`${machine.numero} ${machine.nom}`}
+            organe={model?.organes.find((o) => o.id === fait.organeId)?.nom}
+            plan={plan}
+            fermer={close}
+            recommencer={recommencer}
+            fermerRef={fermerRef}
+          />
         ) : (
           <>
             <span className="modal-icon accent">
               <ClipboardCheck />
             </span>
             <h2 id="iv-title" className="iv-titre">
-              Consigner une intervention
+              {correction ? 'Corriger une intervention' : 'Consigner une intervention'}
               <InfoTip label="Comprendre : consigner une intervention">
                 <p>Le bon rejoint le carnet de la machine et le journal des interventions. Une tâche du plan consignée repart de zéro.</p>
+                <p>Pour une intervention à faire plus tard, utilisez « Planifier » dans le détail de l’entretien ou sur une dérive.</p>
               </InfoTip>
             </h2>
 
-            <Etape n={1} titre="Quel type d’intervention ?" faite>
-              <div className="iv-types" role="radiogroup" aria-label="Type d’intervention">
-                {TYPES.map((t) => (
-                  <label key={t.id} className={`iv-type ${type === t.id ? 'choisi' : ''}`}>
-                    <input ref={type === t.id ? premier : undefined} type="radio" name="iv-type" value={t.id} checked={type === t.id} onChange={() => setType(t.id)} />
-                    <span className="iv-type-titre">{t.titre}</span>
-                    <span className="iv-type-aide">{t.aide}</span>
-                  </label>
-                ))}
+            {avecResume ? (
+              <div className="iv-prerempli">
+                <span className="iv-num" aria-hidden>
+                  <Coche faite />
+                </span>
+                <p>
+                  <b>{typeChoisi.titre}</b> sur {machine.numero} {machine.nom}
+                  {organeNom ? `, ${organeNom}` : ', machine entière'}
+                  {tacheNom ? <span className="iv-prerempli-tache">Tâche du plan : {tacheNom}</span> : null}
+                </p>
+                <button type="button" className="btn sm ghost" onClick={rouvrir} aria-label="Modifier le type, la machine et la tâche">
+                  Modifier
+                </button>
               </div>
-            </Etape>
+            ) : (
+              <>
+                <Etape n={1} titre="Quel type d’intervention ?" faite>
+                  <div className="iv-types" role="radiogroup" aria-label="Type d’intervention">
+                    {TYPES.map((t) => (
+                      <label key={t.id} className={`iv-type ${type === t.id ? 'choisi' : ''}`}>
+                        <input
+                          ref={type === t.id ? premier : undefined}
+                          type="radio"
+                          name="iv-type"
+                          value={t.id}
+                          checked={type === t.id}
+                          data-autofocus={type === t.id ? true : undefined}
+                          onChange={() => setType(t.id)}
+                        />
+                        <span className="iv-type-titre">{t.titre}</span>
+                        <span className="iv-type-aide">{t.aide}</span>
+                      </label>
+                    ))}
+                  </div>
+                </Etape>
 
-            <Etape n={2} titre="Sur quelle machine ?" faite={!!machine}>
-              <div className="form-grid">
-                <Champ id="iv-machine" label="Machine" erreur={erreurs.machine}>
-                  <Select
-                    id="iv-machine"
-                    value={machineId}
-                    aria-invalid={!!erreurs.machine}
-                    aria-describedby={decrit('iv-machine', erreurs.machine, false)}
-                    onChange={(v) => (setMachineId(v), setTacheId(''), setOrganeId(''))}
-                    options={machines.map((m) => ({ value: m.id, label: `${m.numero} · ${m.nom}` }))}
-                  />
-                </Champ>
-                <Champ id="iv-organe" label="Organe" aide="La partie de la machine. « Machine entière » si vous hésitez.">
-                  <Select
-                    id="iv-organe"
-                    value={organeId}
-                    aria-describedby="iv-organe-aide"
-                    onChange={setOrganeId}
-                    options={[{ value: '', label: 'Machine entière' }, ...(model?.organes ?? []).map((o) => ({ value: o.id, label: `${o.numero}. ${o.nom}` }))]}
-                  />
-                </Champ>
-                {type === 'preventive' && plan.length > 0 && (
-                  <Champ id="iv-tache" label="Tâche du plan réalisée" className="span-2" aide="Remet son compteur à zéro. « Hors plan » si elle n’est pas au plan.">
-                    <Select
-                      id="iv-tache"
-                      value={tacheId}
-                      aria-describedby="iv-tache-aide"
-                      onChange={choisirTache}
-                      options={[{ value: '', label: 'Hors plan' }, ...plan.map((t) => ({ value: t.id, label: t.tache }))]}
-                    />
-                  </Champ>
-                )}
-              </div>
-            </Etape>
+                <Etape n={2} titre="Sur quelle machine ?" faite={!!machine}>
+                  <div className="form-grid">
+                    <Champ id="iv-machine" label="Machine" erreur={erreurs.machine}>
+                      <Select
+                        id="iv-machine"
+                        value={machineId}
+                        aria-invalid={!!erreurs.machine}
+                        aria-describedby={decrit('iv-machine', erreurs.machine, false)}
+                        onChange={(v) => (setMachineId(v), setTacheId(''), setOrganeId(''))}
+                        options={[{ value: '', label: 'Choisir la machine' }, ...machines.map((m) => ({ value: m.id, label: `${m.numero} · ${m.nom}` }))]}
+                      />
+                    </Champ>
+                    <Champ id="iv-organe" label="Organe" aide="La partie de la machine. « Machine entière » si vous hésitez.">
+                      <Select
+                        id="iv-organe"
+                        value={organeId}
+                        aria-describedby="iv-organe-aide"
+                        onChange={setOrganeId}
+                        options={[{ value: '', label: 'Machine entière' }, ...(model?.organes ?? []).map((o) => ({ value: o.id, label: `${o.numero}. ${o.nom}` }))]}
+                      />
+                    </Champ>
+                    {type === 'preventive' && plan.length > 0 && (
+                      <Champ id="iv-tache" label="Tâche du plan réalisée" className="span-2" aide="Remet son compteur à zéro. « Hors plan » si elle n’est pas au plan.">
+                        <Select
+                          id="iv-tache"
+                          value={tacheId}
+                          aria-describedby="iv-tache-aide"
+                          onChange={choisirTache}
+                          options={[{ value: '', label: 'Hors plan' }, ...plan.map((t) => ({ value: t.id, label: t.tache }))]}
+                        />
+                      </Champ>
+                    )}
+                  </div>
+                </Etape>
+              </>
+            )}
 
             <Etape n={3} titre="Qu’avez-vous fait ?" faite={etape3}>
               <div className="form-grid">
@@ -332,6 +391,7 @@ function InterventionForm({ initial }: { initial: PreSaisie }) {
                     autoComplete="off"
                     aria-invalid={!!erreurs.titre}
                     aria-describedby={decrit('iv-titre', erreurs.titre)}
+                    data-autofocus={avecResume ? true : undefined}
                     onChange={(e) => setTitre(e.target.value)}
                   />
                 </Champ>
@@ -352,22 +412,19 @@ function InterventionForm({ initial }: { initial: PreSaisie }) {
                     max={versChamp(Date.now())}
                     aria-invalid={!!erreurs.date}
                     aria-describedby={decrit('iv-date', erreurs.date, false)}
-                    onChange={(e) => setDate(e.target.value)}
+                    onChange={(e) => (setDate(e.target.value), setDateTouchee(true))}
                   />
                 </Champ>
                 <Champ id="iv-duree" label="Durée" erreur={erreurs.duree}>
-                  <span className="input-unit">
-                    <input
-                      id="iv-duree"
-                      className="input num"
-                      inputMode="numeric"
-                      value={duree}
-                      aria-invalid={!!erreurs.duree}
-                      aria-describedby={decrit('iv-duree', erreurs.duree, false)}
-                      onChange={(e) => setDuree(e.target.value)}
-                    />
-                    <i>min</i>
-                  </span>
+                  <input
+                    id="iv-duree"
+                    className="input num"
+                    value={duree}
+                    autoComplete="off"
+                    aria-invalid={!!erreurs.duree}
+                    aria-describedby={decrit('iv-duree', erreurs.duree, false)}
+                    onChange={(e) => changerDuree(e.target.value)}
+                  />
                 </Champ>
                 <Champ id="iv-auteur" label="Intervenant">
                   <input id="iv-auteur" className="input" value={auteur} maxLength={60} autoComplete="name" onChange={(e) => setAuteur(e.target.value)} />
@@ -380,7 +437,7 @@ function InterventionForm({ initial }: { initial: PreSaisie }) {
                 <AlertTriangle aria-hidden />
                 <span>
                   {nbErreurs > 1 ? `${nbErreurs} champs à corriger : ` : 'Un champ à corriger : '}
-                  {(Object.keys(erreurs) as Champ[]).map((c, i) => (
+                  {ORDRE.filter((c) => erreurs[c]).map((c, i) => (
                     <span key={c}>
                       {i > 0 && ', '}
                       <button type="button" className="iv-lien" onClick={() => document.getElementById(`iv-${c}`)?.focus()}>
@@ -394,13 +451,19 @@ function InterventionForm({ initial }: { initial: PreSaisie }) {
             )}
 
             <div className="iv-pied">
-              <button type="button" className="btn" onClick={close}>
-                Annuler
-              </button>
-              <button type="submit" className="btn primary" disabled={envoi}>
-                {envoi ? <LoaderCircle className="iv-tourne" aria-hidden /> : <ClipboardCheck />}
-                {envoi ? 'Enregistrement…' : 'Consigner'}
-              </button>
+              {garde.quitter ? (
+                <QuestionQuitter rester={garde.rester} quitter={close} />
+              ) : (
+                <>
+                  <button type="button" className="btn" onClick={close}>
+                    Annuler
+                  </button>
+                  <button type="submit" className="btn primary" disabled={envoi}>
+                    {envoi ? <LoaderCircle className="iv-tourne" aria-hidden /> : <ClipboardCheck />}
+                    {envoi ? 'Enregistrement…' : correction ? 'Enregistrer la correction' : 'Consigner'}
+                  </button>
+                </>
+              )}
             </div>
           </>
         )}
@@ -409,8 +472,31 @@ function InterventionForm({ initial }: { initial: PreSaisie }) {
   );
 }
 
+/**
+ * L'avis qui suit la fermeture du bon : ce qui a été noté, et dix secondes pour l'annuler (la saisie est retirée du
+ * carnet, ou la correction défaite).
+ */
+function avisApres(s: Saisie, numero: string, avant?: Saisie) {
+  const carnet = useCarnet.getState();
+  useLive.getState().pushToast({
+    gravite: 'succes',
+    titre: avant ? 'Intervention corrigée' : 'Intervention consignée',
+    texte: `${numero} · ${s.titre}${s.tacheId && !avant ? ' · compteur remis à zéro' : ''}`,
+    action: {
+      libelle: 'Annuler',
+      faire: () => {
+        if (avant) {
+          const { id, ...contenu } = avant;
+          carnet.corriger(id, contenu);
+        } else carnet.retirer(s.id);
+      },
+    },
+  });
+}
+
 interface ConfirmationProps {
   s: Saisie;
+  corrigee: boolean;
   machineLabel: string;
   organe?: string;
   plan: { id: string; tache: string; nature: 'systematique' | 'conditionnelle'; intervalle?: number; unite?: 'h' | 'j' }[];
@@ -420,7 +506,7 @@ interface ConfirmationProps {
 }
 
 /** Ce qui a été enregistré, redit en clair, et ce que ça change pour la tâche du plan. */
-function Confirmation({ s, machineLabel, organe, plan, fermer, recommencer, fermerRef }: ConfirmationProps) {
+function Confirmation({ s, corrigee, machineLabel, organe, plan, fermer, recommencer, fermerRef }: ConfirmationProps) {
   const type = TYPES.find((t) => t.id === s.type)!;
   const tache = s.tacheId ? plan.find((t) => t.id === s.tacheId) : undefined;
   const rythme = tache?.intervalle ? (tache.unite === 'j' ? `dans ${fmtNombre(tache.intervalle)} jours` : `dans ${fmtNombre(tache.intervalle)} h de marche`) : undefined;
@@ -429,8 +515,10 @@ function Confirmation({ s, machineLabel, organe, plan, fermer, recommencer, ferm
       <span className="iv-ok-icone" aria-hidden>
         <Coche faite />
       </span>
-      <h2 id="iv-title">Intervention consignée</h2>
-      <p className="muted">Dans le carnet de {machineLabel} et le journal des interventions.</p>
+      <h2 id="iv-title">{corrigee ? 'Intervention corrigée' : 'Intervention consignée'}</h2>
+      <p className="muted">
+        {corrigee ? `Le carnet de ${machineLabel} et le journal des interventions sont à jour.` : `Dans le carnet de ${machineLabel} et le journal des interventions.`}
+      </p>
       <dl className="iv-recap">
         <div>
           <dt>Type</dt>
@@ -468,7 +556,7 @@ function Confirmation({ s, machineLabel, organe, plan, fermer, recommencer, ferm
         <p className="iv-ok-note">
           {tache.nature === 'systematique'
             ? `La tâche « ${tache.tache} » repart de zéro${rythme ? ` : prochain passage ${rythme}` : ''}.`
-            : `La tâche « ${tache.tache} » suit une mesure d’usure : sa prochaine date dépend de la mesure.`}
+            : `La tâche « ${tache.tache} » repart de zéro : son compteur d’usure recommence à la date de l’intervention, la prochaine date suit la mesure.`}
         </p>
       )}
       <div className="iv-pied">

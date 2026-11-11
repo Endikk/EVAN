@@ -29,7 +29,15 @@ export function useEtatOuverte() {
   const configure = useProject((s) => s.configure);
   const recu = useLive((s) => Object.keys(s.machines).length > 0);
   const status = usePlantStatus();
-  return configure && recu ? ETAT_DIRECT[status] : undefined;
+  // Une panne d'exercice (« Simuler une panne ») ne fait pas passer l'usine au cramoisi : le cramoisi reste aux
+  // pannes réelles, comme sur la fiche et dans les avis.
+  const exerciceSeul = useLive((s) => {
+    const ouvertes = s.alarms.filter((a) => a.statut !== 'resolue' && a.gravite === 'critique');
+    return ouvertes.length > 0 && ouvertes.every((a) => a.exercice);
+  });
+  if (!configure || !recu) return undefined;
+  if (status === 'crit' && exerciceSeul) return { ton: 'neutre' as Ton, mot: 'Exercice de panne' };
+  return ETAT_DIRECT[status];
 }
 
 /** Ouvre une usine de l'organisation ; depuis la vue d'ensemble, choisir l'usine active revient simplement sur elle. */
@@ -60,7 +68,8 @@ export function UsineMenu() {
       if (!root.current?.contains(e.target as Node)) setOpen(false);
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
+      if (e.key !== 'Escape' || e.defaultPrevented) return;
+      e.preventDefault();
       setOpen(false);
       button.current?.focus();
     };
@@ -195,9 +204,8 @@ function UsinePanel({ onClose }: { onClose: () => void }) {
           return (
             <li key={u.id} className="usine-entree" style={entree(debutListe + i)}>
               <button className={`usine-item ${ici ? 'on' : ''}`} aria-current={ici ? 'true' : undefined} onClick={() => choose(u.id)}>
-                <span className="usine-item-glyphe">
-                  <TonGlyph ton={ton} />
-                </span>
+                {/* Pas de repère pour une usine fermée : son état n'est connu qu'à l'ouverture (voir UsinesListe). */}
+                <span className="usine-item-glyphe">{direct && <TonGlyph ton={ton} />}</span>
                 <span className="usine-item-txt">
                   <b className="truncate">{u.nom}</b>
                   {u.adresse && <span className="muted truncate">{u.adresse}</span>}

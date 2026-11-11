@@ -10,6 +10,9 @@ import { useReducedMotion } from '@/store/ui';
 import { Details, TitreCarte } from '@/ui/explain';
 import { fmtDay, fmtNombre, pct } from '@/ui/format';
 import { arretsLesPlusLongs, type Ligne } from '../lib/donnees';
+
+/** Libellés des axes : en mono et en gris, les lignes gardent la vedette. */
+const TICK = { fontSize: 11, fill: 'var(--text-3)', fontFamily: 'var(--mono)' };
 import { ecartsParType, fr, leconArrets, leconComparables, leconEfficacite, TRS_POINTE } from '../lib/lecture';
 
 /** Forme du point de chaque usine : la couleur n'est jamais seule pour les distinguer. */
@@ -63,9 +66,18 @@ function EfficaciteJours({ lignes }: { lignes: Ligne[] }) {
     return [...parJour.entries()].sort((a, b) => a[0] - b[0]).map(([t, v]) => ({ t, ...v }));
   }, [lignes]);
   const lecon = useMemo(() => leconEfficacite(lignes.map((l) => ({ court: l.court, jours: l.jours }))), [lignes]);
+  // Échelle en dizaines rondes : en bas, un peu sous la journée la plus faible ; en haut, juste assez pour voir le
+  // repère de 85 %. Les lignes des usines gardent ainsi la hauteur du graphique.
+  const echelle = useMemo(() => {
+    const valeurs = lignes.flatMap((l) => l.jours.map((d) => Math.round(d.trs * 100)));
+    const bas = valeurs.length ? Math.min(80, Math.max(0, Math.floor((Math.min(...valeurs) - 8) / 10) * 10)) : 0;
+    const haut = valeurs.length ? Math.min(100, Math.max(90, Math.ceil((Math.max(...valeurs) + 5) / 10) * 10)) : 100;
+    const graduations = Array.from({ length: Math.round((haut - bas) / 10) + 1 }, (_, i) => bas + i * 10);
+    return { bas, haut, graduations };
+  }, [lignes]);
 
   return (
-    <article className="card org-bloc" data-guide="org-trs-jours" aria-label="Efficacité des machines, jour par jour">
+    <article className="card org-bloc org-efficacite" data-guide="org-trs-jours" aria-label="Efficacité des machines, jour par jour">
       <TitreCarte
         titre="Efficacité des machines, jour par jour"
         terme="trs"
@@ -75,18 +87,28 @@ function EfficaciteJours({ lignes }: { lignes: Ligne[] }) {
       <Legende lignes={lignes} reference />
       <div className="org-courbe">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={donnees} margin={{ top: 10, right: 14, bottom: 0, left: 0 }}>
+          <LineChart data={donnees} margin={{ top: 10, right: 16, bottom: 0, left: 0 }}>
             <CartesianGrid vertical={false} stroke="var(--grid)" />
-            <XAxis dataKey="t" tickFormatter={fmtDay} tick={{ fontSize: 11, fill: 'var(--text-3)' }} tickLine={false} axisLine={{ stroke: 'var(--grid)' }} minTickGap={12} />
+            <XAxis
+              dataKey="t"
+              tickFormatter={fmtDay}
+              tick={TICK}
+              tickLine={false}
+              axisLine={{ stroke: 'var(--grid)' }}
+              minTickGap={12}
+              padding={{ left: 16, right: 24 }}
+            />
             <YAxis
-              domain={[(min: number) => Math.min(80, Math.max(0, Math.floor((min - 8) / 10) * 10)), 100]}
-              tick={{ fontSize: 11, fill: 'var(--text-3)' }}
+              domain={[echelle.bas, echelle.haut]}
+              ticks={echelle.graduations}
+              tick={TICK}
               tickLine={false}
               axisLine={false}
-              width={44}
+              width={48}
               tickFormatter={(v: number) => `${v} %`}
             />
-            <ReferenceLine y={TRS_POINTE * 100} stroke="var(--text-3)" strokeDasharray="5 4" ifOverflow="extendDomain" />
+            {/* Le repère de 85 % reste en retrait des lignes des usines : un filet, pas une série de plus. */}
+            <ReferenceLine y={TRS_POINTE * 100} stroke="var(--border-strong)" strokeDasharray="5 4" ifOverflow="extendDomain" />
             <Tooltip
               cursor={{ stroke: 'var(--text-3)', strokeWidth: 1 }}
               content={({ active, payload }) =>
@@ -113,7 +135,7 @@ function EfficaciteJours({ lignes }: { lignes: Ligne[] }) {
                 type="monotone"
                 dataKey={l.u.id}
                 stroke={l.couleur}
-                strokeWidth={2.5}
+                strokeWidth={2}
                 strokeDasharray={i % 2 ? '7 4' : undefined}
                 dot={pointForme(i, l.couleur)}
                 activeDot={false}
@@ -135,7 +157,7 @@ function ArretsLongs({ lignes }: { lignes: Ligne[] }) {
   const plusieurs = lignes.length > 1;
   const rang = useMemo(() => Object.fromEntries(lignes.map((l, i) => [l.court, i])), [lignes]);
   return (
-    <article className="card org-bloc" data-guide="org-arrets" aria-label="Les pannes qui ont coûté le plus de temps">
+    <article className="card org-bloc org-arrets-bloc" data-guide="org-arrets" aria-label="Les pannes qui ont coûté le plus de temps">
       <TitreCarte
         titre="Les pannes qui ont coûté le plus de temps"
         aide="Chaque ligne réunit la même panne sur la même machine, sur 7 jours. La barre donne les heures perdues ; le nombre de fois dit si c’est une longue panne ou une petite qui revient."

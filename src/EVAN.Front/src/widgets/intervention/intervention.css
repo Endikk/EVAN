@@ -1,7 +1,8 @@
 /* ============================================================
    Fenêtre « Consigner une intervention » : quatre étapes numérotées dont le numéro devient une coche une fois
    remplie, une aide sous un champ quand elle sert à le remplir, l'erreur à sa place, l'envoi qui se voit, la
-   confirmation.
+   confirmation. Tout reste gris : la sélection prend l'accent (ivoire la nuit, encre le jour), l'erreur son
+   repère cramoisi. Les coches (ui/explain) sont grises : remplir un bon n'est pas l'état d'une machine.
    ============================================================ */
 
 /* Ouvert depuis « Revoir la panne » (même niveau, monté avant elle), le bon passe au-dessus du rejeu. */
@@ -31,8 +32,8 @@
   gap: 8px;
   margin: 0 0 12px;
   padding: 0;
-  font-size: 14.5px;
-  font-weight: 650;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
   color: var(--text);
 }
 .iv-etape-corps {
@@ -46,20 +47,21 @@
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: var(--accent-soft);
-  color: var(--accent-text);
-  font-size: 12.5px;
-  font-weight: 700;
-  transition: background 300ms var(--ease);
+  background: var(--surface-3);
+  color: var(--text-2);
+  font-family: var(--mono);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  transition: background-color var(--dur) var(--ease);
 }
 .iv-num-chiffre {
-  transition: opacity 200ms var(--ease);
+  transition: opacity var(--dur) var(--ease);
 }
 .iv-num .coche {
   position: absolute;
   inset: 2px;
   opacity: 0;
-  transition: opacity 200ms var(--ease);
+  transition: opacity var(--dur) var(--ease);
 }
 .iv-etape.faite .iv-num {
   background: transparent;
@@ -82,14 +84,14 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 12px 12px 12px 38px;
+  padding: 12px 12px 12px 36px;
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   background: var(--surface);
   cursor: pointer;
   transition:
     border-color var(--dur) var(--ease),
-    background var(--dur) var(--ease);
+    background-color var(--dur) var(--ease);
 }
 .iv-type:hover {
   border-color: var(--border-strong);
@@ -121,36 +123,36 @@
   margin-bottom: 4px;
 }
 .iv-type-titre {
-  font-size: 14px;
-  font-weight: 650;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
   color: var(--text);
 }
 .iv-type-aide {
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   line-height: 1.4;
   color: var(--text-2);
 }
 
 /* ---------- Champs : aide dessous, erreur à sa place ---------- */
 .iv-champ > label {
-  font-size: 12.5px;
-  font-weight: 600;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
   color: var(--text-2);
 }
 .iv-champ > label em {
   font-style: normal;
-  font-weight: 450;
+  font-weight: var(--fw-regular);
   color: var(--text-3);
 }
 /* app.css met en petit tout span enfant d'un .field : le champ à unité garde la taille du texte saisi. */
 .iv-champ > .input-unit {
-  font-size: 14px;
-  font-weight: 400;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-regular);
   color: var(--text);
 }
 .iv .iv-aide {
   margin: 0;
-  font-size: 12px;
+  font-size: var(--fs-sm);
   line-height: 1.4;
   color: var(--text-3);
 }
@@ -159,11 +161,11 @@
   align-items: flex-start;
   gap: 8px;
   margin: 0;
-  font-size: 12.5px;
-  font-weight: 560;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
   line-height: 1.4;
   color: var(--crit);
-  animation: entree 260ms var(--ease-out);
+  animation: entree var(--dur-entree) var(--ease);
 }
 .iv-erreur svg,
 .iv-resume svg {
@@ -175,17 +177,18 @@
 .iv-champ.en-erreur .input {
   border-color: var(--crit);
 }
+/* Le résumé des erreurs : un palier de surface et le repère cramoisi, sans aplat rouge. */
 .iv-resume {
   display: flex;
   align-items: flex-start;
   gap: 8px;
   margin-top: 16px;
   padding: 8px 12px;
-  border-radius: var(--r-sm);
-  background: var(--crit-soft);
-  font-size: 13px;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  font-size: var(--fs-md);
   color: var(--text);
-  animation: entree 260ms var(--ease-out);
+  animation: entree var(--dur-entree) var(--ease);
 }
 .iv-resume svg {
   color: var(--crit);
@@ -194,19 +197,126 @@
   padding: 0;
   border: 0;
   background: none;
-  color: var(--crit);
+  color: var(--text);
   font: inherit;
-  font-weight: 620;
+  font-weight: var(--fw-medium);
   text-decoration: underline;
   text-underline-offset: 2px;
   cursor: pointer;
 }
+/* Le pied reste collé au bas de la fenêtre qui défile : « Consigner » reste visible sans descendre sous le pli. Il
+   déborde sur la marge basse de la fenêtre (24 px) pour la couvrir, sur le fond de la fenêtre et sous un filet. */
 .iv-pied {
   display: flex;
   justify-content: flex-end;
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 24px;
+}
+.modal.wide.iv > .iv-pied {
+  position: sticky;
+  bottom: -24px;
+  z-index: 1;
+  margin: 24px -24px -24px;
+  padding: 12px 24px 16px;
+  border-top: 1px solid var(--border);
+  border-radius: 0 0 var(--r-xl) var(--r-xl);
+  background: var(--surface);
+}
+/* Garde de saisie : la question remplace les boutons, au même endroit. */
+.iv-quitter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  width: 100%;
+  animation: entree var(--dur-entree) var(--ease);
+}
+.modal .iv-quitter p {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
+  color: var(--text);
+}
+.iv-quitter-choix {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-left: auto;
+}
+
+/* Bon prérempli : le type, la machine et la tâche en une ligne, que « Modifier » rouvre en deux étapes. */
+.iv-prerempli {
+  display: flex;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 16px 0 0;
+  padding: 12px 0 0;
+  border-top: 1px solid var(--border);
+}
+.iv-prerempli .iv-num {
+  background: transparent;
+}
+.iv-prerempli .iv-num .coche {
+  opacity: 1;
+}
+.modal .iv-prerempli p {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-base);
+  line-height: 1.45;
+  color: var(--text-2);
+}
+.iv-prerempli b {
+  font-weight: var(--fw-medium);
+  color: var(--text);
+}
+.iv-prerempli-tache {
+  display: block;
+  font-size: var(--fs-md);
+  color: var(--text-2);
+}
+
+/* ---------- Planifier une intervention ---------- */
+.modal.wide.pl {
+  width: min(600px, 100%);
+}
+.modal .pl-quoi {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+  font-size: var(--fs-md);
+  color: var(--text-2);
+}
+.pl-quoi b {
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
+  color: var(--text);
+}
+.pl-note {
+  color: var(--text-3);
+}
+.modal .pl-limite {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 8px 12px;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  font-size: var(--fs-md);
+  color: var(--text);
+}
+.pl-limite svg {
+  flex: none;
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+  margin-top: 2px;
+  color: var(--warn);
+}
+.pl .pl-champs {
+  margin-top: 16px;
 }
 .iv-tourne {
   animation: iv-tourne 900ms linear infinite;
@@ -220,26 +330,26 @@
   grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.8fr) minmax(0, 1fr);
 }
 
-/* ---------- Confirmation ---------- */
+/* ---------- Confirmation ----------
+   La coche seule, sans tuile autour : c'est elle qui dit que c'est enregistré. */
 .iv-ok-icone {
   display: grid;
   place-items: center;
-  width: 48px;
-  height: 48px;
-  border-radius: var(--r-md);
-  background: var(--ok-soft);
+  width: 32px;
+  height: 32px;
+  margin-bottom: 12px;
 }
 .iv-ok-icone .coche {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
 }
 .iv-ok .coche-rond {
   transform-box: fill-box;
   transform-origin: center;
-  animation: iv-pop 360ms var(--ease-out) backwards;
+  animation: iv-pop var(--dur-entree) var(--ease) backwards;
 }
 .iv-ok .coche-trait {
-  animation: iv-trace 480ms var(--ease-out) 220ms backwards;
+  animation: iv-trace var(--dur-entree) var(--ease) 200ms backwards;
 }
 @keyframes iv-pop {
   from {
@@ -264,7 +374,7 @@
   gap: 12px;
   padding: 8px 12px;
   border-top: 1px solid var(--border);
-  animation: entree 360ms var(--ease-out) backwards;
+  animation: entree var(--dur-entree) var(--ease) backwards;
 }
 .iv-recap > div:first-child {
   border-top: 0;
@@ -282,20 +392,20 @@
   animation-delay: 200ms;
 }
 .iv-recap dt {
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   color: var(--text-3);
 }
 .iv-recap dd {
   margin: 0;
-  font-size: 13.5px;
+  font-size: var(--fs-base);
   color: var(--text);
 }
 .modal .iv-ok-note {
   margin-top: 12px;
   padding: 8px 12px;
-  border-radius: var(--r-sm);
-  background: var(--ok-soft);
-  font-size: 13px;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  font-size: var(--fs-md);
   color: var(--text);
 }
 

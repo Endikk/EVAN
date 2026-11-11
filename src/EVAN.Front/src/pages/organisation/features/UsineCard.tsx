@@ -5,7 +5,7 @@
  * chaque chiffre sont dans les « ? ».
  */
 import { memo, useId, type CSSProperties } from 'react';
-import { ArrowRight, Factory } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { ChiffresSecondaires, Repere, TonGlyph } from '@/ui/explain';
 import { HeatPlan } from '@/widgets/charts/HeatPlan';
 import { InfoTip } from '@/ui/InfoTip';
@@ -25,6 +25,8 @@ interface Props {
   moyennePannes?: number;
   /** Première carte : c'est elle que le guide désigne. */
   premiere: boolean;
+  /** Haut de l'échelle des plans des pannes (ms), commun à toutes les usines : une même teinte, un même temps. */
+  echellePannes?: number;
   /** Rang dans l'entrée de l'écran. */
   rang: number;
 }
@@ -35,7 +37,11 @@ const ACTION_LIBELLE = { supervision: 'Voir la supervision', maintenance: 'Voir 
 
 type EtatPastille = 'panne' | 'surveiller' | 'produit' | 'reglage' | 'arret';
 
-/** Un repère par machine, les anomalies d'abord : seules la panne (carré cramoisi) et l'alerte (triangle ambre) colorent. */
+/**
+ * Un repère par machine, les anomalies d'abord, avec les formes des états de la scène (ui/status) : rond plein, elle
+ * produit ; losange, en réglage ; rond creux, à l'arrêt ; carré, en panne ; triangle, à surveiller. Seules la panne
+ * en direct (carré cramoisi) et l'alerte (triangle ambre) colorent : une panne du dernier relevé est passée.
+ */
 function pastilles(e: EtatMachines): EtatPastille[] {
   const surveiller = Math.min(e.surveiller.length, e.produisent);
   const arret = Math.max(0, e.total - e.produisent - e.reglage - e.panne.length);
@@ -50,7 +56,7 @@ function pastilles(e: EtatMachines): EtatPastille[] {
 
 /** L'état des machines : la source (direct ou dernier relevé), un repère par machine, quelques mots, son « ? ». */
 function EtatUsine({ etat, direct, releve }: { etat: EtatMachines; direct: boolean; releve: number }) {
-  const mot = motEtat(etat, direct);
+  const mot = motEtat(etat, direct, heure(releve));
   return (
     <div className="org-usine-etat">
       {direct ? (
@@ -62,26 +68,35 @@ function EtatUsine({ etat, direct, releve }: { etat: EtatMachines; direct: boole
       )}
       <span className="org-pips" role="img" aria-label={fr(phraseEtat(etat, direct))}>
         {pastilles(etat).map((p, i) => (
-          <i key={i} className={p} />
+          <i key={i} className={`${p} ${direct ? '' : 'passe'}`} />
         ))}
       </span>
-      {/* Les mots et leur « ? » restent ensemble quand la ligne passe à la suivante. */}
+      {/* Les mots ouvrent eux-mêmes leur explication : pas de « ? » sur une ligne d'état. Le bouton se nomme par ces
+          mots, suivis de « explication » pour les lecteurs d'écran. */}
       <span className="org-etat-texte">
-        <span aria-hidden>{fr(mot.mot)}</span>
-        {mot.panne && (
-          <span className="org-etat-panne" aria-hidden>
-            <TonGlyph ton="crit" />
-            {mot.panne}
-          </span>
-        )}
-        <InfoTip label="Lire l’état des machines">
-          <p>Un repère par machine : rond plein, elle produit ; anneau, en réglage ; rond pâle, à l’arrêt ; carré rouge, en panne ; triangle, à surveiller.</p>
+        <InfoTip texte={fr(mot.mot)} label="Lire l’état des machines">
+          <p>
+            Un repère par machine, avec les formes de la supervision : rond plein, elle produit ; losange, en réglage ; rond creux, à l’arrêt ; carré, en panne
+            (rouge en direct) ; triangle, à surveiller.
+          </p>
           <p>
             {direct
               ? 'Suivi en direct : l’état change dès qu’une machine change.'
               : `Dernier relevé de l’historique, à ${heure(releve)}. Le direct s’ouvre avec l’usine.`}
           </p>
         </InfoTip>
+        {mot.panne &&
+          (direct ? (
+            <span className="org-etat-panne" aria-hidden>
+              <TonGlyph ton="crit" />
+              {mot.panne}
+            </span>
+          ) : (
+            // Une panne du dernier relevé est passée : elle se dit, sans couleur ni appel à agir.
+            <span className="org-etat-passe" aria-hidden>
+              {mot.panne}
+            </span>
+          ))}
       </span>
     </div>
   );
@@ -95,11 +110,12 @@ function Attention({ point, onAgir }: { point: PointAttention; onAgir: () => voi
       <TonGlyph ton={point.ton} />
       <div className="org-attention-texte">
         <b>
-          {fr(point.titre)}
-          {point.detail && !point.detailVisible && (
-            <InfoTip label={`Détail : ${point.titre}`}>
+          {point.detail && !point.detailVisible ? (
+            <InfoTip texte={fr(point.titre)} label={`Détail : ${point.titre}`}>
               <p>{fr(point.detail)}</p>
             </InfoTip>
+          ) : (
+            fr(point.titre)
           )}
         </b>
         {detailVisible && <span>{fr(detailVisible)}</span>}
@@ -114,36 +130,34 @@ function Attention({ point, onAgir }: { point: PointAttention; onAgir: () => voi
 }
 
 /** Le plan ne dépend que de l'historique : mémorisé, il ne se redessine pas avec le direct. */
-const PlanPannes = memo(function PlanPannes({ l, premiere }: { l: Ligne; premiere: boolean }) {
+const PlanPannes = memo(function PlanPannes({ l, premiere, echelleMax }: { l: Ligne; premiere: boolean; echelleMax?: number }) {
   return (
     <div className="org-usine-plan" data-guide={premiere ? 'org-plan' : undefined}>
       <h4 className="tc-titre">
         Plan des pannes
         <InfoTip label="Comprendre : plan des pannes">
-          <p>Le bâtiment vu de dessus : plus une machine est rouge, plus elle a été en panne en 7 jours.</p>
+          <p>Le bâtiment vu de dessus : plus une machine est rouge, plus elle a été en panne en 7 jours. Toutes les usines partagent la même échelle.</p>
           <p>{fr(leconPlan(machineLaPlusTouchee(l)))}</p>
         </InfoTip>
       </h4>
-      <HeatPlan heat={l.heat} usine={l.u} />
+      <HeatPlan heat={l.heat} usine={l.u} echelleMax={echelleMax} />
     </div>
   );
 });
 
-export const UsineCard = memo(function UsineCard({ l, direct, point, moyennePannes, premiere, rang }: Props) {
+export const UsineCard = memo(function UsineCard({ l, direct, point, moyennePannes, premiere, rang, echellePannes }: Props) {
   const titreId = useId();
   const efficacite = motEfficacite(l.r.trs);
   const machines = l.u.machines.length;
   const pannes = moyennePannes !== undefined && machines ? motPannes(l.r.panneH / machines, moyennePannes) : undefined;
   const etat = direct?.etat ?? l.derniereHeure;
-  const style = { '--usine': l.couleur, '--i': rang } as CSSProperties;
+  const style = { '--i': rang } as CSSProperties;
   const nbPannes = `${l.r.alarmes} ${l.r.alarmes > 1 ? 'pannes' : 'panne'}`;
 
   return (
     <article className="card org-usine entree" style={style} data-tour={`usine-${l.u.id}`} data-guide={premiere ? 'org-usine' : undefined} aria-labelledby={titreId}>
+      {/* Ni tuile ni teinte propre à l'usine : son nom suffit, la couleur reste aux états des machines. */}
       <header className="org-usine-tete">
-        <span className="org-usine-icone" aria-hidden>
-          <Factory />
-        </span>
         <div className="org-usine-nom">
           <h3>
             <span id={titreId}>{l.nom}</span>
@@ -155,7 +169,7 @@ export const UsineCard = memo(function UsineCard({ l, direct, point, moyennePann
             </InfoTip>
           </h3>
         </div>
-        <button type="button" className="btn sm primary org-ouvrir" onClick={() => void ouvrirUsine(l.u.id)} aria-label={`Ouvrir l’usine ${l.court}`}>
+        <button type="button" className="btn sm org-ouvrir" onClick={() => void ouvrirUsine(l.u.id)} aria-label={`Ouvrir l’usine ${l.court}`}>
           Ouvrir l’usine <ArrowRight aria-hidden />
         </button>
       </header>
@@ -197,7 +211,7 @@ export const UsineCard = memo(function UsineCard({ l, direct, point, moyennePann
 
       <Attention point={point} onAgir={() => void ouvrirUsine(l.u.id, point.action)} />
 
-      <PlanPannes l={l} premiere={premiere} />
+      <PlanPannes l={l} premiere={premiere} echelleMax={echellePannes} />
 
       <ChiffresSecondaires
         className="org-usine-chiffres"

@@ -1,6 +1,6 @@
 /**
  * Vue d'ensemble de l'organisation. En haut, une phrase : les usines tournent-elles, et laquelle demande de l'attention.
- * Puis trois repères pour toute l'organisation et la rangée de ses chiffres de second rang, une carte par usine
+ * Puis l'efficacité de toute l'organisation, qui mène, avec ses chiffres de second rang à côté, une carte par usine
  * (lisible en cinq secondes, un bouton pour l'ouvrir), et la comparaison des usines, chaque graphique sous une ligne
  * qui en tire la leçon. Les définitions et le détail des chiffres sont dans les « ? ». Tout est calculé de la même
  * façon pour chaque usine, sur les 7 derniers jours ; seule l'usine ouverte est suivie en direct.
@@ -64,10 +64,15 @@ export function OrganisationView() {
   const lecture = useMemo(
     () =>
       verdictOrganisation(
-        lignes.map((l, i) => ({ court: l.court, tourne: tourne(l.u.id === activeId && direct ? direct.etat : l.derniereHeure), point: points[i] })),
+        lignes.map((l, i) => {
+          const enDirect = l.u.id === activeId && !!direct;
+          return { court: l.court, tourne: tourne(enDirect && direct ? direct.etat : l.derniereHeure), point: points[i], releve: !enDirect };
+        }),
       ),
     [lignes, points, activeId, direct],
   );
+  // Une seule échelle pour les plans des pannes : la même teinte dit le même temps d'une usine à l'autre.
+  const echellePannes = useMemo(() => Math.max(0, ...lignes.flatMap((l) => Object.values(l.heat))) || undefined, [lignes]);
 
   const efficacite = motEfficacite(tot.trs);
   const pannes = motPannesOrganisation(lignes.map((l) => ({ court: l.court, heures: l.r.panneH, machines: l.u.machines.length })));
@@ -88,8 +93,11 @@ export function OrganisationView() {
 
       {n > 0 && (
         <section className="org-haut entree" style={{ ['--i' as string]: 1 }} aria-label="Repères de l’organisation">
-          <div className="reperes org-reperes" data-guide="org-reperes">
+          {/* L'efficacité mène, seule en carte ; à côté, sans fond, les pannes et les retards, puis les chiffres de
+              second rang. Trois tailles, trois rangs : la hiérarchie se lit sans couleur. */}
+          <div className="org-tete-chiffres" data-guide="org-reperes">
             <Repere
+              className="org-mene"
               titre="Efficacité des machines"
               terme="trs"
               valeur={Math.round(tot.trs * 100)}
@@ -100,47 +108,53 @@ export function OrganisationView() {
               cible={TRS_POINTE}
               note={`${n > 1 ? 'Toutes usines, sur 7 jours' : 'Sur 7 jours'}. Une usine de pointe atteint 85 % (repère courant du métier).`}
             />
-            <Repere
-              titre="Temps perdu en pannes"
-              valeur={tot.panneH}
-              format={(v) => fmtNombre(v, 1)}
-              unite="h"
-              mot={pannes?.mot}
-              ton={pannes?.ton}
-              note={
-                tot.pannes
-                  ? `${tot.pannes} ${tot.pannes > 1 ? 'pannes' : 'panne'} en 7 jours${tot.mttr !== undefined ? `, réparées en ${fmtDuration(tot.mttr)} en moyenne` : ''}.`
-                  : 'Aucune panne en 7 jours.'
-              }
-            />
-            <Repere
-              titre="Entretiens en retard"
-              valeur={tot.retard}
-              mot={tot.retard ? 'À rattraper' : 'À jour'}
-              ton={tot.retard ? 'warn' : 'ok'}
-              note={
-                !tot.retard
-                  ? 'Aucun entretien n’a dépassé sa date.'
-                  : (repartitionRetards(lignes) ??
-                    (lignes[0]?.urgent ? fr(`Le plus urgent : ${minuscule(lignes[0].urgent.tache)}, sur ${lignes[0].urgent.numero}.`) : undefined))
-              }
-            />
+            <div className="org-cote">
+              <div className="reperes org-reperes">
+                <Repere
+                  className="compact"
+                  titre="Temps perdu en pannes"
+                  valeur={tot.panneH}
+                  format={(v) => fmtNombre(v, 1)}
+                  unite="h"
+                  mot={pannes?.mot}
+                  ton={pannes?.ton}
+                  note={
+                    tot.pannes
+                      ? `${tot.pannes} ${tot.pannes > 1 ? 'pannes' : 'panne'} en 7 jours${tot.mttr !== undefined ? `, réparées en ${fmtDuration(tot.mttr)} en moyenne` : ''}.`
+                      : 'Aucune panne en 7 jours.'
+                  }
+                />
+                <Repere
+                  className="compact"
+                  titre="Entretiens en retard"
+                  valeur={tot.retard}
+                  mot={tot.retard ? 'À rattraper' : 'À jour'}
+                  ton={tot.retard ? 'warn' : 'ok'}
+                  note={
+                    !tot.retard
+                      ? 'Aucun entretien n’a dépassé sa date.'
+                      : (repartitionRetards(lignes) ??
+                        (lignes[0]?.urgent ? fr(`Le plus urgent : ${minuscule(lignes[0].urgent.tache)}, sur ${lignes[0].urgent.numero}.`) : undefined))
+                  }
+                />
+              </div>
+              <ChiffresSecondaires
+                className="org-chiffres-sec"
+                label="Autres chiffres de l’organisation, sur 7 jours"
+                items={[
+                  { label: 'Disponibilité', terme: 'disponibilite', aide: n > 1 ? 'Moyenne des usines, pondérée par leurs machines.' : undefined, valeur: pct(tot.disponibilite) },
+                  { label: 'Électricité', aide: n > 1 ? 'Consommée en 7 jours, toutes usines.' : 'Consommée en 7 jours.', valeur: fmtNombre(tot.kwh / 1000, 1), unite: 'MWh' },
+                  { label: 'Émissions', terme: 'co2', valeur: fmtNombre(tot.co2 / 1000, 2), unite: 't' },
+                  { label: 'Dérives', terme: 'derive', valeur: tot.derives, ton: tot.derives ? 'warn' : undefined },
+                  {
+                    label: 'Machines',
+                    aide: `${n} ${n > 1 ? 'usines' : 'usine'}, ${formatArea(tot.surface)} de bâtiments.`,
+                    valeur: tot.machines,
+                  },
+                ]}
+              />
+            </div>
           </div>
-          <ChiffresSecondaires
-            className="org-chiffres-sec"
-            label="Autres chiffres de l’organisation, sur 7 jours"
-            items={[
-              { label: 'Disponibilité', terme: 'disponibilite', aide: n > 1 ? 'Moyenne des usines, pondérée par leurs machines.' : undefined, valeur: pct(tot.disponibilite) },
-              { label: 'Électricité', aide: n > 1 ? 'Consommée en 7 jours, toutes usines.' : 'Consommée en 7 jours.', valeur: fmtNombre(tot.kwh / 1000, 1), unite: 'MWh' },
-              { label: 'Émissions', terme: 'co2', valeur: fmtNombre(tot.co2 / 1000, 2), unite: 't' },
-              { label: 'Dérives', terme: 'derive', valeur: tot.derives, ton: tot.derives ? 'warn' : undefined },
-              {
-                label: 'Machines',
-                aide: `${n} ${n > 1 ? 'usines' : 'usine'}, ${formatArea(tot.surface)} de bâtiments.`,
-                valeur: tot.machines,
-              },
-            ]}
-          />
         </section>
       )}
 
@@ -154,6 +168,7 @@ export function OrganisationView() {
             moyennePannes={moyennePannes}
             premiere={i === 0}
             rang={2 + i}
+            echellePannes={echellePannes}
           />
         ))}
       </div>

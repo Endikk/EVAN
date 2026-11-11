@@ -44,8 +44,8 @@
   height: 22px;
   padding: 0 8px;
   border-radius: 999px;
-  font-size: 11.5px;
-  font-weight: 640;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
   color: var(--text-2);
   background: var(--surface-2);
 }
@@ -62,31 +62,30 @@
   background: var(--crit-soft);
 }
 .usine-switch .usine-chevron {
-  transition: transform 220ms var(--ease-out);
+  transition: transform var(--dur) var(--ease);
 }
 .usine-switch[aria-expanded='true'] .usine-chevron {
   transform: rotate(180deg);
 }
 
-/* Ouverture : le menu se déplie depuis le bouton, puis ses lignes arrivent l'une après l'autre. */
+/* Ouverture : le menu apparaît et monte de quelques pixels depuis le bouton ; ses lignes suivent de très près,
+   sans se faire attendre. */
 .usine-menu .usine-panel {
-  transform-origin: top left;
-  animation: usine-ouvre 200ms var(--ease-out) both;
+  animation: usine-ouvre var(--dur) var(--ease) both;
 }
 @keyframes usine-ouvre {
   from {
     opacity: 0;
-    transform: translateY(-6px) scale(0.98);
+    transform: translateY(-4px);
   }
 }
 .usine-entree {
-  animation: usine-ligne 260ms var(--ease-out) backwards;
-  animation-delay: calc(50ms + var(--i, 0) * 35ms);
+  animation: usine-ligne var(--dur) var(--ease) backwards;
+  animation-delay: calc(var(--i, 0) * 20ms);
 }
 @keyframes usine-ligne {
   from {
     opacity: 0;
-    transform: translateY(-4px);
   }
 }
 
@@ -102,19 +101,11 @@
   width: 13px;
   height: 13px;
 }
+/* L'état d'une usine dans le menu : le repère porte la couleur, les mots restent gris. */
 .usine-item-txt .usine-item-etat {
   margin-top: 4px;
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--text-3);
-}
-.usine-item-txt .usine-item-etat.ton-ok {
-  color: var(--ok);
-}
-.usine-item-txt .usine-item-etat.ton-warn {
-  color: var(--warn);
-}
-.usine-item-txt .usine-item-etat.ton-crit {
-  color: var(--crit);
 }
 
 /* Nom de l'organisation */
@@ -130,16 +121,16 @@
 .org-dialog-aide {
   display: block;
   margin-top: 8px;
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   color: var(--text-3);
 }
 .org-dialog-erreur {
   display: block;
   margin-top: 8px;
-  font-size: 12.5px;
-  font-weight: 600;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
   color: var(--crit);
-  animation: usine-ligne 220ms var(--ease-out);
+  animation: usine-ligne var(--dur) var(--ease);
 }
 /* Aperçu : le nom tel qu'il apparaîtra en haut de l'écran. */
 .org-apercu {
@@ -165,23 +156,23 @@
   line-height: 1.25;
 }
 .org-apercu-txt small {
-  font-size: 11px;
+  font-size: var(--fs-xs);
   color: var(--text-3);
 }
 .org-apercu-txt b {
-  font-size: 13.5px;
+  font-size: var(--fs-base);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .org-apercu-txt b.vide {
   color: var(--text-3);
-  font-weight: 500;
+  font-weight: var(--fw-medium);
 }
 .org-apercu-legende {
   margin-left: auto;
   flex: none;
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
   color: var(--text-3);
 }
 .org-dialog .modal-steps {
@@ -195,14 +186,14 @@
   gap: 8px;
   padding: 8px;
   border-radius: var(--r-sm);
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   background: var(--surface-2);
   color: var(--text-2);
 }
 .org-dialog .modal-steps li.on {
   background: var(--accent-soft);
   color: var(--accent-text);
-  font-weight: 650;
+  font-weight: var(--fw-medium);
 }
 .org-dialog .modal-steps li::before {
   counter-increment: etape;
@@ -212,8 +203,9 @@
   width: 18px;
   height: 18px;
   border-radius: var(--r-sm);
-  font-size: 11px;
-  font-weight: 700;
+  font-family: var(--mono);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
   background: var(--surface-3);
 }
 .org-dialog .modal-steps li.on::before {

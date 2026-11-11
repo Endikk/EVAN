@@ -65,17 +65,20 @@ export function phraseEtat(e: EtatMachines, direct: boolean): string {
 
 /**
  * L'état des machines en quelques mots, à côté d'un repère par machine : « 12 sur 14 produisent », et à part les
- * machines en panne (« R03 en panne »), seules à prendre de la couleur. La phrase entière reste pour les lecteurs
- * d'écran (phraseEtat).
+ * machines en panne (« R03 en panne »), seules à prendre de la couleur en direct. Au dernier relevé de l'historique,
+ * la panne est passée et se dit au passé, avec son heure (« R04 était en panne à 12 h ») : elle reste neutre, rien
+ * n'est à faire. La phrase entière reste pour les lecteurs d'écran (phraseEtat).
  */
-export function motEtat(e: EtatMachines, direct: boolean): { mot: string; panne?: string } {
+export function motEtat(e: EtatMachines, direct: boolean, heure?: string): { mot: string; panne?: string } {
   if (!e.total) return { mot: 'Aucune machine suivie' };
   const p = e.produisent;
   const verbe = direct ? pluriel(p, 'produit', 'produisent') : pluriel(p, 'produisait', 'produisaient');
   const mot = p === 0 ? `Aucune ne ${direct ? 'produit' : 'produisait'}` : `${p} sur ${e.total} ${verbe}`;
   const n = e.panne.length;
   if (!n) return { mot };
-  return { mot, panne: n <= 2 ? `${listeFr(e.panne)} en panne` : `${n} en panne` };
+  const qui = n <= 2 ? listeFr(e.panne) : `${n}`;
+  if (direct) return { mot, panne: `${qui} en panne` };
+  return { mot, panne: `${qui} ${pluriel(n, 'était', 'étaient')} en panne${heure ? ` à ${heure}` : ''}` };
 }
 
 /** Une usine tourne quand au moins une de ses machines produit. */
@@ -157,6 +160,33 @@ export interface UsineLue {
   court: string;
   tourne: boolean;
   point: PointAttention;
+  /** L'état vient du dernier relevé de l'historique, pas du direct : la phrase le dit au passé. */
+  releve?: boolean;
+}
+
+/**
+ * Les usines tournent-elles : au présent pour celles suivies en direct, au passé pour celles qu'on ne connaît que par
+ * leur dernier relevé (« Tours tourne, Crissey tournait au dernier relevé »).
+ */
+function phraseMarche(us: UsineLue[]): string {
+  const enMarche = us.filter((u) => u.tourne).map((u) => u.court);
+  const arretees = us.filter((u) => !u.tourne).map((u) => u.court);
+  const seule = us.length === 1;
+  if (!us.some((u) => u.releve)) {
+    if (!arretees.length) return seule ? `${us[0].court} tourne.` : `Vos ${us.length} usines tournent.`;
+    if (!enMarche.length) return seule ? `${us[0].court} est à l’arrêt.` : `Vos ${us.length} usines sont à l’arrêt.`;
+    return `${listeFr(enMarche)} ${pluriel(enMarche.length, 'tourne', 'tournent')}, ${listeFr(arretees)} ${pluriel(arretees.length, 'est', 'sont')} à l’arrêt.`;
+  }
+  const parties: string[] = [];
+  const groupe = (garde: (u: UsineLue) => boolean, un: string, plusieurs: string) => {
+    const noms = us.filter(garde).map((u) => u.court);
+    if (noms.length) parties.push(`${listeFr(noms)} ${pluriel(noms.length, un, plusieurs)}`);
+  };
+  groupe((u) => !u.releve && u.tourne, 'tourne', 'tournent');
+  groupe((u) => !u.releve && !u.tourne, 'est à l’arrêt', 'sont à l’arrêt');
+  groupe((u) => !!u.releve && u.tourne, 'tournait au dernier relevé', 'tournaient au dernier relevé');
+  groupe((u) => !!u.releve && !u.tourne, 'était à l’arrêt au dernier relevé', 'étaient à l’arrêt au dernier relevé');
+  return `${parties.join(', ')}.`;
 }
 
 /**
@@ -167,18 +197,8 @@ export function verdictOrganisation(us: UsineLue[]): { verdict: string; ton: Ton
   if (!us.length) {
     return { verdict: 'Aucune usine en service pour l’instant.', ton: 'neutre', suite: 'Une usine apparaît ici une fois sa configuration terminée.' };
   }
-  const enMarche = us.filter((u) => u.tourne).map((u) => u.court);
-  const arretees = us.filter((u) => !u.tourne).map((u) => u.court);
   const seule = us.length === 1;
-  const marche = !arretees.length
-    ? seule
-      ? `${us[0].court} tourne.`
-      : `Vos ${us.length} usines tournent.`
-    : !enMarche.length
-      ? seule
-        ? `${us[0].court} est à l’arrêt.`
-        : `Vos ${us.length} usines sont à l’arrêt.`
-      : `${listeFr(enMarche)} ${pluriel(enMarche.length, 'tourne', 'tournent')}, ${listeFr(arretees)} ${pluriel(arretees.length, 'est', 'sont')} à l’arrêt.`;
+  const marche = phraseMarche(us);
 
   const concernees = us.filter((u) => u.point.ton === 'crit' || u.point.ton === 'warn').sort((a, b) => RANG[b.point.ton] - RANG[a.point.ton]);
   if (!concernees.length) return { verdict: `${marche} Rien ne demande d’attention.`, ton: 'ok' };

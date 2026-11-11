@@ -2,14 +2,21 @@
  * Journal des interventions, jour par jour : une ligne par intervention (heure, type, machine, quoi, durée). Le
  * détail (organe, intervenant, compte rendu) se déplie au clic sur la ligne : le journal est long, on n'en lit le
  * détail que ligne par ligne. Les réparations après panne y entrent seules ; les entretiens et observations, quand
- * l'atelier les consigne.
+ * l'atelier les consigne. Une saisie faite à l'écran se corrige ou se supprime depuis son détail.
+ *
+ * Le type se lit à l'icône seule (son nom est dans la bulle et pour les lecteurs d'écran) : le mot répété sur chaque
+ * ligne coupait l'intitulé, qui est ce qu'on cherche.
  */
-import { useId, useMemo, useState } from 'react';
-import { ChevronDown, ClipboardCheck, Eye, History as HistoryIcon, Wrench, type LucideIcon } from 'lucide-react';
+import { useId, useMemo, useState, type MouseEvent } from 'react';
+import { ChevronDown, ClipboardCheck, Eye, History as HistoryIcon, Pencil, Trash2, Wrench, type LucideIcon } from 'lucide-react';
 import type { Intervention, TypeIntervention } from '@/analytics/maintenance';
 import { machineModel } from '@/domain/catalog';
 import type { Alarme, Machine } from '@/domain/types';
 import { TitreCarte } from '@/ui/explain';
+import { useCarnet } from '@/store/carnet';
+import { useLive } from '@/store/live';
+import { useUi } from '@/store/ui';
+import { memoriserRetour } from '@/widgets/intervention/retourFocus';
 import { fmtDuration, fmtHM } from '@/ui/format';
 import { openReplay } from '@/widgets/shell/navigation';
 import { fmtDateLongue } from '../lib/carnet';
@@ -41,6 +48,29 @@ function quoi(i: Intervention, a?: Alarme): string {
   return i.titre;
 }
 
+/** Corriger une saisie faite à l'écran : le bon de travail rouvre avec elle, et l'enregistrer la remplace. */
+function corriger(i: Intervention) {
+  const s = useCarnet.getState().saisies.find((x) => x.id === i.id);
+  if (!s) return;
+  const { id, ...contenu } = s;
+  useCarnet.getState().setEnCorrection(id);
+  useUi.getState().setSaisie(contenu);
+}
+
+/** Supprimer une saisie faite à l'écran ; l'avis laisse dix secondes pour la remettre. */
+function supprimer(i: Intervention, numero: string | undefined, ev: MouseEvent<HTMLButtonElement>) {
+  const rendre = memoriserRetour(ev.currentTarget);
+  const s = useCarnet.getState().retirer(i.id);
+  if (!s) return;
+  useLive.getState().pushToast({
+    gravite: 'info',
+    titre: 'Intervention supprimée du carnet',
+    texte: `${numero ?? ''} · ${s.titre}`,
+    action: { libelle: 'Annuler', faire: () => useCarnet.getState().restaurer(s) },
+  });
+  requestAnimationFrame(rendre);
+}
+
 function Ligne({ i, machine, alarme }: { i: Intervention; machine?: Machine; alarme?: Alarme }) {
   const [ouvert, setOuvert] = useState(false);
   const id = useId();
@@ -52,14 +82,15 @@ function Ligne({ i, machine, alarme }: { i: Intervention; machine?: Machine; ala
     i.auteur ? `par ${i.auteur}` : null,
     i.source === 'saisie' ? 'consignée à l’écran' : i.source === 'direct' ? 'pendant cette session' : null,
   ].filter(Boolean);
-  const aDetail = detail.length > 0 || !!i.compteRendu;
+  const saisie = i.source === 'saisie';
+  const aDetail = detail.length > 0 || !!i.compteRendu || saisie;
   const T = TYPE[i.type];
   const tete = (
     <>
       <time className="num">{fmtHM(i.debut)}</time>
-      <span className="chip mt-jl-type" title={T.mot}>
+      <span className="mt-jl-type" title={T.mot}>
         <T.icone aria-hidden />
-        <span className="mt-jl-type-mot">{T.mot}</span>
+        <span className="sr-only">{T.mot}</span>
       </span>
       <span className="mt-jl-quoi">
         <b>{machine?.numero}</b> {quoi(i, alarme)}
@@ -69,7 +100,7 @@ function Ligne({ i, machine, alarme }: { i: Intervention; machine?: Machine; ala
     </>
   );
   return (
-    <li className={`mt-jl type-${i.type} ${ouvert ? 'ouvert' : ''}`}>
+    <li className={`mt-jl type-${i.type} ${ouvert ? 'ouvert' : ''}`} data-retour={i.id}>
       {aDetail ? (
         <button type="button" className="mt-jl-tete" aria-expanded={ouvert} aria-controls={id} onClick={() => setOuvert((v) => !v)}>
           {tete}
@@ -79,7 +110,7 @@ function Ligne({ i, machine, alarme }: { i: Intervention; machine?: Machine; ala
         <div className="mt-jl-tete">{tete}</div>
       )}
       {alarme && (
-        <button type="button" className="btn sm mt-jl-revoir" onClick={() => openReplay(alarme)} aria-label={`Revoir la panne de ${machine?.numero ?? 'la machine'} : ${alarme.message}`}>
+        <button type="button" className="btn sm ghost mt-jl-revoir" onClick={() => openReplay(alarme)} aria-label={`Revoir la panne de ${machine?.numero ?? 'la machine'} : ${alarme.message}`}>
           <HistoryIcon /> <span>Revoir</span>
         </button>
       )}
@@ -87,6 +118,16 @@ function Ligne({ i, machine, alarme }: { i: Intervention; machine?: Machine; ala
         <div className="mt-jl-detail" id={id} hidden={!ouvert}>
           {detail.length > 0 && <p>{detail.join(', ')}.</p>}
           {i.compteRendu && <p className="mt-jl-cr">Ce qui a été fait : {i.compteRendu}</p>}
+          {saisie && (
+            <div className="mt-jl-gestes">
+              <button type="button" className="btn sm" onClick={() => corriger(i)}>
+                <Pencil aria-hidden /> Corriger
+              </button>
+              <button type="button" className="btn sm ghost" onClick={(ev) => supprimer(i, machine?.numero, ev)}>
+                <Trash2 aria-hidden /> Supprimer
+              </button>
+            </div>
+          )}
         </div>
       )}
     </li>
