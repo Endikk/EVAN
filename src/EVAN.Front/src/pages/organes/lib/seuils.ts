@@ -98,3 +98,51 @@ export function lectureSeuils(seuils: Seuils, unite: string): string {
 }
 
 export const MOT_PLAGE: Record<Plage, string> = { normal: 'Normal', attention: 'Attention', alarme: 'Alarme' };
+
+// ---------- Saisie des seuils ----------
+
+/** Les quatre seuils, du plus bas au plus haut, avec le libellé de leur champ. */
+export const ORDRE_SEUILS: { k: keyof Seuils; l: string }[] = [
+  { k: 'alarmeBas', l: 'Alarme sous' },
+  { k: 'attentionBas', l: 'Attention sous' },
+  { k: 'attentionHaut', l: 'Attention au-delà de' },
+  { k: 'alarmeHaut', l: 'Alarme au-delà de' },
+];
+
+/** Seuils tels qu'on les tape : du texte par champ, vide pour « aucun ». */
+export type SaisieSeuils = Record<keyof Seuils, string>;
+
+export function versSaisie(s: Seuils): SaisieSeuils {
+  const t = (v?: number) => (v === undefined ? '' : String(v));
+  return { alarmeBas: t(s.alarmeBas), attentionBas: t(s.attentionBas), attentionHaut: t(s.attentionHaut), alarmeHaut: t(s.alarmeHaut) };
+}
+
+/**
+ * Les seuils d'une saisie, ou ce qui l'empêche : un nombre illisible, ou deux seuils dans le désordre (l'alarme basse doit
+ * rester sous l'attention basse, qui reste sous l'attention haute, elle-même sous l'alarme haute). Un champ vide veut
+ * dire « pas de seuil ».
+ */
+export function lireSaisie(saisie: SaisieSeuils): { seuils: Seuils } | { erreur: string; champ: keyof Seuils } {
+  const seuils: Seuils = {};
+  for (const { k, l } of ORDRE_SEUILS) {
+    const brut = saisie[k].trim().replace(',', '.');
+    if (!brut) continue;
+    const n = Number(brut);
+    if (!Number.isFinite(n)) return { erreur: `« ${l} » n’est pas un nombre.`, champ: k };
+    seuils[k] = n;
+  }
+  const definis = ORDRE_SEUILS.filter(({ k }) => seuils[k] !== undefined);
+  for (let i = 1; i < definis.length; i++) {
+    const bas = definis[i - 1];
+    const haut = definis[i];
+    if ((seuils[bas.k] as number) >= (seuils[haut.k] as number)) {
+      return { erreur: `« ${bas.l} » doit rester sous « ${haut.l} ».`, champ: haut.k };
+    }
+  }
+  return { seuils };
+}
+
+/** Deux jeux de seuils identiques (pour savoir si l'on s'écarte de ceux du kit). */
+export function memesSeuils(a: Seuils, b: Seuils): boolean {
+  return ORDRE_SEUILS.every(({ k }) => a[k] === b[k]);
+}

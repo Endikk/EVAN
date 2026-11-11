@@ -1,6 +1,7 @@
 /**
  * À quoi sert chaque type de zone, dit pour une imprimerie d'étiquettes : une ligne courte sur le bouton, une phrase
- * dans le guide. Les noms et couleurs restent ceux de la scène (ZONE_LIBELLE, ZONE_COULEUR).
+ * dans le guide. Les noms restent ceux de la scène (ZONE_LIBELLE) ; toutes les zones partagent un contour neutre en
+ * pointillé (ZONE_COULEUR), les teintes étant réservées aux états machine.
  */
 import type { TypeZone } from '@/domain/types';
 

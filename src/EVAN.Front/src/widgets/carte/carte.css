@@ -1,6 +1,6 @@
 /* ============================================================
    Carte satellite (étape 1) : ce qui se pose sur la photo.
-   Le bâtiment retenu et ses cotes sont à la braise de la charte (--map-line) ; les bâtiments proposés restent ambre.
+   Le bâtiment retenu et ses cotes sont à l'ivoire de la charte (--map-line) ; les bâtiments proposés restent ambre.
    Préfixe .carte-satellite : ces règles passent devant celles d'app.css sans les toucher.
    ============================================================ */
 
@@ -12,7 +12,7 @@
   --carte-fond-cote: rgba(8, 10, 16, 0.84);
 }
 
-/* Cotes des côtés : chiffre blanc sur fond nuit (lisible sur un toit clair comme sur l'herbe), filet braise. */
+/* Cotes des côtés : chiffre blanc sur fond nuit (lisible sur un toit clair comme sur l'herbe), filet ivoire. */
 .carte-satellite .edge-label {
   background: var(--carte-fond-cote);
   color: var(--carte-blanc);
@@ -20,7 +20,7 @@
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
 }
 
-/* Surface : pastille braise, texte encre (le blanc sur cet orange n'atteint pas le contraste AA). */
+/* Surface : pastille ivoire, texte encre. */
 .carte-satellite .area-label {
   color: var(--carte-encre);
   background: var(--map-line);
@@ -52,10 +52,10 @@
   outline-offset: 2px;
 }
 
-/* Lettre d'un bâtiment déjà retenu (une coche) : brun profond sur la braise, plutôt que le bleu-noir d'app.css. */
+/* Lettre d'un bâtiment déjà retenu (une coche) : encre sur la pastille. */
 .cand-letter.ok,
 .cand-item[aria-pressed='true'] .cand-letter {
-  color: var(--accent-deep);
+  color: var(--map-ink);
 }
 
 /* Désignée depuis « Comment lire cet écran » : la carte occupe toute la scène, le halo se dessine à l'intérieur. */

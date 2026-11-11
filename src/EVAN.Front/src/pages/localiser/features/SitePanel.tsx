@@ -1,14 +1,15 @@
 /**
- * Panneau de l'étape 1 : ce qu'il reste à faire (liste qui se coche seule, chaque aide dans son « ? »), ce qu'EVAN
+ * Panneau de l'étape 1 : ce qu'il reste à faire (liste qui se coche seule, comment faire depuis chaque libellé), ce qu'EVAN
  * est en train de faire, puis la surface au sol du bâtiment choisi, la vérification de son contour et les bâtiments
- * de l'usine.
+ * de l'usine. Tant que le contour n'est pas vérifié, sa carte passe avant la surface : c'est la tâche qui reste, elle
+ * doit se voir sans défiler.
  */
-import { useMemo, type ReactNode } from 'react';
+import { useMemo } from 'react';
 import { AlertTriangle, Loader2, PenLine } from 'lucide-react';
+import { useTachesConfig } from '@/store/avancement';
 import { useProject } from '@/store/project';
 import { useUi } from '@/store/ui';
 import { GuideButton, StepGuide, TitreCarte, type Tache } from '@/ui/explain';
-import { InfoTip } from '@/ui/InfoTip';
 import { measureBuilding } from '@/widgets/carte/measure';
 import { useMapUi } from '@/widgets/carte/mapState';
 import { PanelHeader } from '@/widgets/shell/PanelHeader';
@@ -39,46 +40,40 @@ export function SitePanel() {
   const live = editing && editing.id === b?.id ? editing : null;
   const m = useMemo(() => (b ? measureBuilding({ ...b, contour: live?.ring ?? b.contour, sigmas: live?.sigmas ?? b.sigmas }) : null), [b, live]);
 
-  // L'usine d'exemple est déjà relevée et vérifiée ; ailleurs, chaque contour doit avoir été regardé.
+  // L'usine d'exemple est déjà relevée et vérifiée ; ailleurs, chaque contour doit avoir été regardé. La coche de la
+  // tâche vient du calcul commun (store/avancement.ts), celui qui coche aussi l'étape dans le rail.
   const estVerifie = (id: string) => mode === 'demo' || verifies.includes(id);
-  const contoursVerifies = batiments.length > 0 && batiments.every((x) => estVerifie(x.id));
+  const fait = useTachesConfig()[1];
 
   const taches: Tache[] = [
     {
-      label: (
+      // Une fois trouvée, l'adresse s'affiche sous le libellé : on voit ce qu'EVAN a retenu.
+      label: site ? (
         <>
-          <AvecAide fait={!!site} label="Trouver l’adresse">
-            Tapez l’adresse de l’usine, le nom de l’entreprise ou son SIRET dans la barre sur la carte.
-          </AvecAide>
-          {site && <span className="loc-tache-detail">{site.adresse}</span>}
+          Trouver l’adresse
+          <span className="loc-tache-detail">{site.adresse}</span>
         </>
+      ) : (
+        'Trouver l’adresse'
       ),
-      fait: !!site,
+      comment: 'Tapez l’adresse de l’usine, le nom de l’entreprise ou son SIRET dans la barre sur la carte.',
+      fait: fait.adresse,
     },
     {
-      label: (
-        <AvecAide fait={batiments.length > 0} label="Choisir le bâtiment">
-          Cliquez sur le toit de l’usine, sur la photo : EVAN trace son contour.
-        </AvecAide>
-      ),
-      fait: batiments.length > 0,
+      label: 'Choisir le bâtiment',
+      comment: 'Cliquez sur le toit de l’usine, sur la photo : EVAN trace son contour.',
+      fait: fait.batiment,
     },
     {
-      label: (
-        <AvecAide fait={contoursVerifies} label={batiments.length > 1 ? 'Vérifier chaque contour' : 'Vérifier le contour'}>
-          {batiments.length
-            ? 'Le trait orange doit suivre le bord du toit. Plus bas : « Le contour est juste », ou corrigez-le.'
-            : 'Possible une fois le bâtiment choisi.'}
-        </AvecAide>
-      ),
-      fait: contoursVerifies,
+      label: batiments.length > 1 ? 'Vérifier chaque contour' : 'Vérifier le contour',
+      comment: batiments.length
+        ? 'Le trait orange doit suivre le bord du toit. Plus bas : « Le contour est juste », ou corrigez-le.'
+        : 'Possible une fois le bâtiment choisi.',
+      fait: fait.contours,
     },
     {
-      label: (
-        <AvecAide fait={batiments.length > 1} label="Ajouter les autres bâtiments">
-          S’ils font partie de l’usine : cliquez sur leur toit, un par un.
-        </AvecAide>
-      ),
+      label: 'Ajouter les autres bâtiments',
+      comment: 'S’ils font partie de l’usine : cliquez sur leur toit, un par un.',
       fait: batiments.length > 1,
       facultatif: true,
     },
@@ -121,31 +116,15 @@ export function SitePanel() {
 
         {b && m && (
           <>
+            {!estVerifie(b.id) && <ContourCard b={b} verifie={false} style={cascade(1)} />}
             {/* Un bâtiment qui vient d'être relevé rejoue l'entrée de sa carte : on voit que la mesure est nouvelle. */}
-            <SurfaceCard key={`${b.id}-${lastAddedId === b.id ? 'neuf' : ''}`} b={b} m={m} direct={!!live} style={cascade(1)} />
-            <ContourCard b={b} verifie={estVerifie(b.id)} style={cascade(2)} />
+            <SurfaceCard key={`${b.id}-${lastAddedId === b.id ? 'neuf' : ''}`} b={b} m={m} direct={!!live} style={cascade(2)} />
+            {estVerifie(b.id) && <ContourCard b={b} verifie style={cascade(2)} />}
           </>
         )}
 
         {batiments.length > 0 && <BatimentsCard selectedId={selectedId} style={cascade(3)} />}
       </div>
-    </>
-  );
-}
-
-/**
- * Le libellé d'une tâche et, tant qu'elle n'est pas faite, son « ? » qui dit comment la faire. Une fois faite,
- * l'aide n'a plus d'objet.
- */
-function AvecAide({ label, fait, children }: { label: string; fait: boolean; children: ReactNode }) {
-  return (
-    <>
-      {label}
-      {!fait && (
-        <InfoTip label={`Comment faire : ${label}`}>
-          <p>{children}</p>
-        </InfoTip>
-      )}
     </>
   );
 }

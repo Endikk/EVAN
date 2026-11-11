@@ -28,10 +28,13 @@ export function ChoixProtocole({ choisi, choisir }: { choisi: Protocole; choisir
           >
             <span className="cx-proto-rond" aria-hidden />
             <span className="cx-proto-nom">
-              <b>{p.nom}</b>
-              <InfoTip label={`Comprendre : ${p.nom}`}>
-                <p>{p.phrase}</p>
-              </InfoTip>
+              {/* Le nom ouvre ce qu'est le protocole ; la bulle arrête le clic, on le reprend à la capture pour qu'il
+                  choisisse aussi le protocole. */}
+              <b onClickCapture={() => choisir(p.id)}>
+                <InfoTip label={`Comprendre : ${p.nom}`} texte={p.nom}>
+                  <p>{p.phrase}</p>
+                </InfoTip>
+              </b>
               {p.conseille && <span className="chip">Conseillé</span>}
             </span>
           </div>

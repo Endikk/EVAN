@@ -5,7 +5,7 @@
  * journal) reste replié.
  */
 import { Check, Cpu, Monitor, PlugZap, Router, X, type LucideIcon } from 'lucide-react';
-import { Details } from '@/ui/explain';
+import { Details, TonGlyph } from '@/ui/explain';
 import { lireTest, type EtatTroncon, type LigneTest } from '../lib/diagnostic';
 
 function Noeud({ icone: Icone, nom, sous, etat }: { icone: LucideIcon; nom: string; sous?: string; etat?: 'ok' | 'echec' }) {
@@ -50,14 +50,18 @@ interface Props {
 export function TestLiaison({ log, enCours, lancer, numero, passerelle, simule }: Props) {
   const l = lireTest(log, enCours);
   const [t1, t2] = l.troncons;
+  // Un test simulé réussi ne prouve rien sur la machine : il le dit en titre, en ambre, au lieu de « la liaison passe ».
+  const simuleReussi = l.etat === 'ok' && simule;
   const resume =
     l.etat === 'attente'
       ? 'Pas encore testé.'
       : l.etat === 'encours'
         ? 'Test en cours.'
-        : l.etat === 'ok'
-          ? 'La liaison passe, en lecture seule.'
-          : 'La liaison ne passe pas.';
+        : simuleReussi
+          ? 'Test simulé : la liaison n’a pas été vérifiée.'
+          : l.etat === 'ok'
+            ? 'La liaison passe, en lecture seule.'
+            : 'La liaison ne passe pas.';
 
   return (
     <div className="cx-pas" data-guide="connexion-test">
@@ -69,14 +73,14 @@ export function TestLiaison({ log, enCours, lancer, numero, passerelle, simule }
         <Noeud icone={Cpu} nom="Automate" sous={numero} etat={t2 === 'echec' ? 'echec' : t2 === 'ok' ? 'ok' : undefined} />
       </div>
 
-      <div className={`cx-test-verdict etat-${l.etat}`} role="status" aria-live="polite">
-        {l.etat === 'ok' && <Check aria-hidden />}
+      <div className={`cx-test-verdict etat-${simuleReussi ? 'simule' : l.etat}`} role="status" aria-live="polite">
+        {simuleReussi ? <TonGlyph ton="warn" /> : l.etat === 'ok' && <Check aria-hidden />}
         <p>
           {resume}
           {l.etat === 'encours' && l.derniere && <span className="cx-test-ligne">{l.derniere}</span>}
         </p>
       </div>
-      {l.etat === 'ok' && simule && <p className="cx-simule">Test simulé : aucune connexion réelle n’a été ouverte.</p>}
+      {simuleReussi && <p className="cx-simule">En démonstration, aucune connexion réelle n’est ouverte : l’adresse est bien formée, mais personne n’a répondu à cette adresse.</p>}
 
       {l.etat === 'echec' && (
         <div className="cx-echec">

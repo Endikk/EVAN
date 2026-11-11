@@ -1,7 +1,7 @@
 /**
  * La mesure qui compte : la surface au sol du bâtiment, en grand. Sa précision est dite par un mot et une jauge ;
- * l'écart chiffré reste dans le « ? ». Les autres mesures suivent en une rangée toujours visible, leur sens et leur
- * méthode dans leurs « ? ».
+ * l'écart chiffré s'ouvre depuis le mot « Précision ». Les autres mesures suivent en une rangée toujours visible,
+ * leur sens et leur méthode s'ouvrant depuis leur libellé.
  */
 import type { CSSProperties } from 'react';
 import type { Batiment } from '@/domain/types';
@@ -101,9 +101,7 @@ export function SurfaceCard({ b, m, direct = false, style }: { b: Batiment; m: B
       <div className="loc-precision">
         <span className={`loc-precision-mot ton-${prec.ton}`}>
           <TonGlyph ton={prec.ton} />
-          Précision : {prec.label.toLowerCase()}
-        </span>
-        <InfoTip label="Ce que veut dire la précision">
+          <InfoTip label="Ce que veut dire la précision" texte={`Précision : ${prec.label.toLowerCase()}`}>
           <p>
             Écart probable : {lu.ecart} ({lu.pourcent} de la surface). Deux fois sur trois, la vraie surface est {lu.fourchette}.
           </p>
@@ -111,8 +109,9 @@ export function SurfaceCard({ b, m, direct = false, style }: { b: Batiment; m: B
             {prec.ton === 'ok'
               ? 'Assez précis pour la suite.'
               : 'Pour l’affiner : zoomez sur la photo et replacez les coins du contour sur les angles du toit.'}
-          </p>
-        </InfoTip>
+            </p>
+          </InfoTip>
+        </span>
       </div>
       <div className={`loc-jauge ton-${prec.ton}`} role="meter" aria-label="Précision de la surface" aria-valuemin={0} aria-valuemax={1} aria-valuenow={prec.score} aria-valuetext={prec.label}>
         <i style={{ transform: `scaleX(${prec.score})` }} />

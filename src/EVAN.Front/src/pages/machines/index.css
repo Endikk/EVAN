@@ -3,11 +3,6 @@
    Tout est préfixé par .ecran-machines (le corps du panneau) pour ne rien changer ailleurs.
    ============================================================ */
 
-/* Un compte entre parenthèses ne se coupe pas en fin de ligne. */
-.mc-compte {
-  margin-left: 4px;
-  white-space: nowrap;
-}
 /* Un numéro manquant ou en double : la seule aide de la liste qui reste en vue, en ambre. */
 .mc-tache-alerte,
 .mc-aide-alerte {
@@ -43,14 +38,15 @@
 .gd-ligne-texte {
   fill: var(--surface-3);
 }
+/* La machine qu'on déplace : le trait du texte, sans teinte ; seul le pointeur et l'étiquette sont plus clairs. */
 .gd-glyphe rect {
-  fill: var(--accent-soft);
-  stroke: var(--accent-2);
+  fill: var(--surface-3);
+  stroke: var(--text-2);
   stroke-width: 1.4;
 }
 .gd-glyphe circle {
   fill: none;
-  stroke: var(--accent-2);
+  stroke: var(--text-2);
   stroke-width: 1.2;
 }
 .gd-glyphe-carte {
@@ -66,12 +62,12 @@
 }
 .gd-zone {
   fill: none;
-  stroke: var(--setup);
+  stroke: var(--border-strong);
   stroke-width: 1.2;
   stroke-dasharray: 4 3;
 }
 .gd-aimant line {
-  stroke: var(--accent-2);
+  stroke: var(--text-3);
   stroke-width: 1;
   stroke-dasharray: 3 3;
 }
@@ -81,7 +77,7 @@
 }
 .gd-etiquette text {
   fill: var(--text);
-  font: 650 9.5px var(--font);
+  font: 500 9.5px var(--mono);
 }
 .gd-pointeur {
   fill: var(--text);
@@ -206,7 +202,7 @@
 }
 .mc-geste figcaption {
   margin-top: 8px;
-  font-size: 13px;
+  font-size: var(--fs-md);
   line-height: 1.5;
   color: var(--text-2);
 }
@@ -214,6 +210,37 @@
   position: absolute;
   top: 8px;
   right: 8px;
+}
+/* Bandeau de pose sur la scène, sous les commandes de vue : la consigne là où il faut toucher, et « Annuler ». */
+.mc-pose-bandeau {
+  position: absolute;
+  z-index: 5;
+  top: 64px;
+  /* Centré sans transform : l'animation d'entrée en joue déjà un. */
+  left: 0;
+  right: 0;
+  margin-inline: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: max-content;
+  max-width: calc(100% - 32px);
+  padding: 8px 8px 8px 16px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+  font-size: var(--fs-md);
+  color: var(--text);
+  animation: entree var(--dur-entree) var(--ease-out) both;
+}
+.mc-pose-bandeau span {
+  min-width: 0;
+}
+@media (pointer: coarse) {
+  .mc-pose-bandeau .btn {
+    min-height: 44px;
+  }
 }
 .mc-pose-en-cours {
   display: flex;
@@ -223,17 +250,18 @@
   margin: 8px 0 0;
   padding: 8px 8px 8px 12px;
   border-radius: var(--r-md);
-  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
-  background: var(--accent-soft);
-  font-size: 13px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-3);
+  font-size: var(--fs-md);
   color: var(--text);
-  animation: entree 320ms var(--ease-out) both;
+  animation: entree var(--dur-entree) var(--ease-out) both;
 }
+/* Le métier : un intertitre gris, plus près de ses machines que de la famille d'avant. */
 .mc-famille h4 {
   margin: 16px 0 8px;
-  font-size: 12.5px;
-  font-weight: 620;
-  color: var(--text-2);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-regular);
+  color: var(--text-3);
 }
 .mc-lib {
   list-style: none;
@@ -273,6 +301,27 @@
 .mc-lib-item:active {
   cursor: grabbing;
 }
+.mc-lib-item {
+  position: relative;
+}
+/* Le bouton qui choisit la machine couvre la carte ; le nom, qui ouvre l'explication, passe au-dessus. */
+.mc-lib-etendu {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  background: none;
+  cursor: inherit;
+}
+.mc-lib-etendu:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+.mc-lib-nom .infotip-texte {
+  position: relative;
+  z-index: 1;
+}
 .mc-lib-item.actif {
   border-color: var(--accent-text);
   background: var(--accent-soft);
@@ -285,25 +334,31 @@
   display: grid;
   place-items: center;
   height: 40px;
-  border-radius: var(--r-sm);
+  border-radius: var(--r-xs);
   background: var(--surface-2);
   color: var(--text-3);
+  transition: color var(--dur) var(--ease);
+}
+.mc-lib-item:hover .mc-lib-vignette,
+.mc-lib-item.actif .mc-lib-vignette {
+  color: var(--text-2);
 }
 .mc-lib-vignette > svg:not(.mc-silhouette) {
   width: var(--icon-lg);
   height: var(--icon-lg);
 }
+/* Vue de dessus au trait gris (la couleur du texte de la vignette) : une silhouette, pas une illustration. */
 .mc-silhouette rect {
-  fill: var(--accent-soft);
-  stroke: var(--accent-2);
+  fill: none;
+  stroke: currentColor;
   stroke-width: 1.2;
 }
 .mc-silhouette circle {
   fill: none;
-  stroke: var(--accent-2);
+  stroke: currentColor;
   stroke-width: 1;
 }
-/* Nom, son « ? » juste après, et l'encombrement calé à droite. */
+/* Le nom, qui ouvre ce que fait la machine, et l'encombrement calé à droite. */
 .mc-lib-nom {
   display: flex;
   align-items: center;
@@ -311,17 +366,14 @@
 }
 .mc-lib-nom b {
   min-width: 0;
-  font-size: 13.5px;
-  font-weight: 620;
-}
-.mc-lib-nom .infotip {
-  flex: none;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
 }
 .mc-lib-nom small {
   flex: none;
   margin-left: auto;
   padding-left: 8px;
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
   color: var(--text-3);
 }
 
@@ -368,6 +420,7 @@
   border-radius: var(--r-md);
   border: 1px solid var(--border);
   background: var(--surface-2);
+  color: var(--text-2);
 }
 /* La silhouette tourne avec la machine : on voit le sens changer. */
 .mc-posee-sens > span {
@@ -377,19 +430,18 @@
 }
 .mc-posee-sur {
   margin: 0;
-  font-size: 12px;
-  font-weight: 620;
-  color: var(--accent-text);
+  font-size: var(--fs-sm);
+  color: var(--text-3);
 }
 .mc-posee h3 {
   margin: 4px 0 0;
-  font-size: 15.5px;
+  font-size: var(--fs-lg);
   line-height: 1.3;
   overflow-wrap: anywhere;
 }
 .mc-posee-zone {
   margin: 4px 0 0;
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   color: var(--text-3);
 }
 .mc-posee-champs {
@@ -405,7 +457,7 @@
 }
 .mc-aide {
   margin: -4px 0 0;
-  font-size: 12px;
+  font-size: var(--fs-sm);
   line-height: 1.45;
   color: var(--text-3);
 }
@@ -420,8 +472,8 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 12.5px;
-  font-weight: 600;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
   color: var(--text-2);
 }
 .mc-sens-boutons {
@@ -429,31 +481,54 @@
 }
 .mc-retirer {
   align-self: flex-start;
-  color: var(--crit);
+  color: var(--text-2);
 }
 
-/* ---------- Machines posées ---------- */
+/* ---------- Machines posées ----------
+   Une liste dans un seul cadre, un filet entre deux machines : quatorze cartes empilées se lisaient comme un mur. */
 .ecran-machines .mc-liste .list {
   list-style: none;
   margin: 0;
   padding: 0;
+  gap: 0;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  overflow: hidden;
 }
-.mc-liste .section-title .chip {
-  height: 20px;
-  padding: 0 8px;
-  font-size: 11.5px;
+.ecran-machines .mc-liste li + li .mc-item {
+  border-top-color: var(--border);
+}
+.ecran-machines .mc-item {
+  border-radius: 0;
+  border-color: transparent;
+  background: transparent;
+}
+.ecran-machines .mc-item:hover {
+  background: var(--surface-2);
+}
+.ecran-machines .mc-item:focus-visible {
+  outline: 2px solid var(--text-2);
+  outline-offset: -2px;
+}
+/* Le compte des machines : un chiffre gris après le titre, pas une pastille. */
+.mc-liste-compte {
+  margin-left: 4px;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-regular);
+  color: var(--text-3);
 }
 .mc-item-numero {
   flex: none;
-  width: 54px;
-  font-weight: 700;
+  width: 56px;
+  font-weight: var(--fw-medium);
 }
 .mc-item .s {
   display: block;
 }
-.mc-item[aria-current='true'] {
-  border-color: var(--accent-text);
-  background: var(--accent-soft);
+.ecran-machines .mc-item[aria-current='true'] {
+  background: var(--surface-3);
+  box-shadow: inset 0 0 0 1px var(--accent-text);
 }
 .mc-item.vient-d-arriver {
   animation: mc-arrive 700ms var(--ease-out) both;

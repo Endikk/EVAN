@@ -2,19 +2,15 @@
    Étape 4 · Organes : fiche du modèle en chiffres, organes en liste compacte, bande des seuils, coche « vérifiée ».
    ============================================================ */
 
-.og-compte {
-  margin-left: 4px;
-  white-space: nowrap;
-}
 .ecran-organes .og-texte {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--fs-md);
   line-height: 1.5;
   color: var(--text-2);
 }
 .ecran-organes .og-texte b {
   color: var(--text);
-  font-weight: 620;
+  font-weight: var(--fw-medium);
 }
 
 /* ---------- Choix de la machine ---------- */
@@ -54,19 +50,26 @@
 }
 .og-fiche-sur {
   margin: 0;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--accent-text);
+  font-size: var(--fs-sm);
+  color: var(--text-3);
 }
 .og-fiche h3 {
   margin: 4px 0 0;
-  font-size: 16px;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-medium);
   line-height: 1.3;
 }
 .og-fiche-source {
   display: inline-flex;
   align-items: center;
   flex: none;
+}
+/* « Ce n'est pas ma machine » : un retour discret vers l'étape 3, sous les chiffres de la fiche. */
+.og-pas-ma-machine {
+  margin: 0;
+}
+.og-pas-ma-machine .btn {
+  margin-left: -8px;
 }
 .og-fiche-chiffres {
   padding-block: 8px;
@@ -80,7 +83,7 @@
 }
 .ecran-organes .og-procede {
   margin-bottom: 8px;
-  font-weight: 600;
+  font-weight: var(--fw-medium);
   color: var(--text);
 }
 .og-carac {
@@ -93,12 +96,12 @@
   background: var(--surface-2);
 }
 .og-carac dt {
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--text-3);
 }
 .og-carac dd {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--fs-md);
   line-height: 1.45;
   color: var(--text);
 }
@@ -106,7 +109,7 @@
   display: flex;
   gap: 8px;
   margin: 0;
-  font-size: 13px;
+  font-size: var(--fs-md);
   line-height: 1.5;
   color: var(--text-2);
 }
@@ -119,7 +122,7 @@
 }
 .og-a-verifier b {
   color: var(--text);
-  font-weight: 620;
+  font-weight: var(--fw-medium);
 }
 
 /* ---------- Machine importée ---------- */
@@ -129,7 +132,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  font-size: 13px;
+  font-size: var(--fs-md);
   color: var(--text-2);
 }
 .og-import-ligne {
@@ -151,7 +154,7 @@
   flex-wrap: wrap;
   gap: 4px 16px;
   margin: 0 0 8px;
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--text-3);
 }
 .og-legende span {
@@ -172,31 +175,37 @@
   border-radius: 2px;
   background: var(--text);
 }
+/* Les organes d'une machine se lisent comme une liste, pas comme une pile de cartes : un seul cadre, un filet entre
+   deux organes. L'organe déplié monte d'un palier ; celui que vise la caméra porte un filet ivoire. */
 .og-cartes {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-}
-.og-carte {
-  border-radius: var(--r-md);
+  border-radius: var(--r-lg);
   border: 1px solid var(--border);
   background: var(--surface);
-  transition: border-color var(--dur) var(--ease);
+  overflow: hidden;
+}
+.og-carte {
+  border-top: 1px solid var(--border);
+  transition: background-color var(--dur) var(--ease);
+}
+.og-carte:first-child {
+  border-top: 0;
 }
 .og-carte.ouvert {
-  background: color-mix(in srgb, var(--surface-2) 55%, var(--surface));
+  background: var(--surface-2);
 }
 .og-carte.actif {
-  border-color: var(--accent-text);
+  box-shadow: inset 0 0 0 1px var(--accent-text);
 }
 .og-carte-tete {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 8px 8px 4px;
+  padding: 4px 8px 4px 4px;
 }
 .og-carte-bouton {
   flex: 1;
@@ -213,6 +222,10 @@
   text-align: left;
   cursor: pointer;
 }
+.og-carte-bouton:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
 .og-chevron {
   flex: none;
   width: var(--icon);
@@ -223,16 +236,13 @@
 .og-carte.ouvert .og-chevron {
   transform: rotate(90deg);
 }
+/* Le rang de l'organe sur la bande : un repère court, en gris, dans une colonne de largeur fixe. */
 .og-numero {
   flex: none;
-  min-width: 30px;
-  padding: 4px 8px;
-  border-radius: 999px;
-  background: var(--accent-soft);
-  color: var(--accent-text);
-  font-size: 11.5px;
-  font-weight: 700;
-  text-align: center;
+  width: 24px;
+  color: var(--text-3);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
 }
 .og-carte-titre {
   min-width: 0;
@@ -244,8 +254,8 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 13.5px;
-  font-weight: 640;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
   line-height: 1.3;
 }
 /* Un point par mesure : gris quand c'est normal, en couleur seulement quand ça sort de la plage. */
@@ -285,7 +295,7 @@
   padding-left: 4px;
 }
 .og-organe-chiffres .cs-item dd {
-  font-size: 15px;
+  font-size: var(--fs-lg);
 }
 .og-carte-alerte {
   display: inline-flex;
@@ -294,14 +304,15 @@
   flex: none;
 }
 .og-viser svg {
-  color: var(--accent-text);
+  color: var(--text-2);
 }
+/* Le corps s'aligne sur le nom de l'organe (chevron, rang, gouttières). */
 .og-carte-corps {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 4px 16px 12px 42px;
-  animation: entree 360ms var(--ease-out) both;
+  padding: 4px 16px 12px 64px;
+  animation: entree var(--dur-entree) var(--ease-out) both;
 }
 .og-mesures {
   list-style: none;
@@ -321,8 +332,8 @@
 .og-mesure-nom {
   display: inline-flex;
   align-items: center;
-  font-size: 13px;
-  font-weight: 560;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
   color: var(--text);
 }
 .og-etat {
@@ -330,8 +341,8 @@
   align-items: center;
   gap: 4px;
   flex: none;
-  font-size: 12px;
-  font-weight: 620;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
   color: var(--text-3);
 }
 .og-etat .ton-glyph {
@@ -354,7 +365,7 @@
 }
 .og-sans-seuil {
   margin: 0;
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--text-3);
 }
 
@@ -384,8 +395,9 @@
 .og-seg:first-child {
   box-shadow: none;
 }
+/* La plage normale reste neutre : seules l'attention (ambre) et l'alarme (rouge hachuré) prennent une teinte. */
 .og-normal {
-  background: color-mix(in srgb, var(--ok) 42%, transparent);
+  background: color-mix(in srgb, var(--text-3) 45%, var(--surface-3));
 }
 .og-attention {
   background: color-mix(in srgb, var(--warn) 62%, transparent);
@@ -443,14 +455,14 @@
   justify-content: space-between;
   gap: 4px 8px;
   margin: 0;
-  font-size: 13px;
+  font-size: var(--fs-md);
 }
 .og-chiffres-nom span {
-  font-size: 12px;
+  font-size: var(--fs-sm);
 }
 .og-chiffres-lecture {
   margin: 4px 0 8px;
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   line-height: 1.45;
   color: var(--text-2);
 }
@@ -460,39 +472,53 @@
   gap: 8px;
 }
 .og-seuils-champs .field > span {
-  font-size: 11.5px;
-  font-weight: 560;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+}
+/* Seuils dans le désordre : le champ fautif cerné d'ambre, la raison dessous ; rien n'est appliqué. */
+.og-seuils-champs .input[aria-invalid='true'] {
+  border-color: var(--warn);
+}
+.og-seuils-erreur {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  margin: 8px 0 0;
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+  color: var(--text-2);
+}
+.og-seuils-kit {
+  margin-top: 8px;
+  margin-left: -8px;
 }
 .og-repere-3d {
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
   overflow-wrap: anywhere;
 }
 
 /* ---------- Coche « vérifiée » ---------- */
+/* La case qui clôt la machine : un palier de surface, gris qu'elle soit cochée ou non. */
 .og-verifier {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
   padding: 12px 16px;
   border-radius: var(--r-lg);
-  border: 1px dashed var(--border-strong);
-  transition:
-    border-color 400ms var(--ease),
-    background 400ms var(--ease);
-}
-.og-verifier.fait {
-  border-style: solid;
-  border-color: color-mix(in srgb, var(--ok) 45%, var(--border));
-  background: var(--ok-soft);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
 }
 .og-verifier-ligne {
   display: flex;
   align-items: flex-start;
   gap: 4px;
 }
-.og-verifier-ligne .infotip {
-  flex: none;
-  margin-top: 0;
+.og-verifier-aide {
+  display: block;
+  margin-top: 4px;
+  font-size: var(--fs-md);
+  line-height: 1.4;
+  color: var(--text-3);
 }
 .og-verifier-coche {
   display: flex;
@@ -506,8 +532,8 @@
 }
 .og-verifier-coche b {
   display: block;
-  font-size: 13.5px;
-  font-weight: 620;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
   line-height: 1.35;
 }
 .og-coche {
@@ -523,7 +549,7 @@
 }
 .og-coche-trait {
   fill: none;
-  stroke: var(--bg);
+  stroke: var(--surface-2);
   stroke-width: 2.4;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -532,20 +558,22 @@
   transition: stroke-dashoffset 380ms var(--ease-out) 120ms;
 }
 .og-verifier.fait .og-coche-cadre {
-  fill: var(--ok);
-  stroke: var(--ok);
+  fill: var(--text-2);
+  stroke: var(--text-2);
 }
 .og-verifier.fait .og-coche-trait {
   stroke-dashoffset: 0;
 }
 .og-suivante {
   align-self: flex-start;
-  animation: entree 380ms var(--ease-out) both;
+  animation: entree var(--dur-entree) var(--ease-out) both;
 }
 .og-toutes {
   margin: 0;
-  font-size: 13px;
-  color: var(--ok);
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  font-size: var(--fs-md);
+  color: var(--text-2);
 }
 
 /* ---------- Aucune machine ---------- */
@@ -561,11 +589,18 @@
   align-items: center;
   gap: 8px;
   margin: 0;
-  font-size: 14.5px;
-  font-weight: 620;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
+}
+.og-vide-texte {
+  margin: 0 0 4px;
+  font-size: var(--fs-md);
+  line-height: 1.45;
+  color: var(--text-2);
 }
 
-/* ---------- Schémas du guide ---------- */
+/* ---------- Schémas du guide ----------
+   Ils rejouent quatre fois leur geste puis s'arrêtent : rien ne boucle sans fin hors de ce qui est en direct. */
 .og-schema-organes {
   display: block;
   width: 100%;
@@ -576,18 +611,18 @@
   stroke: var(--border-strong);
 }
 .og-so-num {
-  fill: var(--accent-text);
-  font: 700 10px var(--mono);
+  fill: var(--text-3);
+  font: 500 10px var(--mono);
 }
 .og-so-nom {
   fill: var(--text-2);
-  font: 560 11px var(--font);
+  font: 500 11px var(--font);
 }
 .og-so-bande {
   stroke: var(--text-3);
   stroke-width: 2;
   stroke-dasharray: 6 4;
-  animation: og-defile 1.2s linear infinite;
+  animation: og-defile 1.2s linear 12;
 }
 @keyframes og-defile {
   to {
@@ -607,7 +642,7 @@
   stroke-width: 1.5;
   transform-box: fill-box;
   transform-origin: center;
-  animation: og-onde 1.8s var(--ease-out) infinite;
+  animation: og-onde 1.8s var(--ease-out) 8 forwards;
 }
 @keyframes og-onde {
   from {
@@ -625,14 +660,14 @@
 }
 .og-so-point text {
   fill: var(--text);
-  font: 600 10.5px var(--font);
+  font: 500 10.5px var(--font);
 }
 
 .og-schema-bande {
   padding: 8px 4px 0;
 }
 .og-sb-curseur {
-  animation: og-sb-curseur 7s var(--ease) infinite;
+  animation: og-sb-curseur 7s var(--ease) 4 forwards;
 }
 @keyframes og-sb-curseur {
   0%,
@@ -655,18 +690,18 @@
   position: relative;
   height: 20px;
   margin: 8px 0 0;
-  font-size: 12.5px;
-  font-weight: 620;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
 }
 .og-sb-mot {
   position: absolute;
   left: 0;
   top: 0;
   opacity: 0;
-  animation: 7s var(--ease) infinite;
+  animation: 7s var(--ease) 4 forwards;
 }
 .og-sb-mot.ton-ok {
-  color: var(--ok);
+  color: var(--text-2);
 }
 .og-sb-mot.ton-warn {
   color: var(--warn);

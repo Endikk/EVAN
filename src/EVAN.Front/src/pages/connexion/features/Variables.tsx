@@ -1,6 +1,6 @@
 /**
  * Temps 4 : relier chaque variable de l'automate au point de mesure qui lui correspond. Chaque variable montre son
- * nom et son point relié ; ce qu'elle contient est dans son « ? ». Une variable reliée se coche, et celles que
+ * nom et son point relié ; ce qu'elle contient s'ouvre depuis son nom. Une variable reliée se coche, et celles que
  * l'association automatique vient de relier s'allument une fois. Les adresses techniques (tableau complet) restent
  * repliées.
  */
@@ -37,8 +37,7 @@ function LigneVariable({ v, pointId, points, relier }: { v: Variable; pointId?: 
       </span>
       <div className="cx-var-corps">
         <p className="cx-var-nom">
-          <span className="mono">{v.nom}</span>
-          <InfoTip label={`Comprendre : ${v.nom}`}>
+          <InfoTip label={`Comprendre : ${v.nom}`} texte={<span className="mono">{v.nom}</span>}>
             <p>{v.sens}</p>
           </InfoTip>
         </p>

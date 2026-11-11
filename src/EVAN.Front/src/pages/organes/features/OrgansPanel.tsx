@@ -1,10 +1,11 @@
 /**
  * Étape 4 : ce qu'on surveille sur chaque machine. En haut, ce qu'il reste à faire ; puis le choix de la machine, sa
  * fiche en chiffres, ses organes en liste compacte (dépliables, avec la bande des seuils de chaque mesure), et la
- * coche « vérifiée ». Les explications sont dans les « ? ».
+ * coche « vérifiée ». Les explications s'ouvrent depuis les titres et les libellés.
  */
-import { Suspense, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useTachesConfig } from '@/store/avancement';
 import { useProject } from '@/store/project';
 import { useUi } from '@/store/ui';
 import { MACHINE_TYPES, machineModel } from '@/domain/catalog';
@@ -48,24 +49,14 @@ function ChoixMachine({ machines, courante }: { machines: Machine[]; courante: M
   );
 }
 
-/** Comment faire une tâche : dans le « ? », juste après son intitulé. */
-function CommentFaire({ children }: { children: ReactNode }) {
-  return (
-    <InfoTip label="Comment faire">
-      <p>{children}</p>
-    </InfoTip>
-  );
-}
-
 function AucuneMachine() {
   return (
     <div className="card og-vide">
       <p className="og-vide-titre">
-        <TonGlyph ton="neutre" /> Aucune machine posée pour l’instant.
-        <InfoTip label="Pourquoi">
-          <p>Les organes se vérifient machine par machine. Posez d’abord vos machines sur le plan, à l’étape 3.</p>
-        </InfoTip>
+        <TonGlyph ton="neutre" /> Aucune machine posée pour l’instant
       </p>
+      {/* Un écran vide dit pourquoi en clair : la raison est le contenu, pas une aide à ouvrir. */}
+      <p className="og-vide-texte">Les organes se vérifient machine par machine. Posez d’abord vos machines sur le plan, à l’étape 3.</p>
       <button type="button" className="btn sm" onClick={() => void goToStep(3)}>
         <ArrowLeft aria-hidden /> Revenir aux machines
       </button>
@@ -86,6 +77,8 @@ export function OrgansPanel() {
   const organeVise = focus.kind === 'organe' ? focus.organeId : undefined;
 
   const cochees = useVerifications((s) => s.parUsine[usineId]);
+  // Les coches des tâches viennent du calcul commun (store/avancement.ts), celui qui coche aussi l'étape dans le rail.
+  const fait = useTachesConfig()[4];
   const verifiees = useMemo(() => machinesVerifiees(cochees, machines.map((m) => m.id), configure), [cochees, machines, configure]);
   const [vise, setVise] = useState(organeDejaVise);
   useEffect(() => {
@@ -105,42 +98,24 @@ export function OrgansPanel() {
 
   const taches: Tache[] = [
     {
-      label: (
-        <>
-          Vérifier les organes de chaque machine
-          <CommentFaire>{machines.length ? 'Relisez la liste de ses organes, puis cochez la case en bas.' : 'Posez d’abord une machine à l’étape 3.'}</CommentFaire>
-          {machines.length > 0 && (
-            <span className="og-compte">
-              ({nbVerifiees} sur {machines.length})
-            </span>
-          )}
-        </>
-      ),
-      fait: machines.length > 0 && nbVerifiees === machines.length,
+      label: 'Vérifier les organes de chaque machine',
+      comment: machines.length ? 'Relisez la liste de ses organes, puis cochez la case en bas.' : 'Posez d’abord une machine à l’étape 3.',
+      compte: machines.length > 0 && `${nbVerifiees} sur ${machines.length}`,
+      fait: fait.organesVerifies,
     },
     ...(importees.length
       ? [
           {
-            label: (
-              <>
-                Décrire les organes des machines importées
-                <CommentFaire>Une machine hors du kit n’a pas d’organes tant que vous ne les ajoutez pas.</CommentFaire>
-                <span className="og-compte">
-                  ({importeesDecrites} sur {importees.length})
-                </span>
-              </>
-            ),
-            fait: importeesDecrites === importees.length,
+            label: 'Décrire les organes des machines importées',
+            comment: 'Une machine hors du kit n’a pas d’organes tant que vous ne les ajoutez pas.',
+            compte: `${importeesDecrites} sur ${importees.length}`,
+            fait: fait.importeesDecrites ?? true,
           },
         ]
       : []),
     {
-      label: (
-        <>
-          Viser un organe dans la vue 3D
-          <CommentFaire>Le viseur à droite d’un organe place la caméra dessus.</CommentFaire>
-        </>
-      ),
+      label: 'Viser un organe dans la vue 3D',
+      comment: 'Le viseur à droite d’un organe place la caméra dessus.',
       fait: vise,
       facultatif: true,
     },

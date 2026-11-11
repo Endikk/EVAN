@@ -116,10 +116,10 @@ export function ContourCard({ b, verifie, style }: { b: Batiment; verifie: boole
         >
           <Eraser /> Retirer les points en trop
         </button>
-        <button type="button" className="btn sm icon ghost" onClick={() => useProject.getState().undo()} disabled={!passe} title={`Annuler (${RACCOURCI_ANNULER})`} aria-label="Annuler la dernière correction">
+        <button type="button" className="btn sm icon ghost" onClick={() => useProject.getState().undo()} disabled={!passe} title={`Annuler (${RACCOURCI_ANNULER})`} aria-label="Annuler la dernière modification">
           <Undo2 />
         </button>
-        <button type="button" className="btn sm icon ghost" onClick={() => useProject.getState().redo()} disabled={!futur} title={`Rétablir (${RACCOURCI_RETABLIR})`} aria-label="Rétablir la correction annulée">
+        <button type="button" className="btn sm icon ghost" onClick={() => useProject.getState().redo()} disabled={!futur} title={`Rétablir (${RACCOURCI_RETABLIR})`} aria-label="Rétablir la modification annulée">
           <Redo2 />
         </button>
       </div>
@@ -142,8 +142,7 @@ function AideEdition() {
     <div className="loc-geste-edition">
       <GesteCoin className="petit" />
       <p className="loc-aide">
-        Glissez chaque coin sur l’angle du toit.
-        <InfoTip label="Ajouter, enlever un coin, et sa précision">
+        <InfoTip label="Ajouter, enlever un coin, et sa précision" texte="Glissez chaque coin sur l’angle du toit">
           <p>Glissez le point au milieu d’un côté pour ajouter un coin ; double-cliquez un coin pour l’enlever. Les côtés s’alignent d’eux-mêmes sur le bâtiment.</p>
           <p>
             Au zoom actuel, un coin replacé à la main est précis à ± {formatNumber(handSigma(mpp), 2)} m. Plus on zoome, plus il est précis.

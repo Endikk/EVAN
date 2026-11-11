@@ -1,6 +1,6 @@
 /** « Comment lire cet écran » pour l'étape 2 : un bloc par zone de l'écran, dans l'ordre où on les voit. */
 import type { GuideEcran } from '@/ui/explain';
-import { ZONE_COULEUR, ZONE_LIBELLE } from '@/widgets/scene/Zones3D';
+import { ZONE_LIBELLE } from '@/widgets/scene/Zones3D';
 import { ORDRE_ZONES, ZONE_SENS } from '../lib/typesZone';
 import { GesteVue, GesteZone } from './gestes';
 
@@ -55,7 +55,6 @@ export const GUIDE_PLAN: GuideEcran = {
         <ul className="pln-guide-types">
           {ORDRE_ZONES.map((t) => (
             <li key={t}>
-              <i style={{ background: ZONE_COULEUR[t] }} aria-hidden />
               <span>
                 <b>{ZONE_LIBELLE[t]}</b> : {ZONE_SENS[t].charAt(0).toLowerCase() + ZONE_SENS[t].slice(1)}
               </span>

@@ -4,14 +4,14 @@
  * Rendu en fonction du zoom :
  *  - z < 14 : imagerie seule ;
  *  - z 14-15 : contours OSM discrets (monde) ;
- *  - z ≥ 15 : bâtiments BD TOPO (France), bâtiments industriels en ambre, survol = surface et hauteur ;
- *  - bâtiment retenu : trait braise de la charte (--map-line), halo dont l'épaisseur est l'incertitude réelle en
- *    mètres (il s'élargit en pixels quand on zoome), sommets éditables à partir de z 16, cotes des côtés à partir
- *    de z 17,5.
+ *  - z ≥ 15 : bâtiments BD TOPO (France) en trait fin ivoire, survol = surface et hauteur ;
+ *  - bâtiment retenu : trait ivoire de la charte (--map-line), plus épais, halo dont l'épaisseur est l'incertitude
+ *    réelle en mètres (il s'élargit en pixels quand on zoome), sommets éditables à partir de z 16, cotes des côtés à
+ *    partir de z 17,5.
  *
- * Pourquoi la braise et plus le cyan : sur l'orthophoto, les toits sont gris, la végétation verte et les parkings
- * gris-bleu ; un orange vif tranche sur les trois, et c'est la couleur de la marque. L'ambre reste aux bâtiments
- * proposés et aux bâtiments industriels de l'IGN, plus pâles et en trait fin ou pointillé.
+ * Trois traits, une seule teinte : sur l'orthophoto (toits gris, végétation verte, parkings gris-bleu), le blanc
+ * tranche partout. Le bâtiment retenu se distingue des autres par l'épaisseur et le halo, pas par la couleur. L'ambre
+ * reste aux seuls bâtiments proposés pour une adresse, en pointillé : c'est ce qu'il faut choisir.
  */
 import { useEffect, useRef } from 'react';
 import * as maplibregl from 'maplibre-gl';
@@ -67,17 +67,11 @@ const isReady = (map: maplibregl.Map | null | undefined): map is maplibregl.Map 
 const FRANCE_BOUNDS: [number, number, number, number] = [-5.5, 41.2, 9.8, 51.2];
 const EMPTY: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: [] };
 
-const usageColor: maplibregl.ExpressionSpecification = [
-  'match',
-  ['get', 'usage_1'],
-  'Industriel',
-  '#ffb547',
-  'Commercial et services',
-  '#ffd59a',
-  'Agricole',
-  '#cde8a2',
-  '#ffffff',
-];
+/**
+ * Les bâtiments de l'IGN, tous du même ivoire pâle : leur usage (industriel, commerce…) n'était dit par aucune
+ * légende, et l'ambre de l'industrie couvrait la photo d'orange. L'ambre reste aux bâtiments proposés.
+ */
+const usageColor = '#f4f2ea';
 
 function buildStyle(trait: string): StyleSpecification {
   return {
@@ -152,9 +146,9 @@ function buildStyle(trait: string): StyleSpecification {
             ['linear'],
             ['zoom'],
             15,
-            ['case', ['boolean', ['feature-state', 'hover'], false], 0.38, 0.03],
+            ['case', ['boolean', ['feature-state', 'hover'], false], 0.26, 0.02],
             18,
-            ['case', ['boolean', ['feature-state', 'hover'], false], 0.38, 0.1],
+            ['case', ['boolean', ['feature-state', 'hover'], false], 0.26, 0.06],
           ],
         },
       },
@@ -166,7 +160,7 @@ function buildStyle(trait: string): StyleSpecification {
         layout: { 'line-join': 'round' },
         paint: {
           'line-color': usageColor,
-          'line-opacity': ['interpolate', ['linear'], ['zoom'], 15, 0.4, 17, 0.8, 19, 0.95],
+          'line-opacity': ['interpolate', ['linear'], ['zoom'], 15, 0.3, 17, 0.55, 19, 0.7],
           // Trait affiné à faible zoom, épaissi en approche ; plus marqué au survol.
           'line-width': [
             'interpolate',

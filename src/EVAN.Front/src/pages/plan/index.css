@@ -4,15 +4,20 @@
    ============================================================ */
 
 /* ---------- Vue ---------- */
-/* Le choix de la vue, et son « ? » juste après. */
+/* Le choix de la vue, et à quoi sert chacune juste dessous. */
 .pln-vue {
   display: flex;
-  align-items: center;
-  gap: 4px;
+  flex-direction: column;
+  gap: 8px;
 }
 .pln-vue .seg {
-  flex: 1;
   min-width: 0;
+}
+.pln-vue-usage {
+  margin: 0;
+  font-size: var(--fs-md);
+  line-height: 1.4;
+  color: var(--text-3);
 }
 .pln-vue .seg button {
   flex: 1;
@@ -27,14 +32,16 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  font-size: 13.5px;
+  font-size: var(--fs-base);
 }
 .pln-curseur input[type='range'] {
   width: 100%;
   min-height: 24px;
 }
 .pln-valeur {
-  font-size: 15px;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-medium);
+  font-variant-numeric: tabular-nums;
 }
 .pln-bat-pied {
   margin-top: 8px;
@@ -59,15 +66,15 @@
   border-left: 0;
 }
 .pln-mesures .cs-item dt {
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
 }
 .pln-mesures .cs-item dd {
-  font-size: 13.5px;
-  font-weight: 620;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
   white-space: nowrap;
 }
 .pln-mesures .cs-item dd small {
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
 }
 .pln-a-verifier {
   display: flex;
@@ -76,25 +83,24 @@
   margin-left: auto;
 }
 .pln-origine {
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   line-height: 1.4;
   color: var(--text-3);
 }
-/* Hauteur vérifiée : l'état normal, dit calmement (mot gris, coche verte). */
+/* Hauteur vérifiée : l'état normal, dit calmement, en gris (le vert reste aux machines qui tournent). */
 .pln-verifiee {
   margin-left: auto;
   color: var(--text-2);
   background: var(--surface-2);
   border-color: transparent;
-  animation: pln-coche 420ms var(--ease-out);
+  animation: pln-coche var(--dur-entree) var(--ease-out);
 }
 .pln-verifiee svg {
-  color: var(--ok);
+  color: var(--text-2);
 }
 @keyframes pln-coche {
   from {
     opacity: 0;
-    transform: scale(0.9);
   }
 }
 
@@ -130,20 +136,13 @@
   border-color: var(--pln-c);
   background: color-mix(in srgb, var(--pln-c) 14%, var(--surface));
 }
-.pln-type > i {
-  flex: none;
-  width: 12px;
-  height: 12px;
-  border-radius: var(--r-xs);
-  background: var(--pln-c);
-}
 .pln-type-texte {
   display: flex;
   align-items: center;
   gap: 4px;
   min-width: 0;
-  font-size: 13px;
-  font-weight: 620;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
 }
 .pln-type-texte svg {
   flex: none;
@@ -161,13 +160,13 @@
   margin-bottom: 12px;
   padding: 12px;
   border-radius: var(--r-md);
-  border: 1px solid color-mix(in srgb, var(--accent-2) 40%, var(--border));
+  border: 1px solid var(--border-strong);
   background: var(--surface-2);
-  animation: entree 320ms var(--ease-out) both;
+  animation: entree var(--dur-entree) var(--ease-out) both;
 }
 .pln-geste-carte b {
   display: block;
-  font-size: 13.5px;
+  font-size: var(--fs-base);
   line-height: 1.35;
 }
 .pln-geste-carte .btn {
@@ -200,7 +199,7 @@
   min-width: 0;
 }
 .pln-zone-type {
-  font-weight: 450;
+  font-weight: var(--fw-regular);
   color: var(--text-3);
 }
 /* La surface de la zone comparée à la plus grande, en gris ; en couleur d'accent quand la zone est choisie. */
@@ -224,17 +223,12 @@
 }
 .pln-zone-surface {
   flex: none;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
+  font-variant-numeric: tabular-nums;
   color: var(--text-2);
 }
-.pln-pastille {
-  flex: none;
-  width: 12px;
-  height: 12px;
-  border-radius: var(--r-xs);
-  background: var(--pln-c);
-}
+/* Une zone se dessine en pointillé sur le plan : sa pastille aussi, sans teinte (les teintes sont aux états). */
 .pln-suppr {
   --h: 40px;
   width: 40px;
@@ -269,7 +263,7 @@
   grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
   gap: 8px;
   padding: 8px 4px;
-  animation: entree 260ms var(--ease-out) both;
+  animation: entree var(--dur-entree) var(--ease-out) both;
 }
 /* Au doigt, la liste du type passe à 44 px (ui/select.css) : le nom, à côté, la suit. */
 @media (pointer: coarse) {
@@ -278,7 +272,7 @@
   }
 }
 .pln-vide {
-  font-size: 13px;
+  font-size: var(--fs-md);
   color: var(--text-2);
   padding: 8px 4px;
 }
@@ -296,12 +290,6 @@
   display: flex;
   align-items: baseline;
   gap: 8px;
-}
-.pln-guide-types i {
-  flex: none;
-  width: 10px;
-  height: 10px;
-  border-radius: var(--r-xs);
 }
 
 /* ---------- Scènes animées du geste ---------- */
@@ -332,7 +320,7 @@
   stroke-width: 1.2;
 }
 .pln-g-mot {
-  font: 700 8px var(--font);
+  font: 500 8px var(--font);
   fill: var(--text-2);
 }
 .pln-g-face-haut {
@@ -345,8 +333,8 @@
   fill: color-mix(in srgb, var(--text-3) 30%, var(--surface));
 }
 .pln-g-zone-fixe {
-  fill: color-mix(in srgb, var(--accent-2) 26%, transparent);
-  stroke: var(--accent-2);
+  fill: color-mix(in srgb, var(--text-3) 20%, transparent);
+  stroke: var(--text-3);
   stroke-width: 0.8;
 }
 .pln-g-3d {
@@ -508,6 +496,6 @@
 }
 .pln-autres-niveaux {
   margin: 8px 4px 0;
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   color: var(--text-2);
 }

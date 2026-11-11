@@ -5,7 +5,6 @@
 import { ArrowRight } from 'lucide-react';
 import { useUi } from '@/store/ui';
 import type { Machine } from '@/domain/types';
-import { InfoTip } from '@/ui/InfoTip';
 
 export function choisirMachine(id: string) {
   useUi.getState().selectMachine(id);
@@ -41,14 +40,16 @@ export function Verifier({
             <rect className="og-coche-cadre" x="1.5" y="1.5" width="19" height="19" rx="6" />
             <path className="og-coche-trait" d="M6.5 11.4 9.6 14.4 15.6 8" />
           </svg>
-          <b>
-            Les organes de <span className="mono">{machine.numero}</span> correspondent à la machine
-          </b>
+          <span>
+            <b>
+              Les organes de <span className="mono">{machine.numero}</span> correspondent à la machine
+            </b>
+            {/* Comment faire tient en une ligne : elle reste en vue sous la case, sans « ? » à ouvrir. */}
+            <small className="og-verifier-aide">
+              {fait ? 'Décochez si quelque chose change sur la machine.' : 'Relisez la liste ci-dessus, dépliez un organe au besoin, puis cochez.'}
+            </small>
+          </span>
         </label>
-        {/* Hors du label : un bouton n'a rien à faire dans l'étiquette d'une case. */}
-        <InfoTip label="Comment vérifier">
-          <p>{fait ? 'Vérifiée. Décochez si quelque chose change sur la machine.' : 'Relisez la liste ci-dessus, dépliez un organe au besoin, puis cochez.'}</p>
-        </InfoTip>
       </div>
       {fait &&
         (suivante ? (

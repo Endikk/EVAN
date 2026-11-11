@@ -6,8 +6,8 @@ import type { Niveau } from '@/store/live';
 
 export const FIABILITE: Record<string, { mot: string; sens: string }> = {
   source_directe: {
-    mot: 'Modèle identifié',
-    sens: 'La marque et le modèle de la machine sont connus : organes et caractéristiques viennent de la documentation du constructeur.',
+    mot: 'Fiche constructeur',
+    sens: 'Le modèle du kit est documenté par son constructeur : ses organes et ses caractéristiques en viennent. Votre machine peut être d’une autre marque ou d’une autre version.',
   },
   technologie_confirmee: {
     mot: 'Machine type',

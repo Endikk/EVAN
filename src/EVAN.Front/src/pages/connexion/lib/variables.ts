@@ -34,6 +34,21 @@ function enPhrase(libelle: string): string {
   return /^[A-ZÉÈÀ][a-zéèêàâîôûç]/.test(libelle) ? libelle.charAt(0).toLowerCase() + libelle.slice(1) : libelle;
 }
 
+/**
+ * Nom d'organe écrit comme un mnémonique d'automate, un mot par majuscule : « Dérouleur et guide-bande » donne
+ * « DerouleurEtGuideBande ». Collés en minuscules, les mots devenaient illisibles (« Derouleuretguidebande »). Les
+ * élisions d'une lettre (« d' », « l' ») tombent ; un sigle (« RFID ») reste en capitales.
+ */
+export function motsEnMajuscules(texte: string): string {
+  return texte
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .split(/[^A-Za-z0-9]+/)
+    .filter((mot) => mot.length > 1 || /\d/.test(mot))
+    .map((mot) => (mot === mot.toUpperCase() ? mot : mot.charAt(0).toUpperCase() + mot.slice(1).toLowerCase()))
+    .join('');
+}
+
 /** Variables « découvertes » pour une machine (parcours de l'espace d'adressage simulé). */
 export function browseVariables(machine: Machine, protocole: Protocole, points: PointDeMesure[], organes: { id: string; nom: string }[]): Variable[] {
   const orgName = (id: string) => organes.find((o) => o.id === id)?.nom ?? '';
@@ -49,9 +64,9 @@ export function browseVariables(machine: Machine, protocole: Protocole, points: 
     ).map(([id, nom, type]) => ({ id, nom, type, sens: sensVariable(nom) }));
   }
   const vars: Variable[] = points.map((p, i) => {
-    const organ = slug(orgName(p.organeId)).replace(/_/g, '');
+    const organ = motsEnMajuscules(orgName(p.organeId));
     const leaf = p.cle.replace(/_(\w)/g, (_, c: string) => c.toUpperCase());
-    const name = `${organ.charAt(0).toUpperCase()}${organ.slice(1)}.${leaf.charAt(0).toUpperCase()}${leaf.slice(1)}`;
+    const name = `${organ}.${leaf.charAt(0).toUpperCase()}${leaf.slice(1)}`;
     const id =
       protocole === 'opcua'
         ? `ns=2;s=${machine.numero}.${name}`
@@ -87,7 +102,10 @@ function tokens(s: string) {
 export function autoMatch(vars: Variable[], points: PointDeMesure[], organes: { id: string; nom: string }[]): Association {
   const out: Association = {};
   for (const v of vars) {
-    const vt = new Set(tokens(v.nom));
+    // Les mots de la variable, plus son organe d'un seul tenant (« derouleuretguidebande ») : c'est lui qui départage deux
+    // organes qui partagent des mots (dérouleur, guide-bande).
+    const organeVar = v.nom.includes('.') ? slug(v.nom.split('.')[0]).replace(/_/g, '') : '';
+    const vt = new Set([...tokens(v.nom), ...(organeVar ? [organeVar] : [])]);
     let best: { pointId: string; score: number } | null = null;
     for (const p of points) {
       const pt = new Set([...tokens(p.cle), ...tokens(organes.find((o) => o.id === p.organeId)?.nom ?? '').map((t) => t.replace(/_/g, ''))]);
@@ -117,4 +135,13 @@ export function autoMatch(vars: Variable[], points: PointDeMesure[], organes: { 
 /** Nombre de variables reliées parmi celles de la liste (une association restée d'un autre protocole ne compte pas). */
 export function nbReliees(vars: Variable[], assoc: Association): number {
   return vars.filter((v) => assoc[v.id]).length;
+}
+
+/**
+ * Associations de départ d'une machine déjà branchée : celles qui sont enregistrées, si elles portent sur les variables
+ * lues ; sinon (aucune, ou des noms d'un ancien format), la proposition automatique.
+ */
+export function associationsDeDepart(vars: Variable[], saved: Record<string, string>, auto: () => Association): Association {
+  const reprises: Association = Object.fromEntries(Object.entries(saved).map(([k, p]) => [k, { pointId: p, score: 1 }]));
+  return nbReliees(vars, reprises) > 0 ? reprises : auto();
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bandeSeuils, lectureSeuils, position } from './seuils';
+import { bandeSeuils, lectureSeuils, lireSaisie, memesSeuils, position, versSaisie } from './seuils';
 
 const plages = (b: ReturnType<typeof bandeSeuils>) => b?.segments.map((s) => s.plage);
 
@@ -54,5 +54,31 @@ describe('lecture des seuils', () => {
 
   it('seuils bas seulement', () => {
     expect(lectureSeuils({ attentionBas: 140, alarmeBas: 90 }, 'mm')).toBe('Normal au-dessus de 140 mm. Attention sous 140 mm. Alarme sous 90 mm.');
+  });
+});
+
+describe('saisie des seuils', () => {
+  it('lit une saisie dans l’ordre, un champ vide voulant dire « aucun seuil »', () => {
+    expect(lireSaisie({ alarmeBas: '120', attentionBas: '150', attentionHaut: '212,5', alarmeHaut: '' })).toEqual({
+      seuils: { alarmeBas: 120, attentionBas: 150, attentionHaut: 212.5 },
+    });
+  });
+
+  it('refuse des seuils dans le désordre et désigne le champ à corriger', () => {
+    // On tape « 2 » au lieu de « 235 » : l'alarme haute passerait sous l'attention haute.
+    const r = lireSaisie({ alarmeBas: '120', attentionBas: '150', attentionHaut: '212', alarmeHaut: '2' });
+    expect(r).toEqual({ erreur: '« Attention au-delà de » doit rester sous « Alarme au-delà de ».', champ: 'alarmeHaut' });
+    expect(lireSaisie({ alarmeBas: '150', attentionBas: '150', attentionHaut: '', alarmeHaut: '' })).toHaveProperty('erreur');
+  });
+
+  it('refuse ce qui n’est pas un nombre', () => {
+    expect(lireSaisie({ alarmeBas: 'abc', attentionBas: '', attentionHaut: '', alarmeHaut: '' })).toHaveProperty('champ', 'alarmeBas');
+  });
+
+  it('repasse des seuils en saisie et compare deux jeux', () => {
+    const s = { alarmeBas: 1, alarmeHaut: 9 };
+    expect(versSaisie(s)).toEqual({ alarmeBas: '1', attentionBas: '', attentionHaut: '', alarmeHaut: '9' });
+    expect(memesSeuils(s, { alarmeBas: 1, alarmeHaut: 9 })).toBe(true);
+    expect(memesSeuils(s, { alarmeBas: 1 })).toBe(false);
   });
 });

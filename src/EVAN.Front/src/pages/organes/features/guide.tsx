@@ -84,8 +84,9 @@ export const GUIDE_ORGANES: GuideEcran = {
       cible: 'organes-fiche',
       texte: (
         <p>
-          Ce qu’est la machine, comment elle travaille, et d’où viennent ces informations. « Modèle identifié » veut dire que la marque et le
-          modèle sont connus ; « À confirmer », qu’il faut vérifier sur place que la machine existe. Les questions encore ouvertes sont signalées « À vérifier sur place ».
+          Le modèle du kit dont la machine reprend les organes : une référence pour ce type de machine, pas forcément la vôtre. « Organes types, à
+          adapter » le rappelle : relisez la liste et ajustez les seuils. « À confirmer sur place » signale une machine supposée, dont la présence
+          reste à vérifier. « Ce n’est pas ma machine » ramène à l’étape 3 pour la changer.
         </p>
       ),
     },
@@ -97,7 +98,7 @@ export const GUIDE_ORGANES: GuideEcran = {
         <p>
           Chaque organe porte un numéro dans l’ordre de passage de la bande : le dérouleur d’abord, le rembobineur à la fin. Les petits points à droite
           de son nom sont ses mesures : gris quand tout est normal, en couleur quand une mesure sort de sa plage. Dépliez un organe pour voir ses
-          mesures ; le « ? » de ses pannes typiques dit ce qui lâche d’habitude et comment remonter à la cause. Le viseur à droite place la caméra dessus.
+          mesures ; le chiffre « Pannes » dit ce qui lâche d’habitude et comment remonter à la cause. Le viseur à droite place la caméra dessus.
         </p>
       ),
     },

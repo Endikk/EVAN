@@ -13,15 +13,15 @@
 }
 .searchbox > .loc-recherche-roue {
   left: auto;
-  right: 14px;
-  color: var(--accent-text);
+  right: 16px;
+  color: var(--text-2);
 }
 .loc-recherche-etat {
   padding: 12px 16px;
-  font-size: 13px;
+  font-size: var(--fs-md);
   line-height: 1.5;
   color: var(--text-2);
-  animation: entree 220ms var(--ease-out) both;
+  animation: entree var(--dur-entree) var(--ease-out) both;
 }
 .loc-recherche-etat p {
   margin: 0;
@@ -41,8 +41,16 @@
 .loc-recherche-etat.erreur svg {
   color: var(--warn);
 }
+/* « Réessayer » quand le service d'adresse ne répond pas : un bouton ordinaire, son icône garde la couleur du texte. */
+.loc-recherche-relance {
+  margin-top: 12px;
+}
+.loc-recherche-etat.erreur .loc-recherche-relance svg {
+  color: inherit;
+}
 
 /* ---------- Conseil posé sur la carte ---------- */
+/* Il flotte sur la photo : c'est l'une des rares surfaces qui gardent une ombre. */
 .loc-accueil {
   position: absolute;
   z-index: 4;
@@ -54,17 +62,18 @@
   background: var(--surface);
   border: 1px solid var(--border-strong);
   box-shadow: var(--shadow-2);
-  animation: entree 420ms var(--ease-out) both;
+  animation: entree var(--dur-entree) var(--ease-out) both;
 }
 .loc-accueil h2 {
   margin: 0 32px 4px 0;
-  font-size: 16px;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-medium);
   line-height: 1.3;
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
 }
 .loc-accueil p {
   margin: 0;
-  font-size: 13.5px;
+  font-size: var(--fs-base);
   line-height: 1.5;
   color: var(--text-2);
 }
@@ -76,7 +85,7 @@
 }
 .loc-accueil .loc-accueil-compte {
   margin-top: 4px;
-  font-size: 13px;
+  font-size: var(--fs-md);
   color: var(--text-2);
 }
 .loc-accueil-fermer {
@@ -98,19 +107,23 @@
   align-items: center;
   gap: 8px;
   margin-top: 8px;
-  font-size: 12.5px;
-  font-weight: 600;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
   color: var(--text);
 }
+/* Le numéro du geste : un rond cerclé de gris, comme les étapes du rail, sans aplat. */
 .loc-accueil-gestes figcaption b {
   display: grid;
   place-items: center;
-  width: 18px;
-  height: 18px;
+  flex: none;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
-  font-size: 11px;
-  background: var(--accent);
-  color: var(--accent-contrast);
+  border: 1px solid var(--border-strong);
+  font-family: var(--mono);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-regular);
+  color: var(--text-2);
 }
 .loc-accueil .loc-accueil-ligne {
   display: flex;
@@ -124,7 +137,7 @@
   height: var(--icon-lg);
   flex: none;
   margin-top: 1px;
-  color: var(--accent-text);
+  color: var(--text-2);
 }
 .loc-accueil-ligne.erreur svg {
   color: var(--warn);
@@ -179,7 +192,7 @@
   animation-timing-function: var(--ease-out);
 }
 .loc-g-sol {
-  fill: color-mix(in srgb, var(--ok) 14%, var(--surface-3));
+  fill: var(--surface-3);
 }
 .loc-g-toit {
   fill: color-mix(in srgb, var(--text-3) 62%, var(--surface-3));
@@ -200,7 +213,7 @@
   stroke-linecap: round;
 }
 .loc-g-texte {
-  font: 560 8px var(--font);
+  font: 500 8px var(--font);
   fill: var(--text);
 }
 .loc-g-cache {
@@ -365,9 +378,10 @@
 .loc-g-etiquette rect {
   fill: var(--map-line);
 }
+/* Encre sur l'étiquette ivoire : l'ivoire foncé d'avant ne se lisait pas dessus, la nuit. */
 .loc-g-etiquette text {
-  font: 700 7px var(--font);
-  fill: var(--accent-deep);
+  font: 600 7px var(--font);
+  fill: var(--map-ink);
 }
 @keyframes loc-g-etiquette {
   0%,
@@ -485,7 +499,7 @@
 .loc-tache-detail {
   display: block;
   margin-top: 4px;
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--text-3);
   overflow-wrap: anywhere;
 }
@@ -494,7 +508,7 @@
   padding: 16px 16px 4px;
   border-radius: var(--r-lg);
   background: var(--surface);
-  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border));
+  border: 1px solid var(--border);
 }
 .loc-surface .titre-carte {
   margin-bottom: 0;
@@ -518,14 +532,16 @@
   margin-top: 8px;
   line-height: 1;
 }
+/* Le chiffre qui répond à la question de l'écran : le plus grand du panneau, sans graisse appuyée. */
 .loc-surface-valeur b {
-  font-size: 44px;
-  font-weight: 740;
-  letter-spacing: -0.03em;
+  font-size: 40px;
+  font-weight: var(--fw-medium);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
 }
 .loc-surface-valeur small {
-  font-size: 18px;
-  font-weight: 650;
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-medium);
   color: var(--text-2);
 }
 .loc-precision {
@@ -538,8 +554,8 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 13.5px;
-  font-weight: 620;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
 }
 /* Précision suffisante : mot gris et petit rond vert ; seule une précision faible prend la couleur. */
 .loc-precision-mot.ton-ok {
@@ -602,7 +618,7 @@
   border-left: 0;
 }
 .loc-mesures .cs-item dd {
-  font-size: 15px;
+  font-size: var(--fs-lg);
   white-space: nowrap;
 }
 .loc-source-lien {
@@ -614,7 +630,7 @@
 
 .loc-aide {
   margin: 0 0 8px;
-  font-size: 13px;
+  font-size: var(--fs-md);
   line-height: 1.5;
   color: var(--text-2);
 }
@@ -627,7 +643,7 @@
   height: var(--icon);
   flex: none;
   margin-top: 2px;
-  color: var(--accent-text);
+  color: var(--text-3);
 }
 .loc-geste-texte {
   margin-top: 8px;
@@ -647,21 +663,20 @@
   margin-top: 8px;
   gap: 4px;
 }
-/* Contour vérifié : l'état normal, dit calmement (mot gris, coche verte). */
+/* Contour vérifié : l'état normal, dit calmement, en gris (le vert reste aux machines qui tournent). */
 .loc-verifie {
   height: 32px;
   color: var(--text-2);
   background: var(--surface-2);
   border-color: transparent;
-  animation: loc-verifie 420ms var(--ease-out);
+  animation: loc-verifie var(--dur-entree) var(--ease-out);
 }
 .loc-verifie svg {
-  color: var(--ok);
+  color: var(--text-2);
 }
 @keyframes loc-verifie {
   from {
     opacity: 0;
-    transform: scale(0.9);
   }
 }
 
@@ -716,16 +731,50 @@
   line-height: 1.25;
 }
 .loc-bat-valeurs b {
-  font-size: 13.5px;
-  font-weight: 650;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
+  font-variant-numeric: tabular-nums;
 }
 .loc-bat-valeurs small {
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--text-3);
 }
 .loc-bat-suppr {
   --h: 40px;
   width: 40px;
+}
+/* Confirmation du retrait d'un bâtiment occupé : sous sa ligne, sur toute la largeur, la liste de ce qui part avec lui. */
+.loc-bat {
+  flex-wrap: wrap;
+}
+.loc-bat-confirmer {
+  flex-basis: 100%;
+  margin: 4px 0 8px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--crit) 28%, var(--border));
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  font-size: var(--fs-md);
+  line-height: 1.5;
+  color: var(--text-2);
+}
+.loc-bat-confirmer p {
+  margin: 0;
+}
+.loc-bat-confirmer-titre {
+  color: var(--text);
+  font-weight: var(--fw-medium);
+}
+.loc-bat-confirmer-titre + p {
+  margin-top: 4px;
+}
+.loc-bat-confirmer ul {
+  margin: 4px 0 0;
+  padding-left: 16px;
+}
+.loc-bat-confirmer-actions {
+  margin-top: 12px;
+  gap: 8px;
 }
 /* Total au sol et surface annoncée, côte à côte sous la liste. */
 .loc-totaux {
@@ -734,14 +783,14 @@
   padding-bottom: 0;
 }
 .loc-totaux .cs-item dd {
-  font-size: 16px;
+  font-size: var(--fs-lg);
 }
 .loc-annonce {
   display: flex;
   align-items: flex-start;
   gap: 8px;
   margin: 8px 0 0;
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   line-height: 1.45;
   color: var(--text-2);
 }
@@ -755,7 +804,7 @@
 .loc-encours {
   padding: 12px 16px;
   gap: 8px;
-  font-size: 13px;
+  font-size: var(--fs-md);
 }
 .loc-erreur {
   display: flex;
@@ -772,7 +821,7 @@
 }
 .loc-erreur p {
   margin: 0 0 8px;
-  font-size: 13px;
+  font-size: var(--fs-md);
   line-height: 1.5;
 }
 /* Résumé replié des propositions : le texte se coupe, les boutons restent dans la carte. */

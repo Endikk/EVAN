@@ -1,12 +1,16 @@
 /**
  * La bibliothèque des machines du kit, rangée par métier. Chaque carte montre la machine (vue de dessus, nom,
- * encombrement) ; ce qu'elle fait est dans son « ? ». On la glisse sur le plan, ou, au doigt, on la touche puis on
- * touche l'endroit du plan.
+ * encombrement) ; ce qu'elle fait s'ouvre depuis son nom, souligné en pointillé. On la glisse sur le plan, ou, au
+ * doigt, on la touche puis on touche l'endroit du plan.
+ *
+ * Une machine choisie au toucher (ou au clic) se pose ensuite sur le plan : un bandeau sur la scène dit quoi faire et
+ * permet d'annuler, et sur tablette, où le plan est au-dessus du panneau, la page remonte jusqu'à lui.
  */
-import { useRef, useState, type DragEvent, type KeyboardEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type DragEvent, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { FileUp, PlayCircle, X } from 'lucide-react';
 import { useProject } from '@/store/project';
-import { useUi } from '@/store/ui';
+import { isReducedMotion, useUi } from '@/store/ui';
 import { MACHINE_TYPES, MODEL_FOOTPRINT } from '@/domain/catalog';
 import { useSceneUi } from '@/widgets/scene/sceneState';
 import { DND_TYPE } from '@/widgets/scene/placement';
@@ -51,12 +55,42 @@ function nomEnPose(placingType: string): string {
   return MACHINE_TYPES[placingType]?.libelle ?? placingType;
 }
 
+/** La consigne de pose, au doigt ou à la souris : « Touchez » n'a pas de sens sous un pointeur de souris. */
+const CONSIGNE_POSE = TACTILE ? 'Touchez l’endroit du plan où poser' : 'Cliquez à l’endroit du plan où poser';
+
+/**
+ * Le bandeau de pose, posé sur la scène (hors du panneau, d'où le portail) : on le voit là où il faut toucher. Au
+ * premier affichage, si le plan est hors de vue (tablette : il est au-dessus du panneau), la page remonte jusqu'à lui.
+ */
+function BandeauPose({ type }: { type: string }) {
+  const [scene, setScene] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    const el = document.querySelector<HTMLElement>('main.stage');
+    setScene(el);
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    if (r.bottom < 120 || r.top > window.innerHeight * 0.5) el.scrollIntoView({ block: 'start', behavior: isReducedMotion() ? 'auto' : 'smooth' });
+  }, []);
+  if (!scene) return null;
+  return createPortal(
+    <div className="mc-pose-bandeau" role="status">
+      <span>
+        {CONSIGNE_POSE} <b>{nomEnPose(type)}</b>
+      </span>
+      <button type="button" className="btn sm" onClick={() => useUi.getState().setPlacingType(undefined)}>
+        <X aria-hidden /> Annuler
+      </button>
+    </div>,
+    scene,
+  );
+}
+
 interface CarteProps {
   vignette: ReactNode;
   nom: string;
   /** Encombrement au sol, à droite du nom. */
   mesure?: string;
-  /** Ce que fait la machine : dans le « ? ». */
+  /** Ce que fait la machine : la bulle qui s'ouvre depuis son nom. */
   aide: ReactNode;
   actif?: boolean;
   /** Valeur transportée par le glisser-déposer ; sans elle, la carte ne se glisse pas. */
@@ -66,31 +100,39 @@ interface CarteProps {
 }
 
 /**
- * Une carte de la bibliothèque. C'est un élément qui se comporte en bouton (et non un bouton), pour que son « ? »
- * n'y soit pas imbriqué ; le clic sur le « ? » n'active pas la carte.
+ * Une carte de la bibliothèque : un vrai bouton étiré sur la carte (CSS) pour la choisir, et le nom par-dessus, qui
+ * ouvre l'explication. Les deux sont frères : un élément role="button" qui contiendrait le nom le rendrait muet pour
+ * les lecteurs d'écran. La bulle arrête le clic qui l'ouvre : on le reprend à la capture, pour qu'un clic de souris ou
+ * un toucher sur le nom choisisse aussi la machine (c'est là qu'on clique d'instinct). Entrée ou Espace sur le nom
+ * (clic de `detail` 0) n'ouvre que l'explication.
  */
 function CarteBiblio({ vignette, nom, mesure, aide, actif, glisser, activer, className = '' }: CarteProps) {
-  const auClavier = (e: KeyboardEvent) => {
-    if (e.target !== e.currentTarget || (e.key !== 'Enter' && e.key !== ' ')) return;
-    e.preventDefault();
-    activer();
-  };
   return (
     <div
-      role="button"
-      tabIndex={0}
       className={`mc-lib-item ${actif ? 'actif' : ''} ${className}`}
-      aria-pressed={glisser ? !!actif : undefined}
       draggable={!!glisser}
       onDragStart={glisser ? (e) => demarrerGlisser(e, glisser) : undefined}
       onDragEnd={glisser ? finirGlisser : undefined}
-      onClick={activer}
-      onKeyDown={auClavier}
     >
+      <button
+        type="button"
+        className="mc-lib-etendu"
+        onClick={activer}
+        aria-pressed={glisser ? !!actif : undefined}
+        aria-label={`Choisir : ${nom}${mesure ? `, ${mesure}` : ''}`}
+      />
       <span className="mc-lib-vignette">{vignette}</span>
       <span className="mc-lib-nom">
-        <b className="truncate">{nom}</b>
-        <InfoTip label={`Comprendre : ${nom}`}>{aide}</InfoTip>
+        <b
+          className="truncate"
+          onClickCapture={(e) => {
+            if (e.detail !== 0) activer();
+          }}
+        >
+          <InfoTip texte={nom} label={`Comprendre : ${nom}`}>
+            {aide}
+          </InfoTip>
+        </b>
         {mesure && <small className="num">{mesure}</small>}
       </span>
     </div>
@@ -102,8 +144,7 @@ function Geste({ debutant, fermer }: { debutant: boolean; fermer: () => void }) 
     <figure className="mc-geste" data-guide="machines-geste">
       <GesteDepot boucles={debutant ? 6 : 2} />
       <figcaption>
-        {TACTILE ? 'Touchez une carte, puis l’endroit du plan.' : 'Glissez une carte sur le plan, là où se trouve la machine.'}
-        <InfoTip label="Le geste en détail">
+        <InfoTip label="Le geste en détail" texte={TACTILE ? 'Touchez une carte, puis l’endroit du plan.' : 'Glissez une carte sur le plan, là où se trouve la machine.'}>
           <p>La machine s’aligne d’elle-même sur une grille de {PAS_GRILLE_CM} cm.</p>
           <p>{TACTILE ? 'À la souris : glissez la carte sur le plan.' : 'Sur tablette : touchez la carte, puis l’endroit du plan.'}</p>
         </InfoTip>
@@ -142,10 +183,11 @@ export function Bibliotheque({ debutant }: { debutant: boolean }) {
 
       {(debutant || geste) && <Geste debutant={debutant} fermer={() => setGeste(false)} />}
 
+      {placingType && <BandeauPose key={placingType} type={placingType} />}
       {placingType && (
-        <p className="mc-pose-en-cours" role="status">
+        <p className="mc-pose-en-cours">
           <span>
-            Touchez l’endroit du plan où poser <b>{nomEnPose(placingType)}</b>.
+            {CONSIGNE_POSE} <b>{nomEnPose(placingType)}</b>.
           </span>
           <button type="button" className="btn sm ghost icon" onClick={() => useUi.getState().setPlacingType(undefined)} aria-label="Annuler la pose">
             <X />

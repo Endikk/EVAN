@@ -3,7 +3,7 @@
  * qu'on vient de poser ou de sélectionner ; la bibliothèque, avec le geste montré à qui n'a encore rien posé ; et la
  * liste des machines de l'usine.
  */
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { niveauDe, nomNiveau } from '@/domain/niveaux';
 import { useNiveauxUsine } from '@/store/niveau';
 import { useProject } from '@/store/project';
@@ -11,7 +11,6 @@ import { useUi } from '@/store/ui';
 import type { Machine } from '@/domain/types';
 import { PanelHeader } from '@/widgets/shell/PanelHeader';
 import { GuideButton, StepGuide, TonGlyph, type Tache } from '@/ui/explain';
-import { InfoTip } from '@/ui/InfoTip';
 import { etatPose, numerotationOk, problemeNumeros, type EtatPose } from '../lib/taches';
 import { Bibliotheque } from './Bibliotheque';
 import { MachinePosee } from './MachinePosee';
@@ -32,40 +31,19 @@ function useDernierePose(machines: Machine[]): string | undefined {
   return derniere;
 }
 
-/** Comment faire une tâche : dans le « ? », juste après son intitulé. */
-function CommentFaire({ children }: { children: ReactNode }) {
-  return (
-    <InfoTip label="Comment faire">
-      <p>{children}</p>
-    </InfoTip>
-  );
-}
-
 function taches(e: EtatPose): Tache[] {
   const nomsDoubles = e.nomsEnDouble[0];
   const probleme = problemeNumeros(e);
   return [
     {
-      label: (
-        <>
-          Poser vos machines sur le plan
-          <CommentFaire>Glissez une carte de la bibliothèque sur le plan, à l’endroit de la machine. Sur tablette : touchez la carte, puis le plan.</CommentFaire>
-          {e.total > 0 && (
-            <span className="mc-compte">
-              ({e.total} posée{e.total > 1 ? 's' : ''})
-            </span>
-          )}
-        </>
-      ),
+      label: 'Poser vos machines sur le plan',
+      comment: 'Glissez une carte de la bibliothèque sur le plan, à l’endroit de la machine. Sur tablette : touchez la carte, puis le plan.',
+      compte: e.total > 0 && `${e.total} posée${e.total > 1 ? 's' : ''}`,
       fait: e.total > 0,
     },
     {
-      label: (
-        <>
-          Donner à chacune un numéro unique
-          <CommentFaire>EVAN les numérote seul (R01, R02…). Vous pouvez changer chaque numéro.</CommentFaire>
-        </>
-      ),
+      label: 'Donner à chacune un numéro unique',
+      comment: 'EVAN les numérote seul (R01, R02…). Vous pouvez changer chaque numéro.',
       fait: numerotationOk(e),
       // Un numéro manquant ou en double empêche d'avancer : il reste en vue, en ambre.
       aide: probleme && (
@@ -76,16 +54,10 @@ function taches(e: EtatPose): Tache[] {
       ),
     },
     {
-      label: (
-        <>
-          Distinguer les machines du même type par leur nom
-          <CommentFaire>
-            {nomsDoubles
-              ? `${nomsDoubles.n} machines s’appellent « ${nomsDoubles.nom} » : sélectionnez-les une à une et donnez-leur le nom qu’on emploie à l’atelier.`
-              : 'Sélectionnez une machine, puis changez son nom.'}
-          </CommentFaire>
-        </>
-      ),
+      label: 'Distinguer les machines du même type par leur nom',
+      comment: nomsDoubles
+        ? `${nomsDoubles.n} machines s’appellent « ${nomsDoubles.nom} » : sélectionnez-les une à une et donnez-leur le nom qu’on emploie à l’atelier.`
+        : 'Sélectionnez une machine, puis changez son nom.',
       fait: e.total > 0 && !nomsDoubles,
       facultatif: true,
     },
@@ -99,7 +71,7 @@ function ListeMachines({ machines, selectedId, derniere, enDouble }: { machines:
   return (
     <section className="mc-liste" aria-labelledby="mc-liste-titre" data-guide="machines-liste">
       <h3 id="mc-liste-titre" className="section-title">
-        Machines posées <span className="chip num">{machines.length}</span>
+        Machines posées <span className="mc-liste-compte num">{machines.length}</span>
       </h3>
       <ul className="list">
         {machines.map((m) => (

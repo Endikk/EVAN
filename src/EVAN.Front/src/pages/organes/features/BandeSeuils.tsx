@@ -81,11 +81,13 @@ export function MesureBande({ point }: { point: PointDeMesure }) {
     <li className="og-mesure">
       <div className="og-mesure-tete">
         <span className="og-mesure-nom">
-          {point.libelle}
-          {alarme && (
-            <InfoTip label={`Comprendre : ${point.libelle}`}>
+          {/* Un signal d'alarme n'a pas de bande : son nom ouvre ce qu'il est. */}
+          {alarme ? (
+            <InfoTip label={`Comprendre : ${point.libelle}`} texte={point.libelle}>
               <p>Signal envoyé par l’automate : actif ou non. Il n’a pas de bande, seulement un état.</p>
             </InfoTip>
+          ) : (
+            point.libelle
           )}
         </span>
         <EtatMesure point={point} />

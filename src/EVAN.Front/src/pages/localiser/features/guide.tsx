@@ -40,7 +40,7 @@ export const GUIDE_LOCALISER: GuideEcran = {
             Quand EVAN hésite entre plusieurs bâtiments de la rue, il les propose avec une lettre (A, B, C) : cliquez sur
             la bonne. En zoomant, la longueur de chaque côté s’affiche.
           </p>
-          <p>Les bâtiments apparaissent sur la photo avec un trait fin quand on zoome ; les bâtiments industriels sont en ambre.</p>
+          <p>Les bâtiments apparaissent sur la photo avec un trait fin quand on zoome. Les bâtiments proposés pour une adresse sont en pointillé ambre.</p>
         </>
       ),
     },
@@ -62,7 +62,7 @@ export const GUIDE_LOCALISER: GuideEcran = {
           <p>La surface du toit vue du ciel, en mètres carrés. C’est l’emprise du bâtiment.</p>
           <p>
             La précision dit à quel point on peut s’y fier. Elle dépend de la source (l’IGN est plus précis
-            qu’OpenStreetMap) et des coins replacés à la main sur la photo. Le « ? » donne l’écart probable.
+            qu’OpenStreetMap) et des coins replacés à la main sur la photo. Le mot « Précision » ouvre l’écart probable.
           </p>
         </>
       ),

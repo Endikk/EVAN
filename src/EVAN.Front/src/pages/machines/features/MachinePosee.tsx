@@ -1,11 +1,11 @@
 /**
  * La machine sélectionnée sur le plan : ce qui vient de se passer (posée, numérotée) et ce qu'on peut encore régler
- * (numéro, nom, sens). Ce que ça change pour la suite et les gestes à la souris sont dans les « ? ». Juste après une
- * pose, la carte s'allume une fois et vient se placer sous les yeux.
+ * (numéro, nom, sens). Ce que ça change pour la suite est dans le « ? » du titre ; les gestes à la souris s'ouvrent
+ * depuis le libellé « Sens ». Juste après une pose, la carte s'allume une fois et vient se placer sous les yeux.
  */
 import { useEffect, useRef } from 'react';
 import { RotateCcw, RotateCw, Trash2 } from 'lucide-react';
-import { batimentContenant, useProject } from '@/store/project';
+import { batimentContenant, retirerMachine, useProject } from '@/store/project';
 import { useUi, isReducedMotion } from '@/store/ui';
 import { MACHINE_TYPES } from '@/domain/catalog';
 import type { Machine } from '@/domain/types';
@@ -115,8 +115,14 @@ export function MachinePosee({ machine, nouvelle, numeroEnDouble }: { machine: M
 
       <div className="mc-posee-sens-ligne">
         <span className="mc-sens-texte">
-          Sens <span className="num">{machine.rotationDeg}°</span>
-          <InfoTip label="Déplacer et tourner sur le plan">
+          <InfoTip
+            label="Déplacer et tourner sur le plan"
+            texte={
+              <>
+                Sens <span className="num">{machine.rotationDeg}°</span>
+              </>
+            }
+          >
             <p>
               Glissez la machine sur le plan pour la déplacer. Une poignée à un coin la fait pivoter par pas de 15°, au degré près avec{' '}
               <span className="kbd">Alt</span>. Au clavier : <span className="kbd">R</span> pour un quart de tour, <span className="kbd">Suppr</span> pour la
@@ -147,7 +153,8 @@ export function MachinePosee({ machine, nouvelle, numeroEnDouble }: { machine: M
         type="button"
         className="btn sm ghost mc-retirer"
         onClick={() => {
-          useProject.getState().removeMachine(machine.id);
+          // L'avis qui suit propose « Annuler » : un clic de trop ne coûte pas la machine.
+          retirerMachine(machine.id);
           useUi.getState().selectMachine(undefined);
         }}
       >

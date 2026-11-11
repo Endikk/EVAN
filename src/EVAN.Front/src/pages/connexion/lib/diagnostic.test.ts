@@ -40,4 +40,11 @@ describe('conseil selon la cause', () => {
   it('cause inconnue : vérifier l’adresse, puis l’automaticien', () => {
     expect(conseilPour('Erreur 0x80AB0000')).toMatch(/automaticien/);
   });
+
+  it('une adresse mal formée arrête le test avant tout envoi et renvoie au temps 2', () => {
+    const l = lireTest([{ t: 'Adresse mal formée : De la forme opc.tcp://10.20.1.21:4840.', ok: false }], false);
+    expect(l.etat).toBe('echec');
+    expect(l.troncons).toEqual(['attente', 'attente']);
+    expect(l.conseil).toContain('temps 2');
+  });
 });

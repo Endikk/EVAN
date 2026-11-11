@@ -4,13 +4,9 @@
 
 .ecran-connexion .cx-intro {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--fs-md);
   line-height: 1.55;
   color: var(--text-2);
-}
-.cx-compte {
-  margin-left: 4px;
-  white-space: nowrap;
 }
 /* Une écriture autorisée : la seule aide de la liste qui reste en vue, en ambre. */
 .cx-tache-alerte {
@@ -39,10 +35,10 @@
   align-items: center;
   gap: 8px;
   margin: 0;
-  font-size: 13px;
+  font-size: var(--fs-md);
   line-height: 1.45;
   color: var(--text-2);
-  animation: entree 320ms var(--ease-out) both;
+  animation: entree var(--dur-entree) var(--ease-out) both;
 }
 .cx-machine-etat .ton-glyph {
   width: 14px;
@@ -64,10 +60,11 @@
   padding: 16px;
   border-radius: var(--r-lg);
   border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--surface-2) 50%, var(--surface));
+  background: var(--surface-2);
 }
 
-/* Le fil des quatre temps : des pastilles numérotées, et un trait qui se remplit jusqu'au temps en cours. */
+/* Le fil des quatre temps : des pastilles numérotées, et un trait qui se remplit jusqu'au temps en cours. Même
+   lecture que le rail des étapes : fait en gris coché, en cours cerclé d'ivoire, sans teinte. */
 .cx-temps {
   position: relative;
   display: grid;
@@ -88,7 +85,7 @@
   background: var(--surface-3);
 }
 .cx-temps::after {
-  background: var(--ok);
+  background: var(--text-3);
   transform-origin: left center;
   transform: scaleX(var(--avance, 0));
   transition: transform 520ms var(--ease-out);
@@ -113,6 +110,10 @@
   font: inherit;
   cursor: pointer;
 }
+.cx-temps button:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
 .cx-temps button:disabled {
   cursor: default;
 }
@@ -123,24 +124,24 @@
   height: 30px;
   border-radius: 50%;
   border: 1.5px solid var(--border-strong);
-  background: var(--surface);
+  background: var(--surface-2);
   color: var(--text-3);
-  font-size: 13px;
-  font-weight: 700;
+  font-family: var(--mono);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-regular);
   transition:
-    background 300ms var(--ease),
+    background-color 300ms var(--ease),
     border-color 300ms var(--ease),
     color 300ms var(--ease);
 }
 .cx-temps .courant .cx-temps-rond {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: var(--accent-contrast);
+  border-color: var(--text);
+  color: var(--text);
 }
 .cx-temps .fait .cx-temps-rond {
-  border-color: var(--ok);
-  background: var(--ok);
-  color: var(--bg);
+  border-color: var(--border-strong);
+  background: var(--surface-3);
+  color: var(--text-2);
 }
 .cx-temps-coche {
   fill: none;
@@ -158,8 +159,7 @@
   }
 }
 .cx-temps-nom {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--fs-sm);
 }
 .cx-temps .courant .cx-temps-nom {
   color: var(--text);
@@ -177,34 +177,31 @@
   align-items: center;
   gap: 4px 8px;
   margin: 4px 0 0;
-  font-size: 15px;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-medium);
   line-height: 1.3;
-  animation: entree 360ms var(--ease-out) both;
+  animation: entree var(--dur-entree) var(--ease-out) both;
 }
+/* Le rang du temps, déjà sur le fil au-dessus : un repère gris, sans pastille. */
 .cx-pas-num {
-  display: inline-grid;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-  border-radius: var(--r-sm);
-  background: var(--accent-soft);
-  color: var(--accent-text);
-  font-size: 12px;
-  font-weight: 700;
+  font-family: var(--mono);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-regular);
+  color: var(--text-3);
 }
 .cx-pas-titre .infotip {
   margin-left: -4px;
 }
 .cx-pas-titre small {
-  font-size: 12.5px;
-  font-weight: 500;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-regular);
   color: var(--text-3);
 }
 .cx-pas {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  animation: entree 360ms var(--ease-out) both;
+  animation: entree var(--dur-entree) var(--ease-out) both;
 }
 .cx-nav {
   padding-top: 12px;
@@ -212,7 +209,7 @@
 }
 .cx-nav-aide {
   margin: -4px 0 0;
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--text-3);
   text-align: right;
 }
@@ -243,6 +240,10 @@
 }
 .cx-proto:hover {
   border-color: var(--border-strong);
+}
+.cx-proto:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
 }
 .cx-proto[aria-pressed='true'] {
   border-color: var(--accent-text);
@@ -279,18 +280,32 @@
   min-width: 0;
 }
 .cx-proto-nom b {
-  font-size: 13px;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
 }
 .cx-proto-nom .chip {
   height: 18px;
   padding: 0 8px;
-  font-size: 10.5px;
+  font-size: var(--fs-xs);
 }
 
 /* ---------- Temps 2 : adresse ---------- */
 .cx-champ-tete {
   display: flex;
   align-items: center;
+}
+/* Une valeur mal formée : le champ se cerne d'ambre et la forme attendue s'écrit dessous. */
+.ecran-connexion .input[aria-invalid='true'] {
+  border-color: var(--warn);
+}
+.cx-champ-erreur {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  margin: 4px 0 0;
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+  color: var(--text-2);
 }
 .cx-avances {
   display: flex;
@@ -303,7 +318,7 @@
   align-items: center;
   gap: 8px;
   margin: 0;
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   line-height: 1.5;
   color: var(--text-3);
 }
@@ -357,15 +372,15 @@
   color: var(--crit);
 }
 .cx-noeud-nom {
-  font-size: 12px;
-  font-weight: 620;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
 }
 .cx-noeud-sous {
   max-width: 72px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 11px;
+  font-size: var(--fs-xs);
   color: var(--text-3);
 }
 .cx-troncon {
@@ -450,8 +465,8 @@
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  font-size: 13.5px;
-  font-weight: 560;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
   color: var(--text);
 }
 .cx-test-verdict p {
@@ -467,17 +482,24 @@
 .cx-test-verdict.etat-echec {
   color: var(--crit);
 }
+/* Test simulé réussi : rien n'a été joint, le titre le dit en ambre (une réserve, pas une panne). */
+.cx-test-verdict.etat-simule {
+  color: var(--warn);
+}
+.cx-test-verdict.etat-simule .ton-glyph {
+  margin-top: 2px;
+}
 .cx-test-ligne {
   display: block;
   margin-top: 4px;
-  font-size: 12.5px;
-  font-weight: 450;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-regular);
   color: var(--text-2);
   overflow-wrap: anywhere;
 }
 .cx-simule {
   margin: -4px 0 0;
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--text-3);
 }
 .cx-echec {
@@ -485,10 +507,10 @@
   border-radius: var(--r-md);
   border: 1px solid color-mix(in srgb, var(--crit) 35%, transparent);
   background: var(--crit-soft);
-  font-size: 13px;
+  font-size: var(--fs-md);
   line-height: 1.5;
   color: var(--text);
-  animation: entree 320ms var(--ease-out) both;
+  animation: entree var(--dur-entree) var(--ease-out) both;
 }
 .cx-echec p {
   margin: 0;
@@ -507,7 +529,7 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   line-height: 1.45;
 }
 .cx-journal li {
@@ -538,7 +560,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
+  font-size: var(--fs-md);
   color: var(--text-2);
 }
 .cx-progres b {
@@ -560,58 +582,58 @@
   transform-origin: left center;
   transition: transform 500ms var(--ease-out);
 }
+/* Les variables se lisent comme une liste : un cadre, un filet entre deux lignes, une coche grise quand la
+   variable est reliée (comme la liste « À faire ici »). */
 .cx-vars {
   display: flex;
   flex-direction: column;
-  gap: 8px;
   margin: 0;
   padding: 0;
   list-style: none;
-}
-.cx-var {
-  display: grid;
-  grid-template-columns: 22px minmax(0, 1fr);
-  gap: 8px;
-  padding: 8px;
   border-radius: var(--r-md);
   border: 1px solid var(--border);
   background: var(--surface);
-  transition: border-color 300ms var(--ease);
+}
+.cx-var {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid var(--border);
+}
+.cx-var:first-child {
+  border-top: 0;
 }
 .cx-var-etat {
   display: grid;
   place-items: center;
   width: 20px;
   height: 20px;
-  margin-top: 0;
   border-radius: 50%;
   border: 1.5px dashed var(--border-strong);
 }
 .cx-var.reliee .cx-var-etat {
-  border: 1.5px solid var(--ok);
-  background: var(--ok);
-  color: var(--bg);
-  animation: cx-pop 420ms var(--ease-out);
+  border: 1.5px solid var(--text-2);
+  background: var(--text-2);
+  color: var(--surface);
+  animation: cx-pop var(--dur-entree) var(--ease-out);
 }
 .cx-var-etat svg {
   width: var(--icon-sm);
   height: var(--icon-sm);
 }
 @keyframes cx-pop {
-  0% {
+  from {
     opacity: 0;
-    transform: scale(0.5);
-  }
-  60% {
-    transform: scale(1.12);
   }
 }
 .cx-var-nom {
   display: flex;
   align-items: center;
+  min-height: 20px;
   margin: 0 0 8px;
-  font-size: 12.5px;
-  font-weight: 600;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
   color: var(--text);
   overflow-wrap: anywhere;
 }
@@ -627,14 +649,14 @@
   color: var(--text-3);
 }
 .cx-var-point .choix.sm {
-  font-size: 12.5px;
+  font-size: var(--fs-md);
 }
 .cx-adresses {
   display: flex;
   flex-direction: column;
   gap: 8px;
   margin: 0;
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
 }
 .cx-adresses dt {
   color: var(--text-2);
@@ -654,14 +676,15 @@
   gap: 8px;
   padding: 8px 12px;
   border-radius: var(--r-md);
-  background: var(--ok-soft);
-  animation: entree 360ms var(--ease-out) both;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  animation: entree var(--dur-entree) var(--ease-out) both;
 }
 .cx-enregistree p {
   display: flex;
   gap: 8px;
   margin: 0;
-  font-size: 13px;
+  font-size: var(--fs-md);
   line-height: 1.45;
   color: var(--text);
 }
@@ -670,7 +693,7 @@
   width: var(--icon);
   height: var(--icon);
   margin-top: 2px;
-  color: var(--ok);
+  color: var(--text-2);
 }
 
 /* ---------- Accès à l'automate ---------- */
@@ -708,12 +731,13 @@
   display: flex;
   align-items: center;
   margin: 0;
-  font-size: 14.5px;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
 }
 .cx-acces-mode {
   margin: 0;
-  font-size: 12.5px;
-  font-weight: 620;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
   color: var(--text-2);
 }
 .cx-acces-mode.ton-warn {
@@ -723,13 +747,13 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  animation: entree 320ms var(--ease-out) both;
+  animation: entree var(--dur-entree) var(--ease-out) both;
 }
 .cx-demande-alerte {
   display: flex;
   gap: 8px;
   margin: 0;
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   line-height: 1.45;
   color: var(--warn);
 }
@@ -746,7 +770,7 @@
   gap: 8px;
 }
 .cx-acces-action small {
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--text-3);
 }
 
@@ -763,8 +787,14 @@
   align-items: center;
   gap: 8px;
   margin: 0;
-  font-size: 14.5px;
-  font-weight: 620;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
+}
+.cx-vide-texte {
+  margin: 0 0 4px;
+  font-size: var(--fs-md);
+  line-height: 1.45;
+  color: var(--text-2);
 }
 
 /* ---------- Schéma du guide ---------- */

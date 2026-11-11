@@ -1,6 +1,7 @@
-import { beforeEach, describe, expect, it } from 'vitest';
-import type { Batiment, Machine, Site, Zone } from '@/domain/types';
-import { batimentSous, hasSavedAssistant, listUsines, resumeAssistant, useProject, zoneSous } from './project';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Batiment, Connexion, Machine, Site, Zone } from '@/domain/types';
+import { batimentSous, contenuBatiment, hasSavedAssistant, listUsines, resumeAssistant, retirerMachine, useProject, zoneSous } from './project';
+import { useLive } from './live';
 
 /** localStorage minimal pour l'environnement node des tests. */
 function memoryStorage(): Storage {
@@ -240,14 +241,17 @@ describe('niveaux d’un bâtiment', () => {
     expect(useProject.getState().batiments[0].niveaux).toBe(1);
   });
 
-  it('annuler un tracé ne retire pas un étage déjà occupé', () => {
+  it('annuler la pose d’une machine à l’étage garde l’étage, puis annuler l’étage le retire', () => {
     const p = useProject.getState();
     p.setNiveaux('bat-a', 1);
     p.pushHistory();
     p.setNiveaux('bat-a', 2);
     p.addMachine(machine('m-1', { niveau: 1 }));
     p.undo();
+    expect(useProject.getState().machines).toEqual([]);
     expect(useProject.getState().batiments[0].niveaux).toBe(2);
+    p.undo();
+    expect(useProject.getState().batiments[0].niveaux).toBe(1);
   });
 
   it('une machine poussée hors des contours garde son bâtiment', () => {
@@ -264,5 +268,167 @@ describe('niveaux d’un bâtiment', () => {
     const { site: s, batiments } = useProject.getState();
     expect(batimentSous(s, [batiments[1], batiments[0]], [1, 1], 1)?.id).toBe('bat-a');
     expect(batimentSous(s, batiments, [9999, 9999], 0)?.id).toBe('bat-a');
+  });
+});
+
+describe('annuler et retirer', () => {
+  const zone = (id: string, batimentId = 'bat-a'): Zone => ({
+    id,
+    batimentId,
+    nom: id,
+    type: 'atelier',
+    polygone: [
+      [0, 0],
+      [10, 0],
+      [10, 10],
+      [0, 10],
+    ],
+  });
+  const machine = (id: string, patch: Partial<Machine> = {}): Machine => ({
+    id,
+    batimentId: 'bat-a',
+    type: 'flexo',
+    nom: 'Presse',
+    numero: id.toUpperCase(),
+    position: [5, 5],
+    rotationDeg: 0,
+    modele: { url: '/kit/modeles/flexo.glb' },
+    ...patch,
+  });
+  const connexion = (machineId: string): Connexion => ({ id: `cx-${machineId}`, machineId, protocole: 'opcua', parametres: {}, etat: 'connectee', associations: {}, lectureSeule: true });
+
+  beforeEach(() => {
+    globalThis.localStorage = memoryStorage();
+    useProject.getState().startAssistant();
+    useProject.getState().setSite(site('Usine'));
+    useProject.getState().upsertBatiment(batiment('bat-a'));
+    useProject.getState().upsertBatiment(batiment('bat-b'));
+  });
+
+  it('Ctrl+Z reprend les zones, les machines, les connexions et les réglages, un pas à la fois', () => {
+    const p = useProject.getState();
+    p.addZone(zone('z1'));
+    p.addMachine(machine('r01', { zoneId: 'z1' }));
+    p.setConnexion(connexion('r01'));
+    p.setPerso('r01', { organes: [], points: [] });
+    expect(useProject.getState().connexions.r01).toBeDefined();
+
+    // La connexion et ses réglages, enregistrés ensemble, font un seul pas.
+    p.undo();
+    expect(useProject.getState().connexions.r01).toBeUndefined();
+    expect(useProject.getState().perso.r01).toBeUndefined();
+    p.undo();
+    expect(useProject.getState().machines).toEqual([]);
+    p.undo();
+    expect(useProject.getState().zones).toEqual([]);
+
+    p.redo();
+    p.redo();
+    expect(useProject.getState().machines.map((m) => m.id)).toEqual(['r01']);
+  });
+
+  it('un glisser ou une saisie suivis ne font qu’un pas d’annulation', () => {
+    const p = useProject.getState();
+    p.addMachine(machine('r01'));
+    for (let x = 6; x <= 20; x++) p.updateMachine('r01', { position: [x, 5] });
+    p.addZone(zone('z1'));
+    for (const nom of ['I', 'Im', 'Imp']) p.updateZone('z1', { nom });
+    p.undo();
+    expect(useProject.getState().zones[0].nom).toBe('z1');
+    p.undo();
+    expect(useProject.getState().zones).toEqual([]);
+    p.undo();
+    expect(useProject.getState().machines[0].position).toEqual([5, 5]);
+  });
+
+  it('retirer une machine emporte sa connexion ; « Annuler » la remet à sa place, même après une autre modification', () => {
+    const p = useProject.getState();
+    p.addMachine(machine('r01'));
+    p.addMachine(machine('r02'));
+    p.setConnexion(connexion('r01'));
+    const r = p.removeMachine('r01');
+    expect(useProject.getState().connexions.r01).toBeUndefined();
+    p.updateMachine('r02', { rotationDeg: 90 });
+
+    useProject.getState().restaurer(r!);
+    const s = useProject.getState();
+    expect(s.machines.map((m) => m.id)).toEqual(['r01', 'r02']);
+    expect(s.machines[1].rotationDeg).toBe(90);
+    expect(s.connexions.r01?.id).toBe('cx-r01');
+
+    // Déjà revenue : une seconde restauration ne double rien.
+    useProject.getState().restaurer(r!);
+    expect(useProject.getState().machines).toHaveLength(2);
+  });
+
+  it('l’avis « R01 retirée » propose Annuler, qui remet la machine', () => {
+    vi.stubGlobal('window', { setTimeout: () => 0 });
+    useLive.setState({ toasts: [] });
+    useProject.getState().addMachine(machine('r01'));
+    retirerMachine('r01');
+    const avis = useLive.getState().toasts[0];
+    expect(avis.titre).toBe('R01 retirée');
+    expect(avis.action?.libelle).toBe('Annuler');
+    avis.action?.faire();
+    expect(useProject.getState().machines.map((m) => m.id)).toEqual(['r01']);
+    vi.unstubAllGlobals();
+  });
+
+  it('retirer une zone laisse ses machines en place, sans zone, et l’annulation la leur rend', () => {
+    const p = useProject.getState();
+    p.addZone(zone('z1'));
+    p.addMachine(machine('r01', { zoneId: 'z1' }));
+    const r = p.removeZone('z1');
+    expect(useProject.getState().machines[0].zoneId).toBeUndefined();
+    useProject.getState().restaurer(r!);
+    expect(useProject.getState().zones.map((z) => z.id)).toEqual(['z1']);
+    expect(useProject.getState().machines[0].zoneId).toBe('z1');
+  });
+
+  it('retirer un bâtiment emporte ses zones et ses machines, rien ne reste orphelin', () => {
+    const p = useProject.getState();
+    p.addZone(zone('z-a'));
+    p.addZone(zone('z-b', 'bat-b'));
+    p.addMachine(machine('r01'));
+    p.addMachine(machine('r02', { batimentId: 'bat-b', zoneId: 'z-b' }));
+    p.setConnexion(connexion('r02'));
+    expect(contenuBatiment(useProject.getState(), 'bat-b')).toMatchObject({ zones: [{ id: 'z-b' }], machines: [{ id: 'r02' }] });
+
+    const r = p.removeBatiment('bat-b');
+    let s = useProject.getState();
+    expect(s.batiments.map((b) => b.id)).toEqual(['bat-a']);
+    expect(s.zones.map((z) => z.id)).toEqual(['z-a']);
+    expect(s.machines.map((m) => m.id)).toEqual(['r01']);
+    expect(s.connexions.r02).toBeUndefined();
+
+    useProject.getState().restaurer(r!);
+    s = useProject.getState();
+    expect(s.batiments.map((b) => b.id)).toEqual(['bat-a', 'bat-b']);
+    expect(s.zones.map((z) => z.id)).toEqual(['z-a', 'z-b']);
+    expect(s.machines.map((m) => m.id)).toEqual(['r01', 'r02']);
+    expect(s.connexions.r02?.machineId).toBe('r02');
+  });
+});
+
+describe('reprendre une organisation enregistrée', () => {
+  beforeEach(() => {
+    globalThis.localStorage = memoryStorage();
+  });
+
+  it('une organisation ouverte puis quittée sans rien saisir ne se propose pas à la reprise', () => {
+    localStorage.setItem('evan.assistant.v2', JSON.stringify({ organisation: { id: 'org-moi', nom: '' }, activeId: 'u1', usines: [{ id: 'u1', site: null, batiments: [], zones: [], machines: [] }] }));
+    expect(hasSavedAssistant()).toBe(false);
+  });
+
+  it('un nom d’organisation ou une usine localisée suffit', () => {
+    localStorage.setItem('evan.assistant.v2', JSON.stringify({ organisation: { id: 'org-moi', nom: 'Ateliers du Nord' }, activeId: 'u1', usines: [] }));
+    expect(hasSavedAssistant()).toBe(true);
+    localStorage.setItem('evan.assistant.v2', JSON.stringify({ organisation: { id: 'org-moi', nom: '' }, activeId: 'u1', usines: [{ id: 'u1', site: site('Lille') }] }));
+    expect(hasSavedAssistant()).toBe(true);
+  });
+
+  it('une sauvegarde illisible ne se propose pas', () => {
+    localStorage.setItem('evan.assistant.v2', '{pas du json');
+    expect(hasSavedAssistant()).toBe(false);
   });
 });

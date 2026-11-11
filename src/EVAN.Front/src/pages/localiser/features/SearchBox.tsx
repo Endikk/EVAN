@@ -1,20 +1,20 @@
 import { useEffect, useId, useRef, useState } from 'react';
-import { Building2, Loader2, MapPin, Search, Globe2, Crosshair, SearchX, WifiOff } from 'lucide-react';
-import { communeDe, search, type Precision, type SaisieVisite, type SearchResult } from '@/geo/search';
+import { Building2, Loader2, MapPin, Search, Globe2, Crosshair, SearchX, WifiOff, CloudOff, RotateCw } from 'lucide-react';
+import { communeDe, PRECISION_LIBELLE, RechercheIndisponible, search, type Precision, type SaisieVisite, type SearchResult } from '@/geo/search';
 import { useProject } from '@/store/project';
 import { isReducedMotion } from '@/store/ui';
 import { mapHandle } from '@/widgets/carte/mapState';
 import { decalageCarte } from '@/widgets/carte/marges';
 import { chooseCandidate, fitLocalisation, locate } from '@/widgets/carte/localisation';
 
-/** Ce que le résultat désigne vraiment : un bâtiment, une rue, une commune… */
-const BADGE: Record<Precision, { t: string; tone: 'ok' | 'mid' | 'low'; sens: string }> = {
-  gps: { t: 'Point exact', tone: 'ok', sens: 'Le bâtiment sous ce point sera retenu d’office.' },
-  numero: { t: 'Bâtiment', tone: 'ok', sens: 'L’adresse tombe sur un bâtiment précis.' },
-  rue: { t: 'Rue entière', tone: 'mid', sens: 'Seule la rue est connue : EVAN proposera les bâtiments qui la bordent.' },
-  entreprise: { t: 'Établissement', tone: 'mid', sens: 'Adresse déclarée de l’entreprise : EVAN proposera les bâtiments autour.' },
-  lieu: { t: 'Lieu OSM', tone: 'mid', sens: 'Lieu connu d’OpenStreetMap : EVAN proposera les bâtiments autour.' },
-  commune: { t: 'Commune', tone: 'low', sens: 'Seule la commune est connue : zoomez ensuite et cliquez sur le bâtiment.' },
+/** Ce que le résultat désigne vraiment (le mot vient de PRECISION_LIBELLE, partagé avec la carte des bâtiments proposés). */
+const BADGE: Record<Precision, { tone: 'ok' | 'mid' | 'low'; sens: string }> = {
+  gps: { tone: 'ok', sens: 'Le bâtiment sous ce point sera retenu d’office.' },
+  numero: { tone: 'ok', sens: 'L’adresse tombe sur un bâtiment précis.' },
+  rue: { tone: 'mid', sens: 'Seule la rue est connue : EVAN proposera les bâtiments qui la bordent.' },
+  entreprise: { tone: 'mid', sens: 'Adresse déclarée de l’entreprise : EVAN proposera les bâtiments autour.' },
+  lieu: { tone: 'mid', sens: 'Lieu connu d’OpenStreetMap : EVAN proposera les bâtiments autour.' },
+  commune: { tone: 'low', sens: 'Seule la commune est connue : zoomez ensuite et cliquez sur le bâtiment.' },
 };
 
 /** Nombre de lettres à partir duquel la recherche part : en dessous, les résultats seraient trop vagues. */
@@ -22,7 +22,7 @@ const LETTRES_MIN = 3;
 /** Attente après la dernière lettre tapée, pour ne pas lancer une recherche par touche. */
 const ATTENTE_MS = 220;
 
-type Etat = 'vide' | 'court' | 'recherche' | 'resultats' | 'aucun';
+type Etat = 'vide' | 'court' | 'recherche' | 'resultats' | 'aucun' | 'indisponible';
 
 /**
  * Recherche d'adresse ou d'entreprise avec autocomplétion, puis vol vers le site et détection du bâtiment.
@@ -34,6 +34,8 @@ export function SearchBox({ autoFocus, onSaisie }: { autoFocus?: boolean; onSais
   const [open, setOpen] = useState(false);
   const [etat, setEtat] = useState<Etat>('vide');
   const [active, setActive] = useState(0);
+  /** Relance la même recherche après une panne du service (« Réessayer »). */
+  const [essai, setEssai] = useState(0);
   const ctrl = useRef<AbortController | null>(null);
   /** Résultats fournis par la visite guidée : ils remplacent la recherche réelle tant que la saisie vient d'elle. */
   const resultatsVisite = useRef<SearchResult[] | undefined>(undefined);
@@ -80,12 +82,12 @@ export function SearchBox({ autoFocus, onSaisie }: { autoFocus?: boolean; onSais
         setResults(r);
         setActive(0);
         setEtat(r.length ? 'resultats' : 'aucun');
-      } catch {
-        if (!c.signal.aborted) setEtat('aucun');
+      } catch (e) {
+        if (!c.signal.aborted) setEtat(e instanceof RechercheIndisponible ? 'indisponible' : 'aucun');
       }
     }, ATTENTE_MS);
     return () => window.clearTimeout(timer);
-  }, [q]);
+  }, [q, essai]);
 
   const choisir = (r: SearchResult) => {
     void pick(r);
@@ -153,18 +155,27 @@ export function SearchBox({ autoFocus, onSaisie }: { autoFocus?: boolean; onSais
                 </small>
               </span>
               <span className={`prec-badge ${BADGE[r.precision].tone}`} title={BADGE[r.precision].sens}>
-                {BADGE[r.precision].t}
+                {PRECISION_LIBELLE[r.precision]}
               </span>
             </button>
           ))}
       </div>
-      {open && etat !== 'vide' && etat !== 'resultats' && <EtatRecherche etat={etat} q={q.trim()} />}
+      {open && etat !== 'vide' && etat !== 'resultats' && (
+        <EtatRecherche
+          etat={etat}
+          q={q.trim()}
+          reessayer={() => {
+            setEssai((n) => n + 1);
+            inputRef.current?.focus();
+          }}
+        />
+      )}
     </div>
   );
 }
 
 /** Ce qui se passe quand il n'y a pas (encore) de résultat à montrer. */
-function EtatRecherche({ etat, q }: { etat: Etat; q: string }) {
+function EtatRecherche({ etat, q, reessayer }: { etat: Etat; q: string; reessayer: () => void }) {
   if (etat === 'court') {
     return (
       <div className="suggest glass loc-recherche-etat" role="status">
@@ -182,6 +193,22 @@ function EtatRecherche({ etat, q }: { etat: Etat; q: string }) {
     );
   }
   const horsLigne = typeof navigator !== 'undefined' && navigator.onLine === false;
+  if (etat === 'indisponible' && !horsLigne) {
+    // Le service n'a pas répondu : l'orthographe n'y est pour rien. On le dit, et on propose de relancer.
+    return (
+      <div className="suggest glass loc-recherche-etat erreur" role="status">
+        <p className="row">
+          <CloudOff aria-hidden />
+          <b>Le service d’adresse ne répond pas.</b>
+        </p>
+        <p>Réessayez dans un instant. En attendant, vous pouvez zoomer sur la carte et cliquer sur le toit de l’usine.</p>
+        {/* Le clic ne doit pas ôter le focus du champ : la liste se fermerait avant que la relance parte. */}
+        <button type="button" className="btn sm loc-recherche-relance" onMouseDown={(e) => e.preventDefault()} onClick={reessayer}>
+          <RotateCw aria-hidden /> Réessayer
+        </button>
+      </div>
+    );
+  }
   return (
     <div className="suggest glass loc-recherche-etat erreur" role="status">
       <p className="row">

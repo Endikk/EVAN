@@ -51,7 +51,7 @@ function Contenu({ phase, enCours, erreur }: { phase: Exclude<PhaseAccueil, null
       return (
         <>
           <h2>
-            Trouvez votre usine sur la carte.
+            Trouvez votre usine sur la carte
             <InfoTip label="Pas d’adresse précise ?">
               <p>Pas d’adresse précise ? Zoomez sur la photo et cliquez sur le toit, ou dessinez son contour depuis le panneau.</p>
             </InfoTip>
@@ -89,7 +89,7 @@ function Contenu({ phase, enCours, erreur }: { phase: Exclude<PhaseAccueil, null
         <div className="loc-accueil-rangee">
           <GesteToit className="petit" />
           <h2>
-            Cliquez sur la lettre de votre bâtiment.
+            Cliquez sur la lettre de votre bâtiment
             <InfoTip label="Choisir son bâtiment">
               <p>Un clic sur son toit suffit aussi. La liste des bâtiments proposés est dans le panneau.</p>
             </InfoTip>
@@ -101,7 +101,7 @@ function Contenu({ phase, enCours, erreur }: { phase: Exclude<PhaseAccueil, null
         <div className="loc-accueil-rangee">
           <GesteToit className="petit" />
           <h2>
-            Cliquez sur le toit de votre usine.
+            Cliquez sur le toit de votre usine
             <InfoTip label="Les bâtiments n’apparaissent pas ?">
               <p>Zoomez si besoin : les bâtiments apparaissent sur la photo avec un trait fin.</p>
             </InfoTip>
@@ -132,7 +132,7 @@ function ConseilDessin() {
   return (
     <>
       <h2>
-        Cliquez sur chaque coin du bâtiment.
+        Cliquez sur chaque coin du bâtiment
         <InfoTip label="Fermer le contour">
           <p>Faites le tour du toit sur la photo. Pour finir, double-cliquez sur le dernier coin ou fermez le contour.</p>
         </InfoTip>

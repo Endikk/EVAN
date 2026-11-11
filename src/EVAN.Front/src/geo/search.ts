@@ -7,12 +7,16 @@ import type { LngLat } from './geodesy';
 
 export type Precision = 'gps' | 'numero' | 'rue' | 'commune' | 'entreprise' | 'lieu';
 
+/**
+ * Ce que désigne un résultat, dit avec les mêmes mots dans la liste de recherche et dans la carte des bâtiments
+ * proposés : un même résultat ne change pas de nom entre les deux.
+ */
 export const PRECISION_LIBELLE: Record<Precision, string> = {
-  gps: 'Coordonnées exactes',
+  gps: 'Point exact',
   numero: 'Numéro de rue',
   rue: 'Rue entière',
   commune: 'Commune',
-  entreprise: 'Établissement SIRENE',
+  entreprise: 'Établissement',
   lieu: 'Lieu OpenStreetMap',
 };
 
@@ -41,12 +45,25 @@ export interface SaisieVisite {
   resultats?: SearchResult[];
 }
 
+/**
+ * Aucun service n'a pu répondre (réseau coupé, service en panne ou bloqué par le poste) : ce n'est pas « rien trouvé »,
+ * et l'écran ne doit pas faire chercher une faute d'orthographe qui n'existe pas.
+ */
+export class RechercheIndisponible extends Error {
+  constructor() {
+    super('Le service de recherche d’adresse ne répond pas.');
+    this.name = 'RechercheIndisponible';
+  }
+}
+
+/** Réponse d'un service, ou `null` s'il n'a pas répondu. Une recherche annulée remonte telle quelle (AbortError). */
 async function getJson<T>(url: string, signal: AbortSignal): Promise<T | null> {
   try {
     const res = await fetch(url, { signal });
     if (!res.ok) return null;
     return (await res.json()) as T;
-  } catch {
+  } catch (e) {
+    if (signal.aborted) throw e;
     return null;
   }
 }
@@ -76,13 +93,15 @@ function geopfPrecision(type?: string): Precision {
   return type === 'housenumber' ? 'numero' : type === 'street' ? 'rue' : 'commune';
 }
 
-async function searchAdresse(q: string, signal: AbortSignal, near?: LngLat, limit = 5): Promise<SearchResult[]> {
+/** Adresses trouvées, ou `null` si le géocodeur n'a pas répondu. */
+async function searchAdresse(q: string, signal: AbortSignal, near?: LngLat, limit = 5): Promise<SearchResult[] | null> {
   const bias = near ? `&lat=${near[1]}&lon=${near[0]}` : '';
   const data = await getJson<{ features: GeopfFeature[] }>(
     `https://data.geopf.fr/geocodage/search?q=${encodeURIComponent(q)}&autocomplete=1&limit=${limit}${bias}`,
     signal,
   );
-  return (data?.features ?? []).map((f, i) => {
+  if (!data) return null;
+  return (data.features ?? []).map((f, i) => {
     const precision = geopfPrecision(f.properties.type);
     return {
       id: `adr-${f.properties.id ?? i}`,
@@ -133,7 +152,7 @@ export function variantesAdresse(adresse: string): string[] {
 export async function geocodeAdresse(adresse: string, signal: AbortSignal): Promise<SearchResult | null> {
   const cp = adresse.match(/\b\d{5}\b/)?.[0];
   for (const v of variantesAdresse(adresse)) {
-    const r = (await searchAdresse(v, signal, undefined, 3)).filter((x) => x.precision !== 'commune' && (!cp || !x.sub || x.sub.startsWith(cp.slice(0, 2))));
+    const r = ((await searchAdresse(v, signal, undefined, 3)) ?? []).filter((x) => x.precision !== 'commune' && (!cp || !x.sub || x.sub.startsWith(cp.slice(0, 2))));
     if (r.length) return r[0];
     if (signal.aborted) return null;
   }
@@ -159,14 +178,16 @@ interface EntrepriseResult {
   matching_etablissements?: Etab[];
 }
 
-async function searchEntreprise(q: string, signal: AbortSignal): Promise<SearchResult[]> {
+/** Établissements trouvés, ou `null` si l'annuaire n'a pas répondu. */
+async function searchEntreprise(q: string, signal: AbortSignal): Promise<SearchResult[] | null> {
   if (q.trim().length < 3) return [];
   const data = await getJson<{ results: EntrepriseResult[] }>(
     `https://recherche-entreprises.api.gouv.fr/search?q=${encodeURIComponent(q)}&per_page=4&etat_administratif=A`,
     signal,
   );
+  if (!data) return null;
   const out: SearchResult[] = [];
-  for (const r of data?.results ?? []) {
+  for (const r of data.results ?? []) {
     const etabs = [r.siege, ...(r.matching_etablissements ?? []).filter((e) => e.siret !== r.siege.siret)].filter(
       (e) => e.latitude && e.longitude && e.etat_administratif !== 'F',
     );
@@ -193,9 +214,11 @@ interface PhotonFeature {
   properties: { name?: string; street?: string; housenumber?: string; city?: string; country?: string; osm_id?: number; type?: string };
 }
 
-async function searchMonde(q: string, signal: AbortSignal): Promise<SearchResult[]> {
+/** Lieux trouvés dans le monde, ou `null` si Photon n'a pas répondu. */
+async function searchMonde(q: string, signal: AbortSignal): Promise<SearchResult[] | null> {
   const data = await getJson<{ features: PhotonFeature[] }>(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=4&lang=fr`, signal);
-  return (data?.features ?? []).map((f, i) => {
+  if (!data) return null;
+  return (data.features ?? []).map((f, i) => {
     const p = f.properties;
     const label = [p.name, [p.housenumber, p.street].filter(Boolean).join(' ')].filter(Boolean).join(', ') || q;
     return {
@@ -210,7 +233,11 @@ async function searchMonde(q: string, signal: AbortSignal): Promise<SearchResult
   });
 }
 
-/** Lance les recherches en parallèle ; le repli mondial n'est utilisé que si la France ne répond rien. */
+/**
+ * Lance les recherches en parallèle ; le repli mondial n'est utilisé que si la France ne répond rien. Sans aucun
+ * résultat alors qu'un service n'a pas répondu, la recherche échoue (`RechercheIndisponible`) au lieu de dire « rien
+ * trouvé » : l'adresse existe peut-être, c'est le service qui manque.
+ */
 export async function search(q: string, signal: AbortSignal, near?: LngLat): Promise<SearchResult[]> {
   const query = q.trim();
   const gps = parseCoordinates(query);
@@ -234,7 +261,10 @@ export async function search(q: string, signal: AbortSignal, near?: LngLat): Pro
     searchEntreprise(query.replace(/\s/g, isSiret ? '' : ' '), signal),
   ]);
   // Une entreprise trouvée par son nom passe devant les rues homonymes.
-  const results = /\d/.test(query) ? [...adr, ...ent] : [...ent, ...adr];
+  const results = /\d/.test(query) ? [...(adr ?? []), ...(ent ?? [])] : [...(ent ?? []), ...(adr ?? [])];
   if (results.length) return results.slice(0, 8);
-  return searchMonde(query, signal);
+  const monde = await searchMonde(query, signal);
+  if (monde?.length) return monde;
+  if (adr === null || ent === null || monde === null) throw new RechercheIndisponible();
+  return [];
 }

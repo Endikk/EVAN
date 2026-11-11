@@ -2,9 +2,13 @@
  * Étape 5 : brancher chaque machine à EVAN, en quatre temps numérotés (protocole, adresse, test de liaison,
  * variables). En haut, ce qu'il reste à faire ; en bas, l'accès à l'automate, en lecture seule par défaut.
  * La visite guidée pilote cet écran par deux évènements : evan:connect-autoplay et evan:connect-write-demo.
+ *
+ * Une saisie commencée et pas encore enregistrée reste en brouillon, machine par machine, le temps de la session :
+ * passer à une autre machine, ou revenir à l'étape précédente, ne la perd pas.
  */
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { estBranchee, useTachesConfig } from '@/store/avancement';
 import { useProject } from '@/store/project';
 import { useUi } from '@/store/ui';
 import { useLive } from '@/store/live';
@@ -17,8 +21,8 @@ import { InfoTip } from '@/ui/InfoTip';
 import { Select } from '@/ui/Select';
 import { uid } from '@/sim/random';
 import { ENTETE_ECRITURE } from '@/api/http';
-import { DEFAUTS, nomProtocole } from '../lib/protocoles';
-import { autoMatch, browseVariables, nbReliees, type Association, type Variable } from '../lib/variables';
+import { DEFAUTS, erreursAdresse, nomProtocole } from '../lib/protocoles';
+import { associationsDeDepart, autoMatch, browseVariables, nbReliees, type Association, type Variable } from '../lib/variables';
 import type { LigneTest } from '../lib/diagnostic';
 import { aideDuTemps, FilDesTemps, TEMPS } from './Temps';
 import { ChoixProtocole } from './ChoixProtocole';
@@ -30,8 +34,25 @@ import { GUIDE_CONNEXION, guideSelon } from './guide';
 
 const wait = (ms: number) => new Promise((r) => window.setTimeout(r, ms));
 const DERNIER = TEMPS.length - 1;
+/** Le temps de l'adresse : on n'en sort vers le test qu'avec une adresse bien formée. */
+const TEMPS_ADRESSE = 1;
 
-const estBranchee = (c?: Connexion) => c?.etat === 'connectee';
+/** Ce qu'on a saisi pour une machine et pas encore enregistré. */
+interface Brouillon {
+  wiz: number;
+  atteint: number;
+  proto: Protocole;
+  params: Record<string, string>;
+  log: LigneTest[];
+  vars: Variable[];
+  assoc: Association;
+}
+
+/**
+ * Brouillons de la session, par machine. Hors du composant : l'écran se démonte quand on change d'étape, et la saisie
+ * doit survivre à un aller-retour. Un brouillon s'efface quand sa connexion est enregistrée.
+ */
+const brouillons = new Map<string, Brouillon>();
 
 /** Prochaine machine à brancher après celle-ci, en reprenant au début de la liste. */
 function suivanteABrancher(machines: Machine[], courante: string, connexions: Record<string, Connexion>): Machine | undefined {
@@ -39,24 +60,14 @@ function suivanteABrancher(machines: Machine[], courante: string, connexions: Re
   return [...machines.slice(i + 1), ...machines.slice(0, Math.max(0, i))].find((m) => !estBranchee(connexions[m.id]));
 }
 
-/** Comment faire une tâche : dans le « ? », juste après son intitulé. */
-function CommentFaire({ children }: { children: ReactNode }) {
-  return (
-    <InfoTip label="Comment faire">
-      <p>{children}</p>
-    </InfoTip>
-  );
-}
-
 function AucuneMachine() {
   return (
     <div className="card cx-vide">
       <p className="cx-vide-titre">
-        <TonGlyph ton="neutre" /> Aucune machine à brancher pour l’instant.
-        <InfoTip label="Pourquoi">
-          <p>Chaque machine se branche une à une. Posez d’abord vos machines sur le plan, à l’étape 3.</p>
-        </InfoTip>
+        <TonGlyph ton="neutre" /> Aucune machine à brancher pour l’instant
       </p>
+      {/* Un écran vide dit pourquoi en clair : la raison est le contenu, pas une aide à ouvrir. */}
+      <p className="cx-vide-texte">Chaque machine se branche une à une. Posez d’abord vos machines sur le plan, à l’étape 3.</p>
       <button type="button" className="btn sm" onClick={() => void goToStep(3)}>
         <ArrowLeft aria-hidden /> Revenir aux machines
       </button>
@@ -88,32 +99,63 @@ export function ConnectPanel() {
   const [reason, setReason] = useState('');
   const auto = useRef(false);
 
+  /** Une adresse mal formée a voulu passer au test : ses erreurs se montrent toutes. */
+  const [montrerErreurs, setMontrerErreurs] = useState(false);
+  const erreurs = useMemo(() => erreursAdresse(proto, params), [proto, params]);
+  const adresseValide = Object.keys(erreurs).length === 0;
+
   const aller = (i: number) => {
     setWiz(i);
     setAtteint((a) => Math.max(a, i));
   };
+  /** Aller à un temps depuis l'écran : au-delà de l'adresse, seulement si elle est bien formée. */
+  const allerSiPossible = (i: number) => {
+    if (i > TEMPS_ADRESSE && !adresseValide) {
+      setMontrerErreurs(true);
+      aller(TEMPS_ADRESSE);
+      // Le premier champ à corriger reçoit le focus : on y tape directement.
+      window.requestAnimationFrame(() => document.querySelector<HTMLElement>('.cx-assistant [aria-invalid="true"]')?.focus());
+      return;
+    }
+    aller(i);
+  };
 
-  // Changement de machine : l'assistant repart de son état enregistré (une machine branchée s'ouvre sur ses variables).
+  // La saisie du moment, relue au démontage ou au changement de machine pour la garder en brouillon. Une connexion
+  // enregistrée n'a plus de brouillon : la machine se rouvrira sur ce qui est enregistré.
+  const saisie = useRef<Brouillon>({ wiz, atteint, proto, params, log, vars, assoc });
+  const enregistreeRef = useRef(false);
+  useLayoutEffect(() => {
+    saisie.current = { wiz, atteint, proto, params, log, vars, assoc };
+    enregistreeRef.current = enregistree;
+  });
+
+  // Changement de machine : son brouillon s'il y en a un, sinon son état enregistré (une machine branchée s'ouvre sur
+  // ses variables). En quittant une machine (ou l'écran), ce qui a été saisi pour elle est gardé.
   useEffect(() => {
+    const id = machine?.id;
+    const b = id ? brouillons.get(id) : undefined;
     const debut = existing?.etat === 'connectee' ? DERNIER : 0;
-    setWiz(debut);
-    setAtteint(debut);
-    setProto(existing?.protocole ?? 'opcua');
-    setParams(existing?.parametres ?? DEFAUTS.opcua);
-    setLog([]);
-    setVars([]);
-    setAssoc({});
+    setWiz(b?.wiz ?? debut);
+    setAtteint(b?.atteint ?? debut);
+    setProto(b?.proto ?? existing?.protocole ?? 'opcua');
+    setParams(b?.params ?? existing?.parametres ?? DEFAUTS.opcua);
+    setLog(b?.log ?? []);
+    setVars(b?.vars ?? []);
+    setAssoc(b?.assoc ?? {});
     setEnregistree(false);
     setWriteAsk(false);
+    setMontrerErreurs(false);
+    return () => {
+      if (id && !enregistreeRef.current) brouillons.set(id, saisie.current);
+    };
   }, [machine?.id]);
 
   useEffect(() => {
     if (wiz === DERNIER && machine && model && !vars.length) {
       const v = browseVariables(machine, proto, model.points, model.organes);
       setVars(v);
-      const saved = existing?.associations ?? {};
       // Connexion existante sans association enregistrée : proposition automatique.
-      setAssoc(Object.keys(saved).length ? Object.fromEntries(Object.entries(saved).map(([k, p]) => [k, { pointId: p, score: 1 }])) : autoMatch(v, model.points, model.organes));
+      setAssoc(associationsDeDepart(v, existing?.associations ?? {}, () => autoMatch(v, model.points, model.organes)));
     }
   }, [wiz, machine, model, proto, vars.length, existing]);
 
@@ -136,6 +178,14 @@ export function ConnectPanel() {
       await wait(ms);
       setLog((l) => [...l, { t, ok }]);
     };
+    // Une adresse qui ne peut pas exister ne se teste pas, même en démonstration : le test simulé l'aurait validée.
+    const fautes = Object.values(erreursAdresse(proto, params));
+    if (fautes.length) {
+      await push(`Adresse mal formée : ${fautes[0]}`, 150, false);
+      setTesting(false);
+      setAtteint((a) => Math.max(a, 2));
+      return;
+    }
     if (source === 'api') {
       // Test réel par la passerelle : seules ses étapes s'affichent, et le premier échec arrête la liste.
       try {
@@ -216,7 +266,15 @@ export function ConnectPanel() {
       points: model.points.map((p) => (byPoint.has(p.id) ? { ...p, protocole: proto, adresse: byPoint.get(p.id) } : p)),
     });
     setEnregistree(true);
-    useLive.getState().pushToast({ gravite: 'succes', titre: `${machine.numero} connectée`, texte: `${Object.keys(reliees).length} variables associées en ${nomProtocole(proto)}.` });
+    brouillons.delete(machine.id);
+    const n = Object.keys(reliees).length;
+    const associees = `${n} variable${n > 1 ? 's' : ''} reliée${n > 1 ? 's' : ''} en ${nomProtocole(proto)}.`;
+    // En démonstration, aucune machine n'est jointe : l'avis le dit au lieu d'annoncer une machine connectée.
+    useLive.getState().pushToast(
+      source === 'api'
+        ? { gravite: 'succes', titre: `${machine.numero} connectée`, texte: associees }
+        : { gravite: 'info', titre: `Connexion de ${machine.numero} enregistrée`, texte: `${associees} Les valeurs restent simulées : aucune machine n’est jointe en démonstration.` },
+    );
   };
 
   // Démonstration automatique (visite guidée).
@@ -276,22 +334,24 @@ export function ConnectPanel() {
   }, []);
 
   const branchees = machines.filter((m) => estBranchee(connexions[m.id])).length;
-  const reliees = nbReliees(vars, assoc) || Object.keys(existing?.associations ?? {}).length;
+  const toutesBranchees = useTachesConfig()[5].branchees;
+  // Variables qu'on peut relier sur cette machine : celles qui ont un point de mesure qui leur correspond (les
+  // variables de diagnostic n'en ont pas). La tâche se coche quand toutes le sont, pas dès la première.
+  const protoVars = existing?.protocole ?? proto;
+  const attendues = useMemo(() => {
+    if (!machine || !model) return 0;
+    const v = browseVariables(machine, protoVars, model.points, model.organes);
+    return nbReliees(v, autoMatch(v, model.points, model.organes));
+  }, [machine, model, protoVars]);
+  const reliees = vars.length ? nbReliees(vars, assoc) : Object.keys(existing?.associations ?? {}).length;
+  const toutesReliees = attendues > 0 ? reliees >= attendues : reliees > 0;
   const ecritureQuelquePart = Object.values(connexions).some((c) => c.lectureSeule === false);
   const taches: Tache[] = [
     {
-      label: (
-        <>
-          Brancher chaque machine à EVAN
-          <CommentFaire>{machines.length ? 'Pour chaque machine, suivez les quatre temps ci-dessous, puis enregistrez.' : 'Posez d’abord une machine à l’étape 3.'}</CommentFaire>
-          {machines.length > 0 && (
-            <span className="cx-compte">
-              ({branchees} sur {machines.length})
-            </span>
-          )}
-        </>
-      ),
-      fait: machines.length > 0 && branchees === machines.length,
+      label: 'Brancher chaque machine à EVAN',
+      comment: machines.length ? 'Pour chaque machine, suivez les quatre temps ci-dessous, puis enregistrez.' : 'Posez d’abord une machine à l’étape 3.',
+      compte: machines.length > 0 && `${branchees} sur ${machines.length}`,
+      fait: toutesBranchees,
     },
     ...(machine
       ? [
@@ -299,20 +359,20 @@ export function ConnectPanel() {
             label: (
               <>
                 Relier les variables de <span className="mono">{machine.numero}</span> à ses organes
-                <CommentFaire>Dernier temps de l’assistant : « Associer automatiquement », puis vérifier.</CommentFaire>
               </>
             ),
-            fait: reliees > 0,
+            comment: 'Dernier temps de l’assistant : « Associer automatiquement », vérifier, puis enregistrer.',
+            compte: attendues > 0 && `${Math.min(reliees, attendues)} sur ${attendues}`,
+            // Cochée quand la connexion est enregistrée et que toutes ses variables sont reliées, pas dès la première.
+            fait: estBranchee(existing) && toutesReliees,
+            // Tout est relié mais rien n'est enregistré : la coche attend l'enregistrement, on le dit.
+            aide: !estBranchee(existing) && toutesReliees && 'Reste à enregistrer la connexion.',
           },
         ]
       : []),
     {
-      label: (
-        <>
-          Laisser EVAN en lecture seule
-          <CommentFaire>EVAN lit les valeurs sans jamais commander la machine. Si une écriture a été autorisée, revenez en lecture seule dès que le besoin est passé.</CommentFaire>
-        </>
-      ),
+      label: 'Laisser EVAN en lecture seule',
+      comment: 'EVAN lit les valeurs sans jamais commander la machine. Si une écriture a été autorisée, revenez en lecture seule dès que le besoin est passé.',
       fait: !ecritureQuelquePart,
       facultatif: true,
       // Une écriture autorisée sort de la normale : elle reste en vue, en ambre.
@@ -379,7 +439,7 @@ export function ConnectPanel() {
         </div>
 
         <section className="cx-assistant entree" style={{ ['--i' as string]: 2 }} aria-label={`Brancher ${machine.numero}, temps ${wiz + 1} sur ${TEMPS.length}`}>
-          <FilDesTemps courant={wiz} atteint={atteint} aller={aller} />
+          <FilDesTemps courant={wiz} atteint={atteint} aller={allerSiPossible} />
           <h3 key={wiz} className="cx-pas-titre">
             <span className="cx-pas-num">{wiz + 1}</span> {TEMPS[wiz].titre}
             <InfoTip label={`Comprendre : ${TEMPS[wiz].titre.toLowerCase()}`}>{aideDuTemps(wiz, proto, machine.numero)}</InfoTip>
@@ -388,7 +448,14 @@ export function ConnectPanel() {
 
           {wiz === 0 && <ChoixProtocole choisi={proto} choisir={choisirProtocole} />}
           {wiz === 1 && (
-            <Adresse protocole={proto} params={params} changer={(k, v) => setParams((p) => ({ ...p, [k]: v }))} passerelle={passerelle} />
+            <Adresse
+              protocole={proto}
+              params={params}
+              changer={(k, v) => setParams((p) => ({ ...p, [k]: v }))}
+              passerelle={passerelle}
+              erreurs={erreurs}
+              montrerErreurs={montrerErreurs}
+            />
           )}
           {wiz === 2 && <TestLiaison log={log} enCours={testing} lancer={() => void runTest()} numero={machine.numero} passerelle={passerelle} simule={source !== 'api'} />}
           {wiz === 3 && (
@@ -413,7 +480,17 @@ export function ConnectPanel() {
               {enregistree && (
                 <div className="cx-enregistree" role="status">
                   <p>
-                    <CheckCircle2 aria-hidden /> <span className="mono">{machine.numero}</span> est branchée : ses valeurs remontent en direct.
+                    <CheckCircle2 aria-hidden />
+                    {source === 'api' ? (
+                      <span>
+                        <span className="mono">{machine.numero}</span> est branchée : ses valeurs remontent en direct.
+                      </span>
+                    ) : (
+                      // En démonstration, rien ne vient de l'automate : on ne dit pas « en direct ».
+                      <span>
+                        La connexion de <span className="mono">{machine.numero}</span> est enregistrée. En démonstration, ses valeurs restent simulées.
+                      </span>
+                    )}
                   </p>
                   {suivante && (
                     <button type="button" className="btn sm" onClick={() => useUi.getState().selectMachine(suivante.id)}>
@@ -433,7 +510,7 @@ export function ConnectPanel() {
               <button
                 type="button"
                 className={`btn sm ${wiz !== 2 || testOk ? 'primary' : ''}`}
-                onClick={() => aller(Math.min(DERNIER, wiz + 1))}
+                onClick={() => allerSiPossible(Math.min(DERNIER, wiz + 1))}
                 disabled={wiz === 2 && (testing || !log.length)}
               >
                 {wiz === 2 && testEchec ? 'Continuer quand même' : `Suivant : ${TEMPS[wiz + 1].titre.toLowerCase()}`} <ArrowRight aria-hidden />
@@ -441,6 +518,11 @@ export function ConnectPanel() {
             )}
           </div>
           {wiz === 2 && !testOk && !testEchec && !testing && <p className="cx-nav-aide">Lancez le test pour passer aux variables.</p>}
+          {wiz === TEMPS_ADRESSE && montrerErreurs && !adresseValide && (
+            <p className="cx-nav-aide" role="status">
+              Corrigez l’adresse pour passer au test.
+            </p>
+          )}
         </section>
 
         <div className="entree" style={{ ['--i' as string]: 3 }}>

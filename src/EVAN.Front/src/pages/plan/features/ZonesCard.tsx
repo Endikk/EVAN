@@ -9,7 +9,7 @@ import { Plus, Trash2, X } from 'lucide-react';
 import type { TypeZone } from '@/domain/types';
 import { borneNiveaux, niveauDe, nomNiveau } from '@/domain/niveaux';
 import { formatArea, signedArea } from '@/geo/geodesy';
-import { useProject } from '@/store/project';
+import { retirerZone, useProject } from '@/store/project';
 import { useNiveauActif, useNiveauxUsine } from '@/store/niveau';
 import { isReducedMotion, useUi } from '@/store/ui';
 import { TitreCarte } from '@/ui/explain';
@@ -104,7 +104,7 @@ export function ZonesCard({ style }: { style?: CSSProperties }) {
             title={ZONE_SENS[t]}
             onClick={() => (outil === t ? useUi.getState().setZoneTool(null) : commencer(t))}
           >
-            <i aria-hidden />
+            {/* Pas de pastille de couleur : les zones sont toutes du même gris, et un carré gris se lisait comme une case à cocher. */}
             <span className="pln-type-texte">
               <Plus aria-hidden /> {ZONE_LIBELLE[t]}
             </span>
@@ -117,8 +117,7 @@ export function ZonesCard({ style }: { style?: CSSProperties }) {
           <GesteZone couleur={ZONE_COULEUR[outil]} />
           <div>
             <b>
-              Tracez la zone « {ZONE_LIBELLE[outil]} » sur le plan.
-              <InfoTip label="Comment tracer une zone">
+              <InfoTip label="Comment tracer une zone" texte={`Tracez la zone « ${ZONE_LIBELLE[outil]} » sur le plan`}>
                 <p>Appuyez à un coin, glissez jusqu’au coin opposé, relâchez. Le rectangle s’aimante au mètre près.</p>
               </InfoTip>
             </b>
@@ -136,7 +135,6 @@ export function ZonesCard({ style }: { style?: CSSProperties }) {
             <li key={z.id} data-zone={z.id} className={`pln-zone ${neuves.has(z.id) ? 'neuve' : ''}`} style={{ ['--pln-c' as string]: ZONE_COULEUR[z.type] }}>
               <div className="pln-zone-ligne">
                 <button type="button" className="item" aria-pressed={choisie} onClick={() => useUi.getState().selectZone(choisie ? undefined : z.id)}>
-                  <i className="pln-pastille" aria-hidden />
                   <span className="grow pln-zone-texte">
                     <span className="t truncate">
                       {z.nom}
@@ -152,9 +150,12 @@ export function ZonesCard({ style }: { style?: CSSProperties }) {
                 <button
                   type="button"
                   className="btn sm icon ghost pln-suppr"
-                  aria-label={`Supprimer la zone ${z.nom}`}
-                  title="Supprimer la zone"
-                  onClick={() => useProject.getState().removeZone(z.id)}
+                  aria-label={`Retirer la zone ${z.nom}`}
+                  title="Retirer la zone (ses machines restent en place)"
+                  onClick={() => {
+                    if (choisie) useUi.getState().selectZone(undefined);
+                    retirerZone(z.id);
+                  }}
                 >
                   <Trash2 />
                 </button>

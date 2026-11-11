@@ -1,11 +1,15 @@
 /**
  * Un organe de la machine, en liste compacte : replié, son numéro, son nom et un point par mesure (gris tant que
  * c'est normal, en couleur seulement quand ça sort de la plage) ; déplié, l'état de chaque mesure sur sa bande de
- * seuils, puis une rangée de chiffres dont les « ? » disent ce qui lâche d'habitude, comment remonter à la cause et
- * l'alarme de la machine. Les chiffres exacts et le réglage des seuils restent repliés dans « Voir les chiffres ».
+ * seuils, puis une rangée de chiffres dont les libellés ouvrent ce qui lâche d'habitude, comment remonter à la cause
+ * et l'alarme de la machine. Les chiffres exacts et le réglage des seuils restent repliés dans « Voir les chiffres ».
+ *
+ * Les seuils se tapent en brouillon : rien ne s'applique à la surveillance pendant la frappe (taper « 2 » pour « 235 »
+ * déclenchait une alarme). Ils s'appliquent quand on quitte le champ, s'ils restent dans l'ordre ; sinon le champ dit ce
+ * qui ne va pas. « Revenir aux seuils du kit » remet ceux du modèle.
  */
-import { useEffect, useId, useState } from 'react';
-import { ChevronRight, Crosshair } from 'lucide-react';
+import { useEffect, useId, useMemo, useState } from 'react';
+import { ChevronRight, Crosshair, RotateCcw } from 'lucide-react';
 import { useProject } from '@/store/project';
 import { useUi } from '@/store/ui';
 import { useLive, type Niveau } from '@/store/live';
@@ -13,15 +17,8 @@ import { machineModel } from '@/domain/catalog';
 import type { Machine, Organe, PointDeMesure, Seuils } from '@/domain/types';
 import { ChiffresSecondaires, Details, TonGlyph, type ChiffreSecondaire, type Ton } from '@/ui/explain';
 import { fmtValue } from '@/ui/format';
-import { lectureSeuils, nombreSeuil } from '../lib/seuils';
+import { lectureSeuils, lireSaisie, memesSeuils, nombreSeuil, ORDRE_SEUILS, versSaisie, type SaisieSeuils } from '../lib/seuils';
 import { enPhrase, MesureBande } from './BandeSeuils';
-
-const CHAMPS_SEUILS: { k: keyof Seuils; l: string }[] = [
-  { k: 'alarmeBas', l: 'Alarme sous' },
-  { k: 'attentionBas', l: 'Attention sous' },
-  { k: 'attentionHaut', l: 'Attention au-delà de' },
-  { k: 'alarmeHaut', l: 'Alarme au-delà de' },
-];
 
 function modifierPoint(machine: Machine, pointId: string, patch: Partial<PointDeMesure>) {
   const st = useProject.getState();
@@ -67,7 +64,7 @@ function Points({ niveaux }: { niveaux: (Niveau | undefined)[] }) {
   );
 }
 
-/** Ce que l'organe a d'utile à savoir, en chiffres dont le « ? » donne le détail. */
+/** Ce que l'organe a d'utile à savoir, en chiffres dont le libellé ouvre le détail. */
 function chiffresOrgane(organe: Organe): ChiffreSecondaire[] {
   const items: ChiffreSecondaire[] = [];
   if (organe.pannesTypiques.length || organe.methode) {
@@ -99,8 +96,35 @@ function chiffresOrgane(organe: Organe): ChiffreSecondaire[] {
   return items;
 }
 
+/** Les seuils du modèle du kit pour ce point, avant toute modification. */
+function seuilsDuKit(machine: Machine, pointId: string): Seuils | undefined {
+  return machineModel(machine).points.find((p) => p.id === pointId)?.seuils;
+}
+
 function ChiffresPoint({ machine, point }: { machine: Machine; point: PointDeMesure }) {
   const v = useLive((s) => s.values[point.id]?.v);
+  const idErreur = useId();
+  const [saisie, setSaisie] = useState<SaisieSeuils>(() => versSaisie(point.seuils));
+  const [erreur, setErreur] = useState<{ erreur: string; champ: keyof Seuils }>();
+  // Seuils changés ailleurs (annulation, retour au kit) : la saisie repart d'eux.
+  useEffect(() => {
+    setSaisie(versSaisie(point.seuils));
+    setErreur(undefined);
+  }, [point.seuils]);
+  const kit = useMemo(() => seuilsDuKit(machine, point.id), [machine, point.id]);
+  const modifies = !!kit && !memesSeuils(point.seuils, kit);
+
+  /** En quittant un champ : appliquer si la saisie est cohérente, sinon dire pourquoi sans rien appliquer. */
+  const valider = () => {
+    const r = lireSaisie(saisie);
+    if ('erreur' in r) {
+      setErreur(r);
+      return;
+    }
+    setErreur(undefined);
+    if (!memesSeuils(r.seuils, point.seuils)) modifierPoint(machine, point.id, { seuils: r.seuils });
+  };
+
   return (
     <div className="og-chiffres-point">
       <p className="og-chiffres-nom">
@@ -111,7 +135,7 @@ function ChiffresPoint({ machine, point }: { machine: Machine; point: PointDeMes
       </p>
       <p className="og-chiffres-lecture">{lectureSeuils(point.seuils, point.unite) || 'Aucun seuil : la mesure est suivie pour information.'}</p>
       <div className="og-seuils-champs">
-        {CHAMPS_SEUILS.map(({ k, l }) => (
+        {ORDRE_SEUILS.map(({ k, l }) => (
           <label key={k} className="field">
             <span>
               {l}
@@ -119,16 +143,37 @@ function ChiffresPoint({ machine, point }: { machine: Machine; point: PointDeMes
             </span>
             <input
               className="input num"
-              type="number"
+              type="text"
               inputMode="decimal"
-              step="any"
-              value={point.seuils[k] ?? ''}
+              value={saisie[k]}
               placeholder="aucun"
-              onChange={(e) => modifierPoint(machine, point.id, { seuils: { ...point.seuils, [k]: e.target.value === '' ? undefined : Number(e.target.value) } })}
+              aria-invalid={erreur?.champ === k}
+              aria-describedby={erreur?.champ === k ? idErreur : undefined}
+              onChange={(e) => setSaisie((s) => ({ ...s, [k]: e.target.value }))}
+              onBlur={valider}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') valider();
+              }}
             />
           </label>
         ))}
       </div>
+      {erreur && (
+        <p id={idErreur} className="og-seuils-erreur" role="alert">
+          <TonGlyph ton="warn" />
+          {erreur.erreur} Rien n’est appliqué tant que ce n’est pas corrigé.
+        </p>
+      )}
+      {modifies && kit && (
+        <button
+          type="button"
+          className="btn sm ghost og-seuils-kit"
+          title={lectureSeuils(kit, point.unite) || undefined}
+          onClick={() => modifierPoint(machine, point.id, { seuils: kit })}
+        >
+          <RotateCcw aria-hidden /> Revenir aux seuils du kit
+        </button>
+      )}
     </div>
   );
 }
@@ -197,7 +242,7 @@ export function OrganCard({ machine, organe, points, actif }: { machine: Machine
             {mesures.map((p) => (
               <ChiffresPoint key={p.id} machine={machine} point={p} />
             ))}
-            <p className="og-texte faint">Un seuil modifié s’applique tout de suite à la surveillance.</p>
+            <p className="og-texte faint">Un seuil s’applique à la surveillance quand vous quittez son champ, s’il reste dans l’ordre.</p>
             <p className="og-texte faint mono og-repere-3d">
               Repère 3D : {organe.noeud3d ?? 'aucun'}
               {organe.position ? ` (${organe.position.map((x) => x.toFixed(2)).join(' ; ')} m)` : ''}

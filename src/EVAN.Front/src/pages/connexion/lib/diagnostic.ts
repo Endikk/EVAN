@@ -22,6 +22,7 @@ export interface LectureTest {
 const COTE_PASSERELLE = /passerelle|test impossible/i;
 
 const CONSEILS: [RegExp, string][] = [
+  [/mal formée/i, 'Corrigez l’adresse au temps 2 : elle doit suivre la forme indiquée sous le champ.'],
   [COTE_PASSERELLE, 'Vérifiez que la passerelle de l’usine est allumée et reliée au réseau, puis relancez le test.'],
   [/certificat/i, 'Le certificat de l’automate doit être approuvé par l’administrateur d’EVAN avant la première connexion.'],
   [/session|authentif|identif|mot de passe|utilisateur/i, 'L’automate refuse l’identification : vérifiez l’utilisateur, le mot de passe ou le certificat dans les réglages avancés.'],
@@ -39,9 +40,11 @@ export function lireTest(log: LigneTest[], enCours: boolean): LectureTest {
   const echec = log.find((l) => l.ok === false);
   if (echec) {
     const passerelle = COTE_PASSERELLE.test(echec.t);
+    // Une adresse mal formée arrête le test avant tout envoi : aucun tronçon n'a été essayé.
+    const avantEnvoi = /mal formée/i.test(echec.t);
     return {
       etat: 'echec',
-      troncons: passerelle ? ['echec', 'attente'] : ['ok', 'echec'],
+      troncons: avantEnvoi ? ['attente', 'attente'] : passerelle ? ['echec', 'attente'] : ['ok', 'echec'],
       derniere,
       cause: echec.t,
       conseil: conseilPour(echec.t),
