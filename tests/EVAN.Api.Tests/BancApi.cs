@@ -42,6 +42,8 @@ internal sealed class BancApi : IAsyncDisposable
     public LiveService Live => _app.Services.GetRequiredService<LiveService>();
     public ReferenceData Data => _app.Services.GetRequiredService<ReferenceData>();
     public IServiceProvider Services => _app.Services;
+    /// <summary>Serveur de test, pour ouvrir un WebSocket vers le hub avec le cookie d'un navigateur.</summary>
+    public TestServer Serveur => _app.GetTestServer();
 
     private BancApi(WebApplication app, MemoryStore store)
     {
@@ -49,9 +51,12 @@ internal sealed class BancApi : IAsyncDisposable
         Store = store;
     }
 
-    public static async Task<BancApi> Demarrer(Dictionary<string, string?>? reglages = null)
+    public static async Task<BancApi> Demarrer(Dictionary<string, string?>? reglages = null, TimeProvider? horloge = null)
     {
         var builder = WebApplication.CreateBuilder();
+        // Horloge réglable (durée des sessions, expiration du mot de passe provisoire) : enregistrée avant les modules,
+        // qui n'ajoutent la leur que si aucune n'est déjà là.
+        if (horloge is not null) builder.Services.AddSingleton(horloge);
         builder.WebHost.UseTestServer();
         builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?> { ["Evan:CodeInstallation"] = CodeInstallation });
         builder.Configuration.AddInMemoryCollection(reglages ?? []);
@@ -110,6 +115,8 @@ internal sealed class Navigateur(HttpClient http)
 {
     private readonly Dictionary<string, string> _cookies = new();
     public IReadOnlyList<string> DerniersSetCookie { get; private set; } = [];
+    /// <summary>En-tête Cookie que ce navigateur joindrait à sa prochaine requête.</summary>
+    public string EnteteCookie => string.Join("; ", _cookies.Select(kv => $"{kv.Key}={kv.Value}"));
 
     public async Task<HttpResponseMessage> Envoyer(HttpMethod methode, string url, object? corps = null, bool entete = true)
     {
@@ -134,6 +141,15 @@ internal sealed class Navigateur(HttpClient http)
     public Task<HttpResponseMessage> Post(string url, object? corps = null, bool entete = true) => Envoyer(HttpMethod.Post, url, corps ?? new { }, entete);
     public Task<HttpResponseMessage> Put(string url, object corps) => Envoyer(HttpMethod.Put, url, corps);
     public Task<HttpResponseMessage> Delete(string url) => Envoyer(HttpMethod.Delete, url);
+    public Task<HttpResponseMessage> Delete(string url, object corps) => Envoyer(HttpMethod.Delete, url, corps);
+
+    /// <summary>Autre navigateur qui part avec les cookies actuels de celui-ci : un cookie volé, ou gardé d'avant.</summary>
+    public Navigateur Copie()
+    {
+        var copie = new Navigateur(http);
+        foreach (var (nom, valeur) in _cookies) copie._cookies[nom] = valeur;
+        return copie;
+    }
 
     public async Task<JsonElement> Json(string url)
     {
@@ -148,6 +164,18 @@ internal sealed class Navigateur(HttpClient http)
         Assert.Equal(System.Net.HttpStatusCode.OK, res.StatusCode);
         return this;
     }
+}
+
+/// <summary>Horloge que le test avance à la main (durée des sessions, expiration du mot de passe provisoire).</summary>
+internal sealed class HorlogeReglable(DateTimeOffset depart) : TimeProvider
+{
+    private DateTimeOffset _maintenant = depart;
+
+    public HorlogeReglable() : this(DateTimeOffset.UtcNow) { }
+
+    public override DateTimeOffset GetUtcNow() => _maintenant;
+
+    public void Avancer(TimeSpan duree) => _maintenant += duree;
 }
 
 /// <summary>Configuration d'usine valide, comme l'assistant du front l'envoie : machines du kit, organes et points du catalogue.</summary>

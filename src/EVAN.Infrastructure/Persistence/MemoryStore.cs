@@ -26,6 +26,9 @@ public sealed class MemoryStore : IStore, IComptesStore
     private readonly Dictionary<string, UsineEnregistree> _usines = new();
     private readonly Dictionary<string, Organisation> _organisations = new();
     private readonly Dictionary<string, Compte> _comptes = new();
+    /// <summary>Journal des comptes, le plus ancien d'abord ; borné comme les alarmes.</summary>
+    private readonly List<EvenementCompte> _journalComptes = new();
+    internal const int MaxJournalComptes = 10_000;
 
     public string Kind => "memoire";
     public bool Healthy => true;
@@ -184,13 +187,49 @@ public sealed class MemoryStore : IStore, IComptesStore
         }
     }
 
-    public Task<bool> ChangerEmpreinteAsync(string compteId, string empreinte, CancellationToken ct = default)
+    public Task<int?> ChangerEmpreinteAsync(string compteId, string empreinte, CancellationToken ct = default) =>
+        Remplacer(compteId, c => c with { Empreinte = empreinte, Generation = c.Generation + 1, DoitChanger = false, ProvisoireLe = null });
+
+    public Task<int?> NouvelleGenerationAsync(string compteId, CancellationToken ct = default) =>
+        Remplacer(compteId, c => c with { Generation = c.Generation + 1 });
+
+    /// <summary>Remplace un compte par sa version modifiée ; rend sa nouvelle génération, ou null s'il n'existe plus.</summary>
+    private Task<int?> Remplacer(string compteId, Func<Compte, Compte> modifier)
     {
         lock (_referentiel)
         {
-            if (_comptes.Values.FirstOrDefault(c => c.Id == compteId) is not { } compte) return Task.FromResult(false);
-            _comptes[compte.Identifiant] = compte with { Empreinte = empreinte };
-            return Task.FromResult(true);
+            if (_comptes.Values.FirstOrDefault(c => c.Id == compteId) is not { } compte) return Task.FromResult<int?>(null);
+            var modifie = modifier(compte);
+            _comptes[compte.Identifiant] = modifie;
+            return Task.FromResult<int?>(modifie.Generation);
+        }
+    }
+
+    public Task<Compte?> CompteDeAsync(string organisationId, string compteId, CancellationToken ct = default)
+    {
+        lock (_referentiel) return Task.FromResult(_comptes.Values.FirstOrDefault(c => c.Id == compteId && c.OrganisationId == organisationId));
+    }
+
+    public Task JournaliserAsync(EvenementCompte evenement, CancellationToken ct = default)
+    {
+        lock (_referentiel)
+        {
+            _journalComptes.Add(evenement);
+            if (_journalComptes.Count > MaxJournalComptes) _journalComptes.RemoveRange(0, _journalComptes.Count - MaxJournalComptes);
+        }
+        return Task.CompletedTask;
+    }
+
+    public Task<IReadOnlyList<EvenementCompte>> JournalComptesAsync(string organisationId, int limite, CancellationToken ct = default)
+    {
+        lock (_referentiel)
+        {
+            // Le plus récent d'abord ; à la même milliseconde, le dernier écrit d'abord.
+            var lignes = _journalComptes.Select((e, rang) => (e, rang))
+                .Where(x => x.e.OrganisationId == organisationId)
+                .OrderByDescending(x => x.e.Le).ThenByDescending(x => x.rang)
+                .Take(limite).Select(x => x.e).ToList();
+            return Task.FromResult<IReadOnlyList<EvenementCompte>>(lignes);
         }
     }
 
@@ -201,5 +240,43 @@ public sealed class MemoryStore : IStore, IComptesStore
             var ajoute = _organisations.ContainsKey(compte.OrganisationId) && _comptes.TryAdd(compte.Identifiant, compte);
             return Task.FromResult(ajoute);
         }
+    }
+
+    public Task<IssueMembre> RetirerCompteAsync(string organisationId, string auteurId, string compteId, CancellationToken ct = default)
+    {
+        lock (_referentiel)
+        {
+            var issue = Verifier(organisationId, auteurId, compteId, out var cible);
+            if (issue == IssueMembre.Fait && cible!.Role == Roles.Admin
+                && _comptes.Values.Count(c => c.OrganisationId == organisationId && c.Role == Roles.Admin) <= 1)
+                issue = IssueMembre.DernierAdministrateur;
+            if (issue == IssueMembre.Fait) _comptes.Remove(cible!.Identifiant);
+            return Task.FromResult(issue);
+        }
+    }
+
+    public Task<IssueMembre> ReinitialiserEmpreinteAsync(string organisationId, string auteurId, string compteId, string empreinte, DateTimeOffset provisoireLe, CancellationToken ct = default)
+    {
+        lock (_referentiel)
+        {
+            var issue = Verifier(organisationId, auteurId, compteId, out var cible);
+            if (issue == IssueMembre.Fait)
+                _comptes[cible!.Identifiant] = cible with
+                {
+                    Empreinte = empreinte,
+                    Generation = cible.Generation + 1,
+                    DoitChanger = true,
+                    ProvisoireLe = provisoireLe.ToUnixTimeMilliseconds(),
+                };
+            return Task.FromResult(issue);
+        }
+    }
+
+    /// <summary>Auteur administrateur de l'organisation, puis compte visé dans cette organisation ; sous le verrou du référentiel.</summary>
+    private IssueMembre Verifier(string organisationId, string auteurId, string compteId, out Compte? cible)
+    {
+        cible = _comptes.Values.FirstOrDefault(c => c.Id == compteId && c.OrganisationId == organisationId);
+        if (!_comptes.Values.Any(c => c.Id == auteurId && c.OrganisationId == organisationId && c.Role == Roles.Admin)) return IssueMembre.Refuse;
+        return cible is null ? IssueMembre.Introuvable : IssueMembre.Fait;
     }
 }

@@ -16,6 +16,9 @@ public sealed record ResultatCompte(Compte? Compte, Organisation? Organisation, 
     internal static readonly ResultatCompte DejaInstalle = new(null, null, [new ErreurChamp("installation", "EVAN est déjà installé : un administrateur crée les comptes depuis la page Compte.")], Conflit: true);
 }
 
+/// <summary>Issue d'un changement de mot de passe : les champs refusés, ou le compte à jour (nouvelle génération).</summary>
+public sealed record ResultatChangement(IReadOnlyList<ErreurChamp> Erreurs, Compte? Compte);
+
 /// <summary>
 /// Comptes de l'entreprise. Pas d'inscription publique : l'installation, possible une seule fois, crée l'organisation et
 /// son premier administrateur, qui crée ensuite les membres. Le mot de passe n'est gardé que sous forme d'empreinte.
@@ -28,6 +31,8 @@ public sealed class ComptesService(IComptesStore comptes, IMotsDePasse motsDePas
     public const int IdentifiantMax = 254;
     public const int NomMax = 80;
     public const int OrganisationMax = 120;
+    /// <summary>Un mot de passe provisoire non changé dans ce délai ne vaut plus : l'administrateur en donne un autre.</summary>
+    public static readonly TimeSpan DureeProvisoire = TimeSpan.FromHours(72);
 
     /// <summary>
     /// Empreinte d'un mot de passe que personne ne connaît : un identifiant inconnu coûte le même calcul qu'un compte
@@ -118,20 +123,71 @@ public sealed class ComptesService(IComptesStore comptes, IMotsDePasse motsDePas
         motsDePasse.Hacher(saisie.MotDePasse!),
         time.GetUtcNow().ToUnixTimeMilliseconds());
 
+    /// <summary>Vrai si le compte attend le changement d'un mot de passe provisoire donné il y a plus de 72 h.</summary>
+    public bool ProvisoireExpire(Compte compte) => ProvisoireExpire(compte.DoitChanger, compte.ProvisoireLe, time.GetUtcNow());
+
+    public static bool ProvisoireExpire(bool doitChanger, long? provisoireLe, DateTimeOffset maintenant) =>
+        doitChanger && (provisoireLe is not { } le || maintenant - DateTimeOffset.FromUnixTimeMilliseconds(le) > DureeProvisoire);
+
     /// <summary>
     /// Le titulaire change son mot de passe : l'actuel est exigé (une session laissée ouverte ne suffit pas), le
-    /// nouveau suit les mêmes règles qu'à la création. Erreurs sur « actuel » ou « nouveau ».
+    /// nouveau suit les mêmes règles qu'à la création. Un provisoire expiré ne vaut plus comme « actuel ». La génération
+    /// augmente : l'appelant rouvre la session courante avec le compte rendu, les autres tombent.
     /// </summary>
-    public async Task<IReadOnlyList<ErreurChamp>> ChangerMotDePasseAsync(string identifiant, string? actuel, string? nouveau, CancellationToken ct = default)
+    public async Task<ResultatChangement> ChangerMotDePasseAsync(string identifiant, string? actuel, string? nouveau, CancellationToken ct = default)
     {
-        if (await AuthentifierAsync(identifiant, actuel, ct) is not { } compte) return [new ErreurChamp("actuel", "Mot de passe actuel incorrect.")];
+        if (await AuthentifierAsync(identifiant, actuel, ct) is not { } compte) return Refus("actuel", "Mot de passe actuel incorrect.");
+        if (ProvisoireExpire(compte)) return Refus("actuel", "Mot de passe provisoire expiré (72 h) : demandez-en un nouveau à un administrateur.");
         var erreurs = Verifier(new NouveauCompte(compte.Identifiant, compte.Nom, nouveau))
             .Where(e => e.Champ == "motDePasse")
             .Select(e => e with { Champ = "nouveau" })
             .ToList();
         if (erreurs.Count == 0 && nouveau == actuel) erreurs.Add(new ErreurChamp("nouveau", "Le nouveau mot de passe doit différer de l'actuel."));
-        if (erreurs.Count > 0) return erreurs;
-        return await comptes.ChangerEmpreinteAsync(compte.Id, motsDePasse.Hacher(nouveau!), ct) ? [] : [new ErreurChamp("actuel", "Compte introuvable.")];
+        if (erreurs.Count > 0) return new ResultatChangement(erreurs, null);
+        var empreinte = motsDePasse.Hacher(nouveau!);
+        return await comptes.ChangerEmpreinteAsync(compte.Id, empreinte, ct) is { } generation
+            ? new ResultatChangement([], compte with { Empreinte = empreinte, Generation = generation, DoitChanger = false, ProvisoireLe = null })
+            : Refus("actuel", "Compte introuvable.");
+    }
+
+    private static ResultatChangement Refus(string champ, string message) => new([new ErreurChamp(champ, message)], null);
+
+    /// <summary>Déconnexion : toutes les sessions du compte tombent, celle-ci comprise.</summary>
+    public Task<int?> DeconnecterAsync(string compteId, CancellationToken ct = default) => comptes.NouvelleGenerationAsync(compteId, ct);
+
+    public Task JournaliserAsync(EvenementCompte evenement, CancellationToken ct = default) => comptes.JournaliserAsync(evenement, ct);
+
+    public Task<IReadOnlyList<EvenementCompte>> JournalAsync(string organisationId, int limite, CancellationToken ct = default) =>
+        comptes.JournalComptesAsync(organisationId, limite, ct);
+
+    /// <summary>Horodatage d'une ligne de journal (ms epoch), à l'horloge du service.</summary>
+    public long Maintenant() => time.GetUtcNow().ToUnixTimeMilliseconds();
+
+    /// <summary>
+    /// Un administrateur retire un compte de son organisation. Jamais le sien : un autre administrateur s'en charge, ce
+    /// qui garde aussi au moins un administrateur. Le stockage revérifie l'auteur et le dernier administrateur d'un seul
+    /// bloc. Les sessions du compte retiré tombent à leur prochaine requête : le compte n'existe plus.
+    /// </summary>
+    public async Task<(IssueMembre Issue, Compte? Cible)> RetirerAsync(string organisationId, string auteurId, string compteId, CancellationToken ct = default)
+    {
+        if (compteId == auteurId) return (IssueMembre.Soi, null);
+        // Lu avant : une fois retiré, son adresse ne se retrouve plus, et le journal la garde.
+        var cible = await comptes.CompteDeAsync(organisationId, compteId, ct);
+        var issue = await comptes.RetirerCompteAsync(organisationId, auteurId, compteId, ct);
+        return (issue, issue == IssueMembre.Fait ? cible : null);
+    }
+
+    /// <summary>
+    /// Un administrateur donne un mot de passe provisoire à un compte de son organisation : tiré ici, gardé sous forme
+    /// d'empreinte seulement, rendu une seule fois à l'appelant, valable 72 h et à changer dès la connexion. Jamais pour
+    /// soi : changer le sien exige l'actuel.
+    /// </summary>
+    public async Task<(IssueMembre Issue, string? MotDePasse, Compte? Cible)> ReinitialiserAsync(string organisationId, string auteurId, string compteId, CancellationToken ct = default)
+    {
+        if (compteId == auteurId) return (IssueMembre.Soi, null, null);
+        var provisoire = MotDePasseProvisoire.Generer();
+        var issue = await comptes.ReinitialiserEmpreinteAsync(organisationId, auteurId, compteId, motsDePasse.Hacher(provisoire), time.GetUtcNow(), ct);
+        return issue == IssueMembre.Fait ? (issue, provisoire, await comptes.CompteDeAsync(organisationId, compteId, ct)) : (issue, null, null);
     }
 
     public Task<IReadOnlyList<Compte>> ComptesAsync(string organisationId, CancellationToken ct = default) => comptes.ComptesAsync(organisationId, ct);

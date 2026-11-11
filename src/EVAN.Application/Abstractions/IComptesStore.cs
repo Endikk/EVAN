@@ -29,8 +29,37 @@ public interface IComptesStore
     /// <summary>Ajoute un compte à une organisation existante. Faux si l'identifiant est déjà pris.</summary>
     Task<bool> AjouterCompteAsync(Compte compte, CancellationToken ct = default);
 
-    /// <summary>Remplace l'empreinte du mot de passe d'un compte. Faux si le compte n'existe plus.</summary>
-    Task<bool> ChangerEmpreinteAsync(string compteId, string empreinte, CancellationToken ct = default);
+    /// <summary>
+    /// Le titulaire remplace l'empreinte de son mot de passe : la génération augmente (ses autres sessions tombent),
+    /// l'obligation de changer est levée. Rend la nouvelle génération, ou null si le compte n'existe plus.
+    /// </summary>
+    Task<int?> ChangerEmpreinteAsync(string compteId, string empreinte, CancellationToken ct = default);
+
+    /// <summary>Déconnexion : la génération augmente, toutes les sessions du compte tombent. Null si le compte n'existe plus.</summary>
+    Task<int?> NouvelleGenerationAsync(string compteId, CancellationToken ct = default);
+
+    /// <summary>Compte de cet identifiant technique dans cette organisation, ou null (inconnu, ou d'une autre organisation).</summary>
+    Task<Compte?> CompteDeAsync(string organisationId, string compteId, CancellationToken ct = default);
+
+    Task JournaliserAsync(EvenementCompte evenement, CancellationToken ct = default);
+
+    /// <summary>Journal des comptes d'une organisation, le plus récent d'abord.</summary>
+    Task<IReadOnlyList<EvenementCompte>> JournalComptesAsync(string organisationId, int limite, CancellationToken ct = default);
+
+    /// <summary>
+    /// Un administrateur retire un compte de son organisation, vérifié et écrit d'un seul bloc : l'auteur doit encore en
+    /// être un administrateur (sinon Refuse), le compte visé doit en faire partie (sinon Introuvable), et le dernier
+    /// administrateur reste (DernierAdministrateur). Deux retraits croisés simultanés ne vident donc jamais
+    /// l'organisation de ses administrateurs.
+    /// </summary>
+    Task<IssueMembre> RetirerCompteAsync(string organisationId, string auteurId, string compteId, CancellationToken ct = default);
+
+    /// <summary>
+    /// Un administrateur remplace l'empreinte d'un compte de son organisation (mot de passe provisoire donné à
+    /// <paramref name="provisoireLe"/>) et augmente sa génération : les sessions ouvertes avant cessent de valoir, et
+    /// le titulaire devra le changer. Mêmes vérifications que le retrait.
+    /// </summary>
+    Task<IssueMembre> ReinitialiserEmpreinteAsync(string organisationId, string auteurId, string compteId, string empreinte, DateTimeOffset provisoireLe, CancellationToken ct = default);
 }
 
 /// <summary>Empreinte des mots de passe (algorithme lent et salé, prévu pour cela), fournie par l'hôte (EVAN.Api).</summary>

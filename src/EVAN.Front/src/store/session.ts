@@ -11,6 +11,8 @@ export interface Utilisateur {
   identifiant: string;
   nom: string;
   role: Role;
+  /** Mot de passe provisoire pas encore changé : le serveur ne permet que son changement (page Compte). */
+  doitChanger?: boolean;
 }
 
 export interface OrganisationSession {

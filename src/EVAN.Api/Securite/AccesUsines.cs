@@ -48,6 +48,8 @@ internal sealed class FiltreAccesUsine(AccesUsines acces, LiveService live) : IE
     public async ValueTask<object?> InvokeAsync(EndpointFilterInvocationContext ctx, EndpointFilterDelegate suite)
     {
         var http = ctx.HttpContext;
+        // Mot de passe provisoire pas encore changé : rien d'autre que le changement (Garde).
+        if (Garde.Bloquee(http)) return Garde.Refus();
         if (http.GetEndpoint()?.Metadata.GetMetadata<AccesVerifieParLaRoute>() is null && !Autorise(http, ctx.Arguments))
             return Results.NotFound(new { erreur = "Introuvable." });
         return await suite(ctx);

@@ -19,6 +19,8 @@ export class ErreurApi extends Error {
     readonly statut: number,
     message: string,
     readonly champs: ChampRefuse[] = [],
+    /** Code machine du refus, quand le serveur en donne un (ex. « mot-de-passe-a-changer »). */
+    readonly code?: string,
   ) {
     super(message);
     this.name = 'ErreurApi';
@@ -26,6 +28,9 @@ export class ErreurApi extends Error {
 }
 
 const DELAI_MS = 10_000;
+
+/** Code de refus quand le compte doit d'abord remplacer son mot de passe provisoire (EVAN.Api, Securite/Garde.cs). */
+export const MOT_DE_PASSE_A_CHANGER = 'mot-de-passe-a-changer';
 
 /** Phrase par défaut d'un statut, quand le serveur n'en donne pas. */
 function phrase(statut: number): string {
@@ -41,11 +46,12 @@ function phrase(statut: number): string {
 /** Lit l'erreur d'une réponse refusée ({ erreur, champs }), avec une phrase de repli si le corps n'en dit rien. */
 export async function erreurDe(res: Response): Promise<ErreurApi> {
   try {
-    const corps = (await res.json()) as { erreur?: unknown; champs?: unknown };
+    const corps = (await res.json()) as { erreur?: unknown; champs?: unknown; code?: unknown };
     const champs = Array.isArray(corps.champs)
       ? corps.champs.filter((c): c is ChampRefuse => typeof c?.champ === 'string' && typeof c?.message === 'string')
       : [];
-    return new ErreurApi(res.status, typeof corps.erreur === 'string' && corps.erreur ? corps.erreur : phrase(res.status), champs);
+    const code = typeof corps.code === 'string' ? corps.code : undefined;
+    return new ErreurApi(res.status, typeof corps.erreur === 'string' && corps.erreur ? corps.erreur : phrase(res.status), champs, code);
   } catch {
     return new ErreurApi(res.status, phrase(res.status));
   }
@@ -74,7 +80,13 @@ export async function appel<T>(methode: Methode, url: string, corps?: unknown, d
   } catch {
     throw new ErreurApi(0, 'Le serveur EVAN ne répond pas. Vérifiez la connexion, puis réessayez.');
   }
-  if (!res.ok) throw await erreurDe(res);
+  if (!res.ok) {
+    const erreur = await erreurDe(res);
+    // Mot de passe provisoire pas encore changé : le serveur refuse tout le reste. On mène à la page Compte, où le
+    // formulaire de changement s'ouvre d'emblée, plutôt que de laisser l'écran afficher une erreur incompréhensible.
+    if (erreur.code === MOT_DE_PASSE_A_CHANGER && window.location.pathname !== '/compte') window.location.assign('/compte');
+    throw erreur;
+  }
   if (res.status === 204 || !res.headers.get('content-type')?.includes('json')) return undefined as T;
   return (await res.json()) as T;
 }

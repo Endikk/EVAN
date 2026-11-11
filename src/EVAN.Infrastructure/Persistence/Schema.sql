@@ -121,6 +121,28 @@ CREATE TABLE IF NOT EXISTS comptes (
     cree_le         timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS comptes_organisation ON comptes (organisation_id);
+-- Génération des sessions d'un compte, portée par son cookie : un mot de passe provisoire donné par un administrateur
+-- l'augmente, et les sessions ouvertes avant tombent. Ajout sans perte : les comptes existants partent de 0, comme
+-- les cookies émis avant la colonne.
+ALTER TABLE comptes ADD COLUMN IF NOT EXISTS generation integer NOT NULL DEFAULT 0;
+-- Mot de passe provisoire donné par un administrateur : à changer dès la connexion, valable 72 h après provisoire_le.
+ALTER TABLE comptes ADD COLUMN IF NOT EXISTS doit_changer boolean NOT NULL DEFAULT false;
+ALTER TABLE comptes ADD COLUMN IF NOT EXISTS provisoire_le timestamptz;
+
+-- Journal des comptes : création, retrait, mot de passe provisoire, changement de mot de passe. Auteur et cible gardent
+-- leur adresse en clair (un compte retiré reste lisible ici). Aucun mot de passe, ni en clair ni en empreinte.
+CREATE TABLE IF NOT EXISTS journal_comptes (
+    id                 bigserial PRIMARY KEY,
+    organisation_id    text NOT NULL REFERENCES organisations(id) ON DELETE CASCADE,
+    auteur_id          text NOT NULL,
+    auteur_identifiant text NOT NULL,
+    cible_id           text NOT NULL,
+    cible_identifiant  text NOT NULL,
+    action             text NOT NULL CHECK (action IN ('creation', 'retrait', 'reinitialisation', 'changement')),
+    adresse            text NOT NULL,
+    horodatage         timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS journal_comptes_organisation ON journal_comptes (organisation_id, horodatage DESC);
 
 -- Séries temporelles : une ligne par échantillon, hypertable partitionnée par jour, compressée après 1 jour.
 CREATE TABLE IF NOT EXISTS mesures (

@@ -1,12 +1,14 @@
 using EVAN.Application.Abstractions;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
 
 namespace EVAN.Api.Securite;
 
 /// <summary>
 /// Empreinte des mots de passe par le <see cref="PasswordHasher{TUser}"/> de Microsoft.Extensions.Identity.Core :
-/// PBKDF2 avec HMAC-SHA512, sel aléatoire par compte et 100 000 itérations (format v3). Le format porte ses paramètres :
-/// une empreinte ancienne reste vérifiable si les valeurs par défaut augmentent.
+/// PBKDF2 avec HMAC-SHA512, sel aléatoire par compte et 210 000 itérations (format v3, recommandation OWASP pour
+/// PBKDF2-HMAC-SHA512). Le format porte ses paramètres : une empreinte ancienne (100 000 itérations, la valeur par
+/// défaut d'avant) reste vérifiable.
 /// L'assemblage vient du framework partagé d'ASP.NET Core (Microsoft.AspNetCore.App), à la version du runtime et
 /// corrigé avec lui : le référencer en paquet depuis l'infrastructure tirerait les Microsoft.Extensions.* en 10.x,
 /// au-dessus des versions 9.0 fixées dans Directory.Packages.props.
@@ -16,8 +18,10 @@ public sealed class MotsDePasse : IMotsDePasse
     /// <summary>Le calcul ne dépend pas de l'utilisateur : un titulaire vide suffit au type générique.</summary>
     private sealed class Titulaire;
 
+    public const int Iterations = 210_000;
+
     private static readonly Titulaire Personne = new();
-    private readonly PasswordHasher<Titulaire> _hacheur = new();
+    private readonly PasswordHasher<Titulaire> _hacheur = new(Options.Create(new PasswordHasherOptions { IterationCount = Iterations }));
 
     public string Hacher(string motDePasse) => _hacheur.HashPassword(Personne, motDePasse);
 

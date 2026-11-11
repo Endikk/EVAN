@@ -1,6 +1,7 @@
 /* ============================================================
    Compte : connexion, session, membres et passerelles.
-   Même fond que les pages hors des écrans (.hors-route de app.css), une colonne de cartes sobres.
+   Même fond et même colonne que les pages hors des écrans (.hors-route, styles/hors-route.css), une colonne de cartes
+   sobres. Le bloc se centre quand il est court (sans serveur, connexion) et part du haut quand il s'allonge.
    ============================================================ */
 
 .cpt {
@@ -11,13 +12,25 @@
   position: relative;
   z-index: 1;
   width: min(640px, 100%);
+  /* Marges automatiques : centré tant qu'il reste de la place, collé en haut sinon, jamais rogné. */
+  margin-block: auto;
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 .cpt-contenu > .hr-logo {
   align-self: flex-start;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
+}
+
+/* Sans serveur : l'allure de l'adresse inconnue, sans carte. */
+.cpt-etat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.cpt-etat .hr-code {
+  margin-top: 0;
 }
 
 .cpt-carte {
@@ -31,34 +44,38 @@
 }
 .cpt-carte h1 {
   margin: 0;
-  font-size: clamp(24px, 1.2rem + 1.2vw, 32px);
-  line-height: 1.15;
-  letter-spacing: -0.02em;
+  font-size: var(--fs-3xl);
+  font-weight: var(--fw-medium);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
 }
 .cpt-carte h2 {
   margin: 0;
-  font-size: 18px;
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-medium);
 }
 .cpt-carte h3 {
   margin: 8px 0 0;
-  font-size: 14px;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
   color: var(--text-2);
 }
+/* L'organisation au-dessus du nom : une étiquette, collée au titre qu'elle précède. */
 .cpt-sur-titre {
   margin: 0 0 -8px;
-  font-size: 13px;
-  font-weight: 650;
-  color: var(--accent-text);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
+  color: var(--text-3);
 }
 .cpt-intro,
 .cpt-note {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--fs-base);
   line-height: 1.55;
   color: var(--text-2);
 }
 .cpt-note {
-  font-size: 13px;
+  font-size: var(--fs-md);
   color: var(--text-3);
 }
 
@@ -79,7 +96,7 @@
   margin: 0;
   padding: 8px 12px;
   border-radius: var(--r-sm);
-  font-size: 13.5px;
+  font-size: var(--fs-base);
   line-height: 1.45;
 }
 .cpt-erreur {
@@ -94,7 +111,7 @@
   padding: 4px 8px;
 }
 .cpt-champ-erreur {
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   color: var(--crit);
 }
 .cpt-carte .input[aria-invalid='true'] {
@@ -108,7 +125,7 @@
   margin: 0;
 }
 .cpt-fiche dt {
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--text-3);
 }
 .cpt-fiche dd {
@@ -116,7 +133,9 @@
   overflow-wrap: anywhere;
 }
 
-/* Membres : nom, adresse, rôle sur une ligne ; empilés sur téléphone. */
+/* Membres : le nom et le rôle, l'adresse dessous, toujours alignée sur le nom quelle que soit la largeur du rôle ;
+   les actions à droite, sous l'identité sur téléphone. La confirmation et le mot de passe provisoire s'ouvrent sous la
+   ligne, sur toute sa largeur. */
 .cpt-liste,
 .cpt-passerelles {
   list-style: none;
@@ -124,18 +143,79 @@
   padding: 0;
   border-top: 1px solid var(--border);
 }
-.cpt-liste li {
+.cpt-membre {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 8px;
-  padding: 8px 0;
+  gap: 8px 12px;
+  min-height: 44px;
+  padding: 12px 0;
   border-bottom: 1px solid var(--border);
-  font-size: 14px;
+  font-size: var(--fs-base);
 }
-.cpt-liste li span:not(.chip) {
+.cpt-membre-qui {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.cpt-membre-nom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+.cpt-membre-nom b {
+  font-weight: var(--fw-medium);
+}
+.cpt-soi {
+  font-size: var(--fs-sm);
+  color: var(--text-3);
+}
+.cpt-membre-adresse {
   color: var(--text-2);
   overflow-wrap: anywhere;
+}
+.cpt-membre-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px;
+}
+.cpt-membre-volet {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+}
+.cpt-membre-volet > p {
+  margin: 0;
+  line-height: 1.5;
+}
+/* Le mot de passe provisoire, lisible à la dictée : chasse fixe, un peu plus grand que le texte. */
+.cpt-provisoire {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.cpt-provisoire-valeur {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  font-family: var(--mono);
+  font-size: var(--fs-lg);
+  letter-spacing: 0.04em;
+  color: var(--text);
+  background: var(--surface);
+  user-select: all;
+}
+/* Annonce du retrait : zone toujours présente ; vide, elle ne compte pas dans l'espacement de la carte. */
+.cpt-annonce:empty {
+  margin-top: -16px;
 }
 .cpt-formulaire {
   display: flex;
@@ -152,38 +232,162 @@
   padding: 12px 0;
   border-bottom: 1px solid var(--border);
 }
-.cpt-passerelles li > div {
+.cpt-passerelles li > div:first-child {
   display: flex;
   flex-direction: column;
   gap: 4px;
   min-width: 0;
 }
+.cpt-passerelles b {
+  font-weight: var(--fw-medium);
+}
 .cpt-passerelles .mono {
   font-family: var(--mono);
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   color: var(--text-2);
 }
-.cpt-commande {
+/* La commande de l'exploitant et son bouton Copier, sur toute la largeur de la ligne. */
+.cpt-commande-ligne {
   grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.cpt-commande {
+  flex: 1 1 240px;
   display: block;
   padding: 8px;
   border-radius: var(--r-sm);
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--text);
   background: var(--surface-2);
   overflow-wrap: anywhere;
+}
+
+/* Copie refusée : la consigne s'affiche ; copie réussie, le bouton dit « Copié » et l'annonce reste pour les lecteurs
+   d'écran. */
+.cpt-copie-etat {
+  flex-basis: 100%;
+  font-size: var(--fs-md);
+  color: var(--text-2);
+}
+.cpt-copie-etat:empty {
+  display: none;
+}
+.cpt-sans-passerelle {
+  grid-column: 1 / -1;
+}
+
+/* Titres qui reçoivent le focus après une connexion, une déconnexion ou un retrait : ce n'est pas une commande, pas
+   d'anneau de focus. */
+.cpt h1[tabindex='-1']:focus,
+.cpt h2[tabindex='-1']:focus,
+.cpt-membre-volet > p[tabindex='-1']:focus {
+  outline: none;
 }
 
 @media (max-width: 520px) {
   .cpt-carte {
     padding: 16px;
   }
-  .cpt-liste li {
-    grid-template-columns: minmax(0, 1fr) auto;
+  .cpt-membre {
+    grid-template-columns: minmax(0, 1fr);
   }
-  .cpt-liste li span:not(.chip) {
-    grid-column: 1 / -1;
-    grid-row: 2;
+  .cpt-membre-actions {
+    justify-content: flex-start;
+  }
+  /* L'usine garde toute la largeur : le téléchargement passe dessous. */
+  .cpt-passerelles li {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .cpt-passerelles li > .btn {
+    justify-self: start;
+  }
+}
+
+/* Cibles tactiles de 44 px : boutons des lignes et de copie. */
+@media (pointer: coarse) {
+  .cpt .btn.sm {
+    min-height: 44px;
+  }
+}
+
+/* Journal des comptes : une liste dense rangée par jour. L'heure en chiffres de même largeur, la phrase, et l'adresse
+   en chasse fixe, discrète, à droite ; sous la phrase sur téléphone. */
+.cpt-journal-filtres {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.cpt-journal-filtres .field {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+/* Zone d'annonce toujours présente ; vide, elle ne compte pas dans l'espacement de la carte. */
+.cpt-journal-compte:empty {
+  margin-top: -16px;
+}
+.cpt-journal-erreur {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+.cpt-journal-jours,
+.cpt-journal-lignes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.cpt-journal-jours {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.cpt-carte .cpt-journal-jour {
+  margin: 0 0 4px;
+  font-size: var(--fs-md);
+  color: var(--text-3);
+}
+.cpt-journal-lignes {
+  border-top: 1px solid var(--border);
+}
+.cpt-journal-ligne {
+  display: grid;
+  grid-template-columns: 3.25em minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 2px 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: var(--fs-md);
+}
+.cpt-journal-ligne time {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-2);
+}
+.cpt-journal-texte {
+  margin: 0;
+  line-height: 1.45;
+  color: var(--text-2);
+  overflow-wrap: anywhere;
+}
+.cpt-journal-qui {
+  color: var(--text);
+}
+.cpt-journal-adresse {
+  font-family: var(--mono);
+  font-size: var(--fs-sm);
+  color: var(--text-3);
+  white-space: nowrap;
+}
+
+@media (max-width: 520px) {
+  .cpt-journal-ligne {
+    grid-template-columns: 3.25em minmax(0, 1fr);
+  }
+  .cpt-journal-adresse {
+    grid-column: 2;
   }
 }

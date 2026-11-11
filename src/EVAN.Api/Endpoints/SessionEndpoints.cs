@@ -34,7 +34,8 @@ internal static class SessionEndpoints
     public static RouteGroupBuilder MapSessionEndpoints(this RouteGroupBuilder api)
     {
         api.MapGet("/session", (HttpContext http, AccesUsines acces) =>
-            http.User.OrganisationId() is not null ? Results.Ok(http.User.Vue()) : Results.Ok(new { connecte = false, demo = acces.DemoOuverte }));
+            http.User.OrganisationId() is not null ? Results.Ok(http.User.Vue()) : Results.Ok(new { connecte = false, demo = acces.DemoOuverte }))
+            .PermisAvantChangement();
 
         api.MapPost("/session", async (ConnexionRequest req, ComptesService comptes, EssaisConnexion essais, HttpContext http, ILoggerFactory logs, CancellationToken ct) =>
         {
@@ -50,27 +51,50 @@ internal static class SessionEndpoints
                 logs.CreateLogger("EVAN.Session").LogWarning("Connexion refusée depuis {Adresse}", adresse);
                 return Results.Json(new { erreur = Refus }, statusCode: StatusCodes.Status401Unauthorized);
             }
+            // Bon mot de passe, mais provisoire de plus de 72 h : le dire, puisque seul son titulaire le connaît.
+            if (comptes.ProvisoireExpire(compte))
+                return Results.Json(new { erreur = "Mot de passe provisoire expiré (72 h) : demandez-en un nouveau à un administrateur.", code = Garde.CodeProvisoireExpire },
+                    statusCode: StatusCodes.Status401Unauthorized);
             await http.OuvrirAsync(compte, organisation);
             return Results.Ok(Identite.Principal(compte, organisation).Vue());
-        });
+        }).PermisAvantChangement();
 
-        // Changement de son mot de passe : l'actuel est exigé, et ses échecs comptent comme ceux de la connexion.
-        api.MapPut("/session/mot-de-passe", async (ChangementRequest req, ComptesService comptes, EssaisConnexion essais, HttpContext http, CancellationToken ct) =>
+        // Changement de son mot de passe : l'actuel est exigé, et ses échecs comptent comme ceux de la connexion. La
+        // génération augmente : les autres sessions du compte et son temps réel tombent, celle-ci est rouverte.
+        api.MapPut("/session/mot-de-passe", async (ChangementRequest req, ComptesService comptes, EssaisConnexion essais, CacheSessions cache,
+            SessionsTempsReel tempsReel, HttpContext http, ILoggerFactory logs, CancellationToken ct) =>
         {
             var adresse = EssaisConnexion.Adresse(http);
             var identifiant = http.User.FindFirstValue(ClaimTypes.Email) ?? "";
             if (essais.Connexion(adresse, identifiant) is { } attente)
                 return Patienter(http, attente, "Trop d'essais : patientez une minute avant de réessayer.");
-            var erreurs = await comptes.ChangerMotDePasseAsync(identifiant, req.Actuel, req.Nouveau, ct);
-            if (erreurs.Any(e => e.Champ == "actuel")) essais.EchecConnexion(adresse, identifiant);
-            return erreurs.Count == 0 ? Results.NoContent() : Champs(StatusCodes.Status400BadRequest, "Mot de passe inchangé : corrigez les champs signalés.", erreurs);
-        }).RequireAuthorization(Politiques.Membre);
+            var r = await comptes.ChangerMotDePasseAsync(identifiant, req.Actuel, req.Nouveau, ct);
+            if (r.Erreurs.Any(e => e.Champ == "actuel")) essais.EchecConnexion(adresse, identifiant);
+            if (r.Compte is not { } compte)
+                return Champs(StatusCodes.Status400BadRequest, "Mot de passe inchangé : corrigez les champs signalés.", r.Erreurs);
+            cache.Oublier(compte.Id);
+            tempsReel.Fermer(compte.Id);
+            if (await comptes.OrganisationAsync(compte.OrganisationId, ct) is { } organisation) await http.OuvrirAsync(compte, organisation);
+            else await http.FermerAsync();
+            await comptes.JournaliserAsync(new EvenementCompte(compte.OrganisationId, compte.Id, compte.Identifiant, compte.Id, compte.Identifiant,
+                ActionCompte.Changement, adresse, comptes.Maintenant()), ct);
+            logs.CreateLogger("EVAN.Session").LogInformation("Compte {Compte} : mot de passe changé par son titulaire", compte.Id);
+            return Results.NoContent();
+        }).RequireAuthorization(Politiques.Membre).PermisAvantChangement();
 
-        api.MapDelete("/session", async (HttpContext http) =>
+        // Déconnexion : révoquée côté serveur (génération augmentée), si bien qu'une copie du cookie ne vaut plus rien.
+        // Toutes les sessions du compte tombent, sur tous les postes, et son temps réel est coupé.
+        api.MapDelete("/session", async (HttpContext http, ComptesService comptes, CacheSessions cache, SessionsTempsReel tempsReel, CancellationToken ct) =>
         {
+            if (http.User.OrganisationId() is not null && http.User.FindFirstValue(ClaimTypes.NameIdentifier) is { Length: > 0 } id)
+            {
+                await comptes.DeconnecterAsync(id, ct);
+                cache.Oublier(id);
+                tempsReel.Fermer(id);
+            }
             await http.FermerAsync();
             return Results.NoContent();
-        });
+        }).PermisAvantChangement();
 
         api.MapPost("/installation", async (InstallationRequest req, ComptesService comptes, EssaisConnexion essais, IConfiguration config, HttpContext http, ILoggerFactory logs, CancellationToken ct) =>
         {

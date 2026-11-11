@@ -293,12 +293,13 @@ public sealed partial class PostgresStore
 
     // ---------- Comptes et organisations ----------
 
-    private sealed record CompteRow(string Id, string OrganisationId, string Identifiant, string Nom, string Role, string Empreinte, DateTime CreeLe)
+    private sealed record CompteRow(string Id, string OrganisationId, string Identifiant, string Nom, string Role, string Empreinte, DateTime CreeLe, int Generation, bool DoitChanger, DateTime? ProvisoireLe)
     {
-        public Compte VersCompte() => new(Id, OrganisationId, Identifiant, Nom, Role, Empreinte, Ms(CreeLe));
+        public Compte VersCompte() => new(Id, OrganisationId, Identifiant, Nom, Role, Empreinte, Ms(CreeLe), Generation, DoitChanger, ProvisoireLe is { } le ? Ms(le) : null);
     }
 
-    private const string CompteColonnes = "SELECT id, organisation_id AS OrganisationId, identifiant, nom, role, empreinte, cree_le AS CreeLe FROM comptes";
+    private const string CompteColonnes =
+        "SELECT id, organisation_id AS OrganisationId, identifiant, nom, role, empreinte, cree_le AS CreeLe, generation, doit_changer AS DoitChanger, provisoire_le AS ProvisoireLe FROM comptes";
 
     public async Task<Compte?> CompteAsync(string identifiant, CancellationToken ct = default)
     {
@@ -371,9 +372,101 @@ public sealed partial class PostgresStore
         return await conn.ExecuteAsync(new CommandDefinition(InsererCompte, Args(compte), cancellationToken: ct)) == 1;
     }
 
-    public async Task<bool> ChangerEmpreinteAsync(string compteId, string empreinte, CancellationToken ct = default)
+    public async Task<int?> ChangerEmpreinteAsync(string compteId, string empreinte, CancellationToken ct = default)
     {
         await using var conn = await _db.OpenConnectionAsync(ct);
-        return await conn.ExecuteAsync(new CommandDefinition("UPDATE comptes SET empreinte = @empreinte WHERE id = @compteId", new { compteId, empreinte }, cancellationToken: ct)) == 1;
+        return await conn.QuerySingleOrDefaultAsync<int?>(new CommandDefinition(
+            "UPDATE comptes SET empreinte = @empreinte, generation = generation + 1, doit_changer = false, provisoire_le = NULL WHERE id = @compteId RETURNING generation",
+            new { compteId, empreinte }, cancellationToken: ct));
+    }
+
+    public async Task<int?> NouvelleGenerationAsync(string compteId, CancellationToken ct = default)
+    {
+        await using var conn = await _db.OpenConnectionAsync(ct);
+        return await conn.QuerySingleOrDefaultAsync<int?>(new CommandDefinition(
+            "UPDATE comptes SET generation = generation + 1 WHERE id = @compteId RETURNING generation", new { compteId }, cancellationToken: ct));
+    }
+
+    public async Task<Compte?> CompteDeAsync(string organisationId, string compteId, CancellationToken ct = default)
+    {
+        await using var conn = await _db.OpenConnectionAsync(ct);
+        var row = await conn.QuerySingleOrDefaultAsync<CompteRow>(new CommandDefinition(
+            $"{CompteColonnes} WHERE id = @compteId AND organisation_id = @organisationId", new { compteId, organisationId }, cancellationToken: ct));
+        return row?.VersCompte();
+    }
+
+    private sealed record EvenementRow(string OrganisationId, string AuteurId, string AuteurIdentifiant, string CibleId, string CibleIdentifiant, string Action, string Adresse, DateTime Horodatage)
+    {
+        public EvenementCompte VersEvenement() => new(OrganisationId, AuteurId, AuteurIdentifiant, CibleId, CibleIdentifiant, Action, Adresse, Ms(Horodatage));
+    }
+
+    public async Task JournaliserAsync(EvenementCompte e, CancellationToken ct = default)
+    {
+        await using var conn = await _db.OpenConnectionAsync(ct);
+        await conn.ExecuteAsync(new CommandDefinition(
+            """
+            INSERT INTO journal_comptes (organisation_id, auteur_id, auteur_identifiant, cible_id, cible_identifiant, action, adresse, horodatage)
+            VALUES (@OrganisationId, @AuteurId, @AuteurIdentifiant, @CibleId, @CibleIdentifiant, @Action, @Adresse, @Horodatage)
+            """,
+            new { e.OrganisationId, e.AuteurId, e.AuteurIdentifiant, e.CibleId, e.CibleIdentifiant, e.Action, e.Adresse, Horodatage = Utc(e.Le) }, cancellationToken: ct));
+    }
+
+    public async Task<IReadOnlyList<EvenementCompte>> JournalComptesAsync(string organisationId, int limite, CancellationToken ct = default)
+    {
+        await using var conn = await _db.OpenConnectionAsync(ct);
+        var rows = await conn.QueryAsync<EvenementRow>(new CommandDefinition(
+            """
+            SELECT organisation_id AS OrganisationId, auteur_id AS AuteurId, auteur_identifiant AS AuteurIdentifiant, cible_id AS CibleId,
+                   cible_identifiant AS CibleIdentifiant, action, adresse, horodatage
+            FROM journal_comptes WHERE organisation_id = @organisationId ORDER BY horodatage DESC, id DESC LIMIT @limite
+            """,
+            new { organisationId, limite }, cancellationToken: ct));
+        return rows.Select(r => r.VersEvenement()).ToList();
+    }
+
+    public Task<IssueMembre> RetirerCompteAsync(string organisationId, string auteurId, string compteId, CancellationToken ct = default) =>
+        SurUnMembreAsync(organisationId, auteurId, compteId, async (conn, tx, role) =>
+        {
+            if (role == Roles.Admin && await conn.ExecuteScalarAsync<long>(new CommandDefinition(
+                    "SELECT count(*) FROM comptes WHERE organisation_id = @organisationId AND role = 'admin'", new { organisationId }, tx, cancellationToken: ct)) <= 1)
+                return IssueMembre.DernierAdministrateur;
+            await conn.ExecuteAsync(new CommandDefinition("DELETE FROM comptes WHERE id = @compteId AND organisation_id = @organisationId", new { compteId, organisationId }, tx, cancellationToken: ct));
+            return IssueMembre.Fait;
+        }, ct);
+
+    public Task<IssueMembre> ReinitialiserEmpreinteAsync(string organisationId, string auteurId, string compteId, string empreinte, DateTimeOffset provisoireLe, CancellationToken ct = default) =>
+        SurUnMembreAsync(organisationId, auteurId, compteId, async (conn, tx, _) =>
+        {
+            await conn.ExecuteAsync(new CommandDefinition(
+                """
+                UPDATE comptes SET empreinte = @empreinte, generation = generation + 1, doit_changer = true, provisoire_le = @provisoireLe
+                WHERE id = @compteId AND organisation_id = @organisationId
+                """,
+                new { compteId, organisationId, empreinte, provisoireLe = provisoireLe.UtcDateTime }, tx, cancellationToken: ct));
+            return IssueMembre.Fait;
+        }, ct);
+
+    /// <summary>
+    /// Action d'un administrateur sur un compte de son organisation, dans une transaction qui verrouille la ligne de
+    /// l'organisation : deux actions sur la même organisation passent l'une après l'autre, si bien que la seconde voit
+    /// ce que la première a fait (auteur retiré entre-temps, nombre d'administrateurs). L'auteur doit être un
+    /// administrateur de l'organisation, le compte visé doit en faire partie ; l'action reçoit son rôle.
+    /// </summary>
+    private async Task<IssueMembre> SurUnMembreAsync(string organisationId, string auteurId, string compteId,
+        Func<NpgsqlConnection, NpgsqlTransaction, string, Task<IssueMembre>> action, CancellationToken ct)
+    {
+        await using var conn = await _db.OpenConnectionAsync(ct);
+        await using var tx = await conn.BeginTransactionAsync(ct);
+        await conn.ExecuteAsync(new CommandDefinition("SELECT 1 FROM organisations WHERE id = @organisationId FOR UPDATE", new { organisationId }, tx, cancellationToken: ct));
+        var auteurAdmin = await conn.ExecuteScalarAsync<bool>(new CommandDefinition(
+            "SELECT EXISTS (SELECT 1 FROM comptes WHERE id = @auteurId AND organisation_id = @organisationId AND role = 'admin')", new { auteurId, organisationId }, tx, cancellationToken: ct));
+        var role = auteurAdmin
+            ? await conn.QuerySingleOrDefaultAsync<string>(new CommandDefinition(
+                "SELECT role FROM comptes WHERE id = @compteId AND organisation_id = @organisationId", new { compteId, organisationId }, tx, cancellationToken: ct))
+            : null;
+        var issue = !auteurAdmin ? IssueMembre.Refuse : role is null ? IssueMembre.Introuvable : await action(conn, tx, role);
+        if (issue == IssueMembre.Fait) await tx.CommitAsync(ct);
+        else await tx.RollbackAsync(ct);
+        return issue;
     }
 }
