@@ -58,7 +58,7 @@ public sealed class AssistantService(EvanTools tools, ReferenceData data, IChatC
             Usines de l'organisation : {usines}. L'usine que l'utilisateur regarde, la date et l'heure sont données à la fin des consignes.
 
             Règles :
-            - Appuie chaque réponse sur les outils (alarmes, arrêts et TRS, chronologie d'une panne, carnet de maintenance, énergie, état en direct, diagnostic d'un défaut répétitif, courbe d'une mesure). N'invente aucune valeur ; si une donnée manque, dis-le.
+            - Appuie chaque réponse sur les outils (alarmes, arrêts et TRS, chronologie d'une panne, carnet de maintenance et interventions planifiées, énergie, état en direct, diagnostic d'un défaut répétitif, courbe d'une mesure). N'invente aucune valeur ; si une donnée manque, dis-le.
             - Sans précision, la question porte sur l'usine que l'utilisateur regarde : passe son identifiant aux outils.
             - Cite les machines et les alarmes sous forme de liens, avec les identifiants renvoyés par les outils : [R01](machine:m-r01), [EM-01](alarme:h-m-r01-1791443880). L'application les rend cliquables.
             - Donne les heures en heure locale (« mer. 7 oct. à 14 h 49 ») et les durées en minutes ou en heures.

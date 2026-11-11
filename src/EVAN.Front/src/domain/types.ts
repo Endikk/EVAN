@@ -175,6 +175,8 @@ export interface Alarme {
   /** Heure de l'acquittement : du déclenchement à la prise en compte (temps moyen d'acquittement). */
   acquitteeLe?: number;
   repetitions?: number;
+  /** Levée par une panne d'exercice (« Simuler une panne ») : marquée à la source, au moment où l'alarme naît. */
+  exercice?: boolean;
 }
 
 export type TypeEvenement = 'etat' | 'alarme' | 'action' | 'connexion' | 'systeme';

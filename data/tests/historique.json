@@ -1753,13 +1753,83 @@
      "v": 4.2
     }
    ],
+   "usure": [
+    {
+     "point": "m-r01.o6.metres_outil",
+     "v": 187.7181045733392
+    },
+    {
+     "point": "m-r02.o4.heures_blanchet",
+     "v": 679.1746185878291
+    },
+    {
+     "point": "m-r02.o6.metres_outil",
+     "v": 94.314644010365
+    },
+    {
+     "point": "m-r03.o4.heures_blanchet",
+     "v": 605.2109399423935
+    },
+    {
+     "point": "m-r03.o6.metres_outil",
+     "v": 77.21355577111244
+    },
+    {
+     "point": "m-r04.o4.heures_blanchet",
+     "v": 531.4778636749834
+    },
+    {
+     "point": "m-r04.o6.metres_outil",
+     "v": 122.0983514741063
+    },
+    {
+     "point": "m-r05.o4.heures_blanchet",
+     "v": 447.05490600410843
+    },
+    {
+     "point": "m-r05.o6.metres_outil",
+     "v": 118.7408091008663
+    },
+    {
+     "point": "m-r06.o4.heures_blanchet",
+     "v": 766.8449783804826
+    },
+    {
+     "point": "m-r06.o6.metres_outil",
+     "v": 78.12865938395261
+    },
+    {
+     "point": "m-r07.o4.heures_blanchet",
+     "v": 440.24349980568513
+    },
+    {
+     "point": "m-r07.o6.metres_outil",
+     "v": 117.83147546947
+    },
+    {
+     "point": "m-rf01.o3.usure_lame3",
+     "v": 40.08218219047412
+    },
+    {
+     "point": "m-rf02.o3.usure_lame3",
+     "v": 47.150259187072514
+    },
+    {
+     "point": "m-pv01.o2.usure_perforateur",
+     "v": 38.01155831310898
+    },
+    {
+     "point": "m-fe01.o2.usure_couteau",
+     "v": 67.59545908328145
+    }
+   ],
    "maintenance": {
     "echeances": [
      {
       "id": "m-r01:outil",
-      "compteur": 182.056875,
+      "compteur": 187.77497957333918,
       "statut": "ok",
-      "echeance": 1794547938461.5386
+      "echeance": 1794366969877.2393
      },
      {
       "id": "m-r01:uv",
@@ -1793,21 +1863,21 @@
      },
      {
       "id": "m-r01:armoire",
-      "compteur": 42.895833333333336,
+      "compteur": 42.885416666666664,
       "statut": "ok",
-      "echeance": 1795518000000
+      "echeance": 1795518900000
      },
      {
       "id": "m-r02:blanchet",
-      "compteur": 610.1906250000001,
+      "compteur": 679.3652435878291,
       "statut": "ok",
-      "echeance": 1796073285245.9016
+      "echeance": 1795420095404.81
      },
      {
       "id": "m-r02:outil",
-      "compteur": 96.03,
+      "compteur": 94.34464401036499,
       "statut": "ok",
-      "echeance": 1802486400000
+      "echeance": 1802587521359.3782
      },
      {
       "id": "m-r02:uv",
@@ -1835,15 +1905,15 @@
      },
      {
       "id": "m-r03:blanchet",
-      "compteur": 610.1906249999998,
+      "compteur": 605.4015649423934,
       "statut": "ok",
-      "echeance": 1796073285245.9016
+      "echeance": 1796118506534.3145
      },
      {
       "id": "m-r03:outil",
-      "compteur": 96.03,
+      "compteur": 77.24355577111244,
       "statut": "ok",
-      "echeance": 1802486400000
+      "echeance": 1803613586653.7332
      },
      {
       "id": "m-r03:uv",
@@ -1871,15 +1941,15 @@
      },
      {
       "id": "m-r04:blanchet",
-      "compteur": 610.1906250000002,
+      "compteur": 531.6684886749835,
       "statut": "ok",
-      "echeance": 1796073285245.9016
+      "echeance": 1796814740172.5117
      },
      {
       "id": "m-r04:outil",
-      "compteur": 96.03000000000002,
+      "compteur": 122.12835147410627,
       "statut": "ok",
-      "echeance": 1802486400000
+      "echeance": 1800920498911.5537
      },
      {
       "id": "m-r04:uv",
@@ -1889,9 +1959,9 @@
      },
      {
       "id": "m-r04:mouillage",
-      "compteur": 45.999722222222225,
+      "compteur": 50.32861111111111,
       "statut": "ok",
-      "echeance": 1792729202573.1755
+      "echeance": 1792693194080.9463
      },
      {
       "id": "m-r04:encrage",
@@ -1907,15 +1977,15 @@
      },
      {
       "id": "m-r05:blanchet",
-      "compteur": 610.1906249999998,
+      "compteur": 447.2455310041085,
       "statut": "ok",
-      "echeance": 1796073285245.9016
+      "echeance": 1797611914330.1907
      },
      {
       "id": "m-r05:outil",
-      "compteur": 96.03,
+      "compteur": 118.77080910086632,
       "statut": "ok",
-      "echeance": 1802486400000
+      "echeance": 1801121951453.948
      },
      {
       "id": "m-r05:uv",
@@ -1943,15 +2013,15 @@
      },
      {
       "id": "m-r06:blanchet",
-      "compteur": 610.1906250000001,
+      "compteur": 767.0356033804826,
       "statut": "ok",
-      "echeance": 1796073285245.9016
+      "echeance": 1794592257253.3252
      },
      {
       "id": "m-r06:outil",
-      "compteur": 96.03000000000002,
+      "compteur": 78.15865938395261,
       "statut": "ok",
-      "echeance": 1802486400000
+      "echeance": 1803558680436.963
      },
      {
       "id": "m-r06:uv",
@@ -1979,15 +2049,15 @@
      },
      {
       "id": "m-r07:blanchet",
-      "compteur": 610.190625,
+      "compteur": 440.4341248056852,
       "statut": "ok",
-      "echeance": 1796073285245.9016
+      "echeance": 1797676231870.6873
      },
      {
       "id": "m-r07:outil",
-      "compteur": 96.02999999999997,
+      "compteur": 117.86147546947001,
       "statut": "ok",
-      "echeance": 1802486400000
+      "echeance": 1801176511471.8318
      },
      {
       "id": "m-r07:uv",
@@ -2015,9 +2085,9 @@
      },
      {
       "id": "m-r08:tetes",
-      "compteur": 11.708333333333334,
+      "compteur": 6.512222222222222,
       "statut": "a_planifier",
-      "echeance": 1791683069329.0295
+      "echeance": 1791726205958.0806
      },
      {
       "id": "m-r08:filtre",
@@ -2027,27 +2097,27 @@
      },
      {
       "id": "m-r08:cellule",
-      "compteur": 8.895833333333334,
+      "compteur": 9,
       "statut": "ok",
-      "echeance": 1793271600000
+      "echeance": 1793262600000
      },
      {
       "id": "m-pp01:bain",
-      "compteur": 19.895833333333332,
+      "compteur": 19.927083333333332,
       "statut": "a_planifier",
-      "echeance": 1791543600000
+      "echeance": 1791540900000
      },
      {
       "id": "m-pp01:ventouses",
-      "compteur": 2.8958333333333335,
+      "compteur": 3.15625,
       "statut": "ok",
-      "echeance": 1792407600000
+      "echeance": 1792385100000
      },
      {
       "id": "m-pp01:laser",
-      "compteur": 86.89583333333333,
+      "compteur": 87.05208333333333,
       "statut": "a_planifier",
-      "echeance": 1791716400000
+      "echeance": 1791702900000
      },
      {
       "id": "m-rfid01:tete",
@@ -2057,15 +2127,15 @@
      },
      {
       "id": "m-rfid01:rf",
-      "compteur": 29.895833333333332,
+      "compteur": 29.614583333333332,
       "statut": "ok",
-      "echeance": 1794049200000
+      "echeance": 1794073500000
      },
      {
       "id": "m-rf01:lame3",
-      "compteur": 46.01437500000001,
+      "compteur": 40.096557190474115,
       "statut": "ok",
-      "echeance": 1797206400000
+      "echeance": 1797947413708.3232
      },
      {
       "id": "m-rf01:frein",
@@ -2075,15 +2145,15 @@
      },
      {
       "id": "m-rf01:capteur",
-      "compteur": 19.895833333333332,
+      "compteur": 19.864583333333332,
       "statut": "ok",
-      "echeance": 1794913200000
+      "echeance": 1794915900000
      },
      {
       "id": "m-rf02:lame3",
-      "compteur": 46.014374999999994,
+      "compteur": 47.16463418707251,
       "statut": "ok",
-      "echeance": 1797206400000
+      "echeance": 1797062367545.271
      },
      {
       "id": "m-rf02:frein",
@@ -2093,33 +2163,33 @@
      },
      {
       "id": "m-rf02:capteur",
-      "compteur": 22.895833333333332,
+      "compteur": 22.90625,
       "statut": "ok",
-      "echeance": 1794654000000
+      "echeance": 1794653100000
      },
      {
       "id": "m-pv01:perforateur",
-      "compteur": 38.01187499999999,
+      "compteur": 38.02343331310898,
       "statut": "ok",
-      "echeance": 1799631663157.8948
+      "echeance": 1799629911160.9604
      },
      {
       "id": "m-pv01:pliage",
-      "compteur": 52.63361111111111,
+      "compteur": 46.949444444444445,
       "statut": "ok",
-      "echeance": 1793744539157.9377
+      "echeance": 1793797306126.6257
      },
      {
       "id": "m-fe01:couteau",
-      "compteur": 52.01625,
+      "compteur": 67.61170908328144,
       "statut": "ok",
-      "echeance": 1795877169230.7693
+      "echeance": 1794149672224.621
      },
      {
       "id": "m-fe01:ioniseur",
-      "compteur": 9.895833333333334,
+      "compteur": 10.145833333333334,
       "statut": "ok",
-      "echeance": 1793185200000
+      "echeance": 1793163600000
      }
     ],
     "previsions": [
@@ -2129,6 +2199,435 @@
       "pente": -1.3472244908972646,
       "niveau": "attention",
       "franchissement": 1791661386001.7664
+     }
+    ],
+    "apresSaisie": [
+     {
+      "id": "m-r01:outil",
+      "compteur": 0.2275000000000001,
+      "statut": "ok",
+      "echeance": 1800302538461.5386,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r01:uv",
+      "compteur": 1.1494444444444445,
+      "statut": "ok",
+      "echeance": 1803724204550.155,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r01:anilox",
+      "compteur": 1.1494444444444445,
+      "statut": "ok",
+      "echeance": 1792749230403.309,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r01:racle",
+      "compteur": 1.1494444444444445,
+      "statut": "ok",
+      "echeance": 1792421619234.7466,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r01:groupes",
+      "compteur": 1.1494444444444445,
+      "statut": "ok",
+      "echeance": 1793486355532.575,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r01:frein",
+      "compteur": 1.1494444444444445,
+      "statut": "ok",
+      "echeance": 1795533925336.091,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r01:armoire",
+      "compteur": 0.08333333333333333,
+      "statut": "ok",
+      "echeance": 1799217000000,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r02:blanchet",
+      "compteur": 0.7625000000000006,
+      "statut": "ok",
+      "echeance": 1801827885245.9016,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r02:outil",
+      "compteur": 0.12000000000000004,
+      "statut": "ok",
+      "echeance": 1808241000000,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r02:uv",
+      "compteur": 1.3747222222222222,
+      "statut": "ok",
+      "echeance": 1804233817751.8638,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r02:mouillage",
+      "compteur": 1.3747222222222222,
+      "statut": "ok",
+      "echeance": 1793142784306.8188,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r02:encrage",
+      "compteur": 1.3747222222222222,
+      "statut": "ok",
+      "echeance": 1793569362516.2437,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r02:frein",
+      "compteur": 1.3747222222222222,
+      "statut": "ok",
+      "echeance": 1795702253563.3677,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r03:blanchet",
+      "compteur": 0.7625000000000004,
+      "statut": "ok",
+      "echeance": 1801827885245.9016,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r03:outil",
+      "compteur": 0.12,
+      "statut": "ok",
+      "echeance": 1808241000000,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r03:uv",
+      "compteur": 1.3044444444444445,
+      "statut": "ok",
+      "echeance": 1804230701741.8506,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r03:mouillage",
+      "compteur": 1.3044444444444445,
+      "statut": "ok",
+      "echeance": 1793142891277.0723,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r03:encrage",
+      "compteur": 1.3044444444444445,
+      "statut": "ok",
+      "echeance": 1793569345525.7175,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r03:frein",
+      "compteur": 1.3044444444444445,
+      "statut": "ok",
+      "echeance": 1795701616768.944,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r04:blanchet",
+      "compteur": 0.7624999999999997,
+      "statut": "ok",
+      "echeance": 1801827885245.9016,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r04:outil",
+      "compteur": 0.12,
+      "statut": "ok",
+      "echeance": 1808241000000,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r04:uv",
+      "compteur": 1.3397222222222223,
+      "statut": "ok",
+      "echeance": 1803914331229.4478,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r04:mouillage",
+      "compteur": 1.3397222222222223,
+      "statut": "ok",
+      "echeance": 1793100692649.3206,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r04:encrage",
+      "compteur": 1.3397222222222223,
+      "statut": "ok",
+      "echeance": 1793516601825.4792,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r04:frein",
+      "compteur": 1.3397222222222223,
+      "statut": "ok",
+      "echeance": 1795596147706.273,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r05:blanchet",
+      "compteur": 0.7625000000000002,
+      "statut": "ok",
+      "echeance": 1801827885245.9016,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r05:outil",
+      "compteur": 0.12,
+      "statut": "ok",
+      "echeance": 1808241000000,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r05:uv",
+      "compteur": 1.1458333333333333,
+      "statut": "ok",
+      "echeance": 1804291439797.0137,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r05:mouillage",
+      "compteur": 1.1458333333333333,
+      "statut": "ok",
+      "echeance": 1793152122772.4302,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r05:encrage",
+      "compteur": 1.1458333333333333,
+      "statut": "ok",
+      "echeance": 1793580558042.6064,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r05:frein",
+      "compteur": 1.1458333333333333,
+      "statut": "ok",
+      "echeance": 1795722734393.488,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r06:blanchet",
+      "compteur": 0.7625000000000002,
+      "statut": "ok",
+      "echeance": 1801827885245.9016,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r06:outil",
+      "compteur": 0.12000000000000002,
+      "statut": "ok",
+      "echeance": 1808241000000,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r06:uv",
+      "compteur": 1.4430555555555555,
+      "statut": "ok",
+      "echeance": 1803905164860.0356,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r06:mouillage",
+      "compteur": 1.4430555555555555,
+      "statut": "ok",
+      "echeance": 1793098732459.7976,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r06:encrage",
+      "compteur": 1.4430555555555555,
+      "statut": "ok",
+      "echeance": 1793514364475.1912,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r06:frein",
+      "compteur": 1.4430555555555555,
+      "statut": "ok",
+      "echeance": 1795592524552.1602,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r07:blanchet",
+      "compteur": 0.7625000000000002,
+      "statut": "ok",
+      "echeance": 1801827885245.9016,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r07:outil",
+      "compteur": 0.11999999999999995,
+      "statut": "ok",
+      "echeance": 1808241000000,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r07:uv",
+      "compteur": 1.4919444444444445,
+      "statut": "ok",
+      "echeance": 1804698752999.8672,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r07:mouillage",
+      "compteur": 1.4919444444444445,
+      "statut": "ok",
+      "echeance": 1793203506887.599,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r07:encrage",
+      "compteur": 1.4919444444444445,
+      "statut": "ok",
+      "echeance": 1793645631738.071,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r07:frein",
+      "compteur": 1.4919444444444445,
+      "statut": "ok",
+      "echeance": 1795856255990.4302,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r08:tetes",
+      "compteur": 1.5,
+      "statut": "a_planifier",
+      "echeance": 1791767815994.1433,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r08:filtre",
+      "compteur": 1.5,
+      "statut": "ok",
+      "echeance": 1799737461562.3948,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-r08:cellule",
+      "compteur": 0.08333333333333333,
+      "statut": "ok",
+      "echeance": 1794033000000,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-pp01:bain",
+      "compteur": 0.08333333333333333,
+      "statut": "ok",
+      "echeance": 1793255400000,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-pp01:ventouses",
+      "compteur": 0.08333333333333333,
+      "statut": "ok",
+      "echeance": 1792650600000,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-pp01:laser",
+      "compteur": 0.08333333333333333,
+      "statut": "ok",
+      "echeance": 1799217000000,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-rfid01:tete",
+      "compteur": 1.0944444444444446,
+      "statut": "ok",
+      "echeance": 1793271634923.2012,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-rfid01:rf",
+      "compteur": 0.08333333333333333,
+      "statut": "ok",
+      "echeance": 1796625000000,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-rf01:lame3",
+      "compteur": 0.0575,
+      "statut": "ok",
+      "echeance": 1802961000000,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-rf01:frein",
+      "compteur": 1.1983333333333333,
+      "statut": "ok",
+      "echeance": 1796249559671.6553,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-rf01:capteur",
+      "compteur": 0.08333333333333333,
+      "statut": "ok",
+      "echeance": 1796625000000,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-rf02:lame3",
+      "compteur": 0.0575,
+      "statut": "ok",
+      "echeance": 1802961000000,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-rf02:frein",
+      "compteur": 0.7227777777777777,
+      "statut": "ok",
+      "echeance": 1796050016990.8562,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-rf02:capteur",
+      "compteur": 0.08333333333333333,
+      "statut": "ok",
+      "echeance": 1796625000000,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-pv01:perforateur",
+      "compteur": 0.047499999999999966,
+      "statut": "ok",
+      "echeance": 1805386263157.8948,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-pv01:pliage",
+      "compteur": 1.5,
+      "statut": "ok",
+      "echeance": 1794219220112.0022,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-fe01:couteau",
+      "compteur": 0.06499999999999999,
+      "statut": "ok",
+      "echeance": 1801631769230.7693,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-fe01:ioniseur",
+      "compteur": 0.08333333333333333,
+      "statut": "ok",
+      "echeance": 1794033000000,
+      "dernierPassage": 1791441000000
      }
     ]
    },
@@ -3158,37 +3657,59 @@
      "v": 63.111111111111114
     }
    ],
+   "usure": [
+    {
+     "point": "m-cr-fe01.o2.usure_couteau",
+     "v": 52.516218398511405
+    },
+    {
+     "point": "m-cr-r01.o4.heures_blanchet",
+     "v": 467.1859578015282
+    },
+    {
+     "point": "m-cr-r01.o6.metres_outil",
+     "v": 88.4891692712903
+    },
+    {
+     "point": "m-cr-rf01.o3.usure_lame3",
+     "v": 42.243741667643185
+    },
+    {
+     "point": "m-cr-fe02.o2.usure_couteau",
+     "v": 38.37260937020182
+    }
+   ],
    "maintenance": {
     "echeances": [
      {
       "id": "m-cr-pp01:bain",
-      "compteur": 16.895833333333332,
+      "compteur": 16.760416666666668,
       "statut": "a_planifier",
-      "echeance": 1791802800000
+      "echeance": 1791814500000
      },
      {
       "id": "m-cr-pp01:ventouses",
-      "compteur": 1.8958333333333333,
+      "compteur": 1.8125,
       "statut": "ok",
-      "echeance": 1792494000000
+      "echeance": 1792501200000
      },
      {
       "id": "m-cr-pp01:laser",
-      "compteur": 95.89583333333333,
+      "compteur": 95.76041666666667,
       "statut": "en_retard",
-      "echeance": 1790938800000
+      "echeance": 1790950500000
      },
      {
       "id": "m-cr-fe01:couteau",
-      "compteur": 52.01624999999999,
+      "compteur": 52.53246839851142,
       "statut": "ok",
-      "echeance": 1795877169230.7693
+      "echeance": 1795819988115.8572
      },
      {
       "id": "m-cr-fe01:ioniseur",
-      "compteur": 21.895833333333332,
+      "compteur": 21.84375,
       "statut": "ok",
-      "echeance": 1792148400000
+      "echeance": 1792152900000
      },
      {
       "id": "m-cr-rfid01:tete",
@@ -3198,21 +3719,21 @@
      },
      {
       "id": "m-cr-rfid01:rf",
-      "compteur": 48.895833333333336,
+      "compteur": 49.15625,
       "statut": "ok",
-      "echeance": 1792407600000
+      "echeance": 1792385100000
      },
      {
       "id": "m-cr-r01:blanchet",
-      "compteur": 610.1906250000001,
+      "compteur": 467.37658280152834,
       "statut": "ok",
-      "echeance": 1796073285245.9016
+      "echeance": 1797421824398.4644
      },
      {
       "id": "m-cr-r01:outil",
-      "compteur": 96.03,
+      "compteur": 88.5191692712903,
       "statut": "ok",
-      "echeance": 1802486400000
+      "echeance": 1802937049843.7227
      },
      {
       "id": "m-cr-r01:uv",
@@ -3228,9 +3749,9 @@
      },
      {
       "id": "m-cr-r01:encrage",
-      "compteur": 44.339166666666664,
+      "compteur": 47.97638888888889,
       "statut": "ok",
-      "echeance": 1793204670668.5837
+      "echeance": 1793173606542.0562
      },
      {
       "id": "m-cr-r01:frein",
@@ -3240,9 +3761,9 @@
      },
      {
       "id": "m-cr-r02:tetes",
-      "compteur": 11.31638888888889,
+      "compteur": 12.561944444444444,
       "statut": "a_planifier",
-      "echeance": 1791686667331.484
+      "echeance": 1791676312139.1616
      },
      {
       "id": "m-cr-r02:filtre",
@@ -3258,9 +3779,9 @@
      },
      {
       "id": "m-cr-r03:tetes",
-      "compteur": 25.327222222222222,
+      "compteur": 19.694444444444443,
       "statut": "a_planifier",
-      "echeance": 1791570026435.7534
+      "echeance": 1791616794760.7737
      },
      {
       "id": "m-cr-r03:filtre",
@@ -3270,15 +3791,15 @@
      },
      {
       "id": "m-cr-r03:cellule",
-      "compteur": 13.895833333333334,
+      "compteur": 13.96875,
       "statut": "ok",
-      "echeance": 1792839600000
+      "echeance": 1792833300000
      },
      {
       "id": "m-cr-rf01:lame3",
-      "compteur": 46.014375,
+      "compteur": 42.258116667643186,
       "statut": "ok",
-      "echeance": 1797206400000
+      "echeance": 1797676748869.4429
      },
      {
       "id": "m-cr-rf01:frein",
@@ -3288,24 +3809,194 @@
      },
      {
       "id": "m-cr-rf01:capteur",
-      "compteur": 33.895833333333336,
+      "compteur": 33.6875,
       "statut": "ok",
-      "echeance": 1793703600000
+      "echeance": 1793721600000
      },
      {
       "id": "m-cr-fe02:couteau",
-      "compteur": 52.01624999999999,
+      "compteur": 38.38885937020183,
       "statut": "ok",
-      "echeance": 1795877169230.7693
+      "echeance": 1797386664808.2239
      },
      {
       "id": "m-cr-fe02:ioniseur",
-      "compteur": 7.895833333333333,
+      "compteur": 7.791666666666667,
       "statut": "ok",
-      "echeance": 1793358000000
+      "echeance": 1793367000000
      }
     ],
-    "previsions": []
+    "previsions": [],
+    "apresSaisie": [
+     {
+      "id": "m-cr-pp01:bain",
+      "compteur": 0.08333333333333333,
+      "statut": "ok",
+      "echeance": 1793255400000,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-cr-pp01:ventouses",
+      "compteur": 0.08333333333333333,
+      "statut": "ok",
+      "echeance": 1792650600000,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-cr-pp01:laser",
+      "compteur": 0.08333333333333333,
+      "statut": "ok",
+      "echeance": 1799217000000,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-cr-fe01:couteau",
+      "compteur": 0.06499999999999999,
+      "statut": "ok",
+      "echeance": 1801631769230.7693,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-cr-fe01:ioniseur",
+      "compteur": 0.08333333333333333,
+      "statut": "ok",
+      "echeance": 1794033000000,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-cr-rfid01:tete",
+      "compteur": 1.5,
+      "statut": "ok",
+      "echeance": 1793238235513.8667,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-cr-rfid01:rf",
+      "compteur": 0.08333333333333333,
+      "statut": "ok",
+      "echeance": 1796625000000,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-cr-r01:blanchet",
+      "compteur": 0.7624999999999997,
+      "statut": "ok",
+      "echeance": 1801827885245.9016,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-cr-r01:outil",
+      "compteur": 0.12000000000000002,
+      "statut": "ok",
+      "echeance": 1808241000000,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-cr-r01:uv",
+      "compteur": 1.1994444444444445,
+      "statut": "ok",
+      "echeance": 1804248883393.2422,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-cr-r01:mouillage",
+      "compteur": 1.1994444444444445,
+      "statut": "ok",
+      "echeance": 1793146079654.9246,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-cr-r01:encrage",
+      "compteur": 1.1994444444444445,
+      "statut": "ok",
+      "echeance": 1793573110567.9368,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-cr-r01:frein",
+      "compteur": 1.1994444444444445,
+      "statut": "ok",
+      "echeance": 1795708265132.9978,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-cr-r02:tetes",
+      "compteur": 1.5,
+      "statut": "a_planifier",
+      "echeance": 1791768277978.556,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-cr-r02:filtre",
+      "compteur": 1.5,
+      "statut": "ok",
+      "echeance": 1799749443158.1316,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-cr-r02:cellule",
+      "compteur": 0.08333333333333333,
+      "statut": "ok",
+      "echeance": 1794033000000,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-cr-r03:tetes",
+      "compteur": 1.4602777777777778,
+      "statut": "a_planifier",
+      "echeance": 1791768191010.862,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-cr-r03:filtre",
+      "compteur": 1.4602777777777778,
+      "statut": "ok",
+      "echeance": 1799738963832.1152,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-cr-r03:cellule",
+      "compteur": 0.08333333333333333,
+      "statut": "ok",
+      "echeance": 1794033000000,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-cr-rf01:lame3",
+      "compteur": 0.05749999999999997,
+      "statut": "ok",
+      "echeance": 1802961000000,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-cr-rf01:frein",
+      "compteur": 0.45694444444444443,
+      "statut": "ok",
+      "echeance": 1796049110077.6196,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-cr-rf01:capteur",
+      "compteur": 0.08333333333333333,
+      "statut": "ok",
+      "echeance": 1796625000000,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-cr-fe02:couteau",
+      "compteur": 0.06500000000000002,
+      "statut": "ok",
+      "echeance": 1801631769230.7693,
+      "dernierPassage": 1791441000000
+     },
+     {
+      "id": "m-cr-fe02:ioniseur",
+      "compteur": 0.08333333333333333,
+      "statut": "ok",
+      "echeance": 1794033000000,
+      "dernierPassage": 1791441000000
+     }
+    ]
    },
    "energie": {
     "kwh": {

@@ -10,14 +10,15 @@ namespace EVAN.Mcp;
 /// <summary>
 /// Serveur MCP d'EVAN. Les outils sont ceux de l'assistant intégré (<see cref="EvanTools"/>), définis une seule fois :
 /// Claude Desktop, Claude Code ou toute application cliente MCP (une application Laravel, par exemple) interrogent
-/// l'historique, le carnet de maintenance, l'énergie et l'état en direct, sans accès en écriture aux machines.
+/// l'historique, le carnet de maintenance et ses interventions planifiées, l'énergie et l'état en direct, sans accès en
+/// écriture aux machines ni au carnet.
 /// </summary>
 public static class DependencyInjection
 {
     public const string Route = "/mcp";
 
     private const string Consignes =
-        "EVAN supervise des usines d'étiquettes : machines, organes, alarmes, maintenance et énergie. " +
+        "EVAN supervise des usines d'étiquettes : machines, organes, alarmes, maintenance (plan, interventions planifiées, carnet) et énergie. " +
         "Commencez par l'outil organisation pour situer les usines, puis passez l'identifiant d'usine aux autres outils. " +
         "Les machines se désignent par identifiant (m-r01), numéro (R01) ou nom (Gallus) ; les heures sont en heure de Paris. " +
         "Tous les outils sont en lecture seule.";

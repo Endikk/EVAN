@@ -1,7 +1,9 @@
 using EVAN.Application;
 using EVAN.Application.Abstractions;
+using EVAN.Application.Exploitation;
 using EVAN.Application.Live;
 using EVAN.Core.Domain.Alarms;
+using EVAN.Core.Domain.Exploitation;
 using EVAN.Infrastructure.Persistence;
 using EVAN.Infrastructure.Reference;
 using EVAN.Infrastructure.Simulation;
@@ -82,5 +84,23 @@ public class McpServerTests : IAsyncLifetime
         var texte = string.Concat(resultat.Content.OfType<TextContentBlock>().Select(c => c.Text));
         Assert.Contains("Puissance UV", texte);
         Assert.Contains("derivesDetectees", texte);
+    }
+
+    [Fact]
+    public async Task Un_client_MCP_trouve_quand_est_prevu_le_changement_de_lampe_UV()
+    {
+        var carnet = _app.Services.GetRequiredService<CarnetService>();
+        var apresDemain = Clock.Now() + 2 * 86_400_000L;
+        await carnet.PlanifierAsync("site-tours", new Prevue("pv-uv", "m-r04", "m-r04.o5", "uv", "Remplacer la lampe UV", apresDemain, 45, "Martine Roux", null));
+
+        var outil = (await _client.ListToolsAsync()).Single(t => t.Name == "carnet_maintenance");
+        Assert.Contains("interventions planifiées", outil.Description);
+        var resultat = await _client.CallToolAsync("carnet_maintenance", new Dictionary<string, object?> { ["usine"] = "Tours", ["machine"] = "R04" });
+
+        Assert.NotEqual(true, resultat.IsError);
+        var texte = string.Concat(resultat.Content.OfType<TextContentBlock>().Select(c => c.Text));
+        Assert.Contains("interventionsPlanifiees", texte);
+        Assert.Contains("pv-uv", texte);
+        Assert.Contains("dans 2 jours", texte);
     }
 }

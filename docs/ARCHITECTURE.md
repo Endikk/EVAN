@@ -90,7 +90,8 @@ EVAN/
 │   ├── EVAN.Infrastructure/    ← ADAPTATEURS DU BACK
 │   │   ├── Messaging/          ←   MqttMessageBus (port IMessageBus), MqttIngestionService (evan/v1/+/+/+ → LiveService)
 │   │   ├── Persistence/        ←   PostgresStore (COPY binaire, agrégat continu ; comptes et usines enregistrées dans
-│   │   │                           PostgresStore.Referentiel), MemoryStore, Schema.sql, StoreInitializer
+│   │   │                           PostgresStore.Referentiel ; carnet dans PostgresStore.Carnet), MemoryStore, Schema.sql,
+│   │   │                           Carnet.sql (migration additive du carnet), StoreInitializer
 │   │   ├── Reference/          ←   JsonReferenceData (data/*.json)
 │   │   ├── Simulation/         ←   HistoriqueSimule (identique au navigateur), SimulatedHistoryReader (port IHistoryReader)
 │   │   ├── Assistant/          ←   AddEvanAssistant : SDK Anthropic → IChatClient, exécution des outils
@@ -199,7 +200,7 @@ flowchart TB
 |---|---|---|
 | **Core** | `Domain/` : sites, machines, catalogue, alarmes et **moteur de règles** (seuils, dérive, répétitif, automate). `Contracts/` : sujets et messages MQTT versionnés. | rien (bibliothèque standard seule) |
 | **Core** (suite) | `Domain/Exploitation` : historique (`IHistorique`), énergie, maintenance (NF EN 13306), chronologie d'une panne, aléa déterministe. `Domain/Diagnostics` : défaut répétitif. | rien |
-| **Application** | `LiveService` : ingestion de la télémétrie, évaluation des règles, états machine, acquittement, résolution, panne de démonstration, trace de détection. `ConnectionTestService`. `ExploitationService` et `CarnetService`. `EvanTools` (outils, définis une fois) et `AssistantService`. `ComptesService` (comptes et organisations), `UsinesService` et `ValidationUsine` (configuration d'une usine réelle), `ConfigurationPasserelle`. **Ports** : `IStore`, `IComptesStore`, `IMotsDePasse`, `IMessageBus`, `IRealtimeNotifier`, `IHistoryReader`, `IChatClient` (abstraction Microsoft.Extensions.AI). | Core |
+| **Application** | `LiveService` : ingestion de la télémétrie, évaluation des règles, états machine, acquittement, résolution (et son annulation dans les 30 s), panne de démonstration, trace de détection. `ConnectionTestService`. `ExploitationService` et `CarnetService`. `EvanTools` (outils, définis une fois) et `AssistantService`. `ComptesService` (comptes et organisations), `UsinesService` et `ValidationUsine` (configuration d'une usine réelle), `ConfigurationPasserelle`. **Ports** : `IStore`, `IComptesStore`, `ICarnetStore`, `IMotsDePasse`, `IMessageBus`, `IRealtimeNotifier`, `IHistoryReader`, `IChatClient` (abstraction Microsoft.Extensions.AI). | Core |
 | **Messaging** | `MqttConnection` (connexion sortante, TLS mutuel, reconnexion, abonnements rejoués), `MqttSettings`, `AddEvanMqtt`. | Core |
 | **Infrastructure** | `MqttMessageBus` (requête/réponse), `MqttIngestionService` ; `PostgresStore` (schéma idempotent embarqué, COPY binaire par lots, agrégat continu) et `MemoryStore` ; `JsonReferenceData` ; `HistoriqueSimule` (port `IHistoryReader` de la démo) ; `AddEvanAssistant` (SDK Anthropic → `IChatClient`). | Application, Messaging |
 | **Mcp** | `AddEvanMcp` / `MapEvanMcp` : chaque outil d'`EvanTools` devient un outil MCP annoté lecture seule, transport Streamable HTTP sans état. | Application |
@@ -234,7 +235,8 @@ répétitif : des cas de test communs (`data/tests/`) vérifient, des deux côt�
 | PointDeMesure | type (tension, température, vitesse, pression, alarme…), unité, nominale, **seuils** (attention/alarme bas/haut), protocole, adresse | |
 | Connexion | protocole, paramètres, état, associations variable → point, **lecture seule** | |
 | Alarme | code, gravité, organe, horodatage, valeur, seuil, statut, **règle**, cause probable, répétitions, acquittement (qui, quand) | le délai d'acquittement nourrit le temps moyen d'acquittement |
-| Intervention (saisie) | machine, organe, type (curative, préventive, observation), date, durée, compte rendu, intervenant, tâche du plan | une tâche du plan réalisée remet son compteur à zéro |
+| Intervention (saisie) | machine, organe, type (curative, préventive, observation), date, durée, compte rendu, intervenant, tâche du plan | une tâche du plan réalisée remet son compteur à zéro, y compris une tâche suivie par une mesure d'usure |
+| Intervention planifiée | machine, organe, tâche du plan, intitulé, date prévue, durée, intervenant, point en dérive | attend son jour dans « À faire » ; consignée, elle devient une saisie |
 | Événement | type, message, auteur, horodatage | journal (dont autorisations d'écriture) |
 
 Identifiants stables partagés front/back : organe `{machineId}.o{numero}`, point `{machineId}.o{numero}.{cle}` (ou
@@ -247,6 +249,23 @@ Identifiants d'usine, de machine et de passerelle : lettres, chiffres, `-` et `_
 Côté base : référentiel relationnel (organisations, `comptes`, sites et leurs dépendances ; colonnes ajoutées de façon
 idempotente pour les bases existantes), `mesures` et `etats_machine` en hypertables TimescaleDB (`mesures` compressées
 après 1 jour, rétention 400 jours, agrégat continu `mesures_1min` compressé après 2 jours). Voir `src/EVAN.Infrastructure/Persistence/Schema.sql`.
+Le carnet de maintenance tenu à l'écran est dans ses propres tables (`carnet_saisies`, `carnet_prevues`, clé
+`(site_id, id)`), créées par `Carnet.sql`, joué après le schéma à chaque démarrage. Sans base, il reste en mémoire.
+
+**Carnet et alarmes en REST.** Le navigateur en mode API envoie chaque geste du carnet au serveur, pour que l'assistant
+et le serveur MCP voient le même carnet. Chaque route porte le `siteId` (cloisonnement du § 10) et ne touche qu'aux
+lignes et aux machines de cette usine ; elle est ouverte sans compte sur la démo, comme la saisie.
+
+| Route | Rôle |
+|---|---|
+| `POST /api/alarms/{id}/reopen` | annule une clôture faite il y a 30 s au plus, par la même organisation (la démo sans compte en est une) ; 409 sinon |
+| `GET`, `POST /api/sites/{siteId}/interventions` | saisies de l'usine ; consigner une intervention (ou la remettre, même identifiant) |
+| `PUT`, `DELETE /api/sites/{siteId}/interventions/{saisieId}` | corriger ou retirer une saisie, inscrit au journal de l'usine |
+| `GET`, `POST /api/sites/{siteId}/interventions/prevues` | interventions planifiées ; planifier ou déplacer (même identifiant) |
+| `DELETE /api/sites/{siteId}/interventions/prevues/{prevueId}` | annuler une intervention planifiée, ou la retirer une fois consignée |
+
+Le client (`realtime/apiSource.ts`) envoie les écritures d'une même saisie ou d'une même intervention planifiée l'une
+après l'autre : le serveur les reçoit dans l'ordre des gestes, « Annuler » compris.
 
 ## 5. Étape 1 : relever l'emprise au m² près
 
@@ -421,10 +440,13 @@ cloisonnement par organisation sépare ces usines de celles de la démo.
 | Route | Accès | Rôle |
 |---|---|---|
 | `POST /api/installation` | code `Evan:CodeInstallation` (vide : la route n'existe pas) | une seule fois : crée l'organisation de l'entreprise et son administrateur, ouvre sa session ; ensuite 409 |
-| `GET /api/session`, `POST /api/session`, `DELETE /api/session` | libre | qui est connecté ; connexion ; déconnexion |
-| `PUT /api/session/mot-de-passe` | compte | changer son mot de passe (l'actuel est exigé) |
+| `GET /api/session`, `POST /api/session`, `DELETE /api/session` | libre | qui est connecté (dont `doitChanger`) ; connexion (401 `provisoire-expire` pour un provisoire de plus de 72 h) ; déconnexion, révoquée côté serveur sur tous les postes |
+| `PUT /api/session/mot-de-passe` | compte | changer son mot de passe (l'actuel est exigé) ; ferme les autres sessions et rouvre celle-ci |
 | `GET /api/organisation` | libre | l'organisation du compte et ses usines ; sans compte, la démo |
 | `GET`, `POST /api/organisation/membres` | administrateur | comptes de l'organisation ; création d'un compte |
+| `DELETE /api/organisation/membres/{id}` | administrateur, avec son mot de passe dans le corps | retrait d'un compte de l'organisation (jamais le sien, jamais le dernier administrateur) |
+| `POST /api/organisation/membres/{id}/mot-de-passe` | administrateur, avec son mot de passe dans le corps | mot de passe provisoire tiré par le serveur, rendu une seule fois (`Cache-Control: no-store`), valable 72 h, à changer dès la connexion |
+| `GET /api/organisation/journal-comptes` | administrateur | journal des comptes de l'organisation (200 dernières lignes) |
 | `GET /api/sites/{id}` | usine visible | configuration complète (formes de `domain/types.ts`) |
 | `PUT /api/sites/{id}` | compte de l'organisation | enregistre la configuration complète (4 Mo au plus), puis la recharge dans le temps réel |
 | `GET /api/sites/{id}/passerelle/config` | administrateur de l'organisation | appsettings.json prêt pour `EVAN.Gateway` |
@@ -436,6 +458,29 @@ au moins, empreinte `PasswordHasher` (PBKDF2-HMAC-SHA512, sel par compte). Conne
 inconnu et un mauvais mot de passe, même calcul aussi ; échecs limités par adresse (10, puis un toutes les 30 s) et par
 compte visé (5, puis un par minute), bon mot de passe compris une fois la limite atteinte. L'adresse est celle de la
 connexion et, derrière nginx, la dernière de `X-Forwarded-For` ; le middleware ForwardedHeaders n'est pas activé.
+
+**Révocation.** Le cookie ne dit que ce qui était vrai à la connexion : chaque requête qui en porte un le compare à
+l'état du compte (`ValidationSession`). Il tombe si le compte a été retiré ou recréé à la même adresse, a changé
+d'organisation ou de rôle, si sa **génération** a changé, ou si la session a été ouverte il y a plus de **24 h**
+(durée absolue, claim `evan:ouverte` : le glissement de 8 h ne la prolonge pas). La génération, colonne de `comptes`
+portée par le cookie, augmente à chaque mot de passe provisoire, changement de mot de passe et déconnexion. L'état des
+comptes est gardé 10 s en mémoire (`CacheSessions`) et oublié aussitôt par ces actions et par le retrait. Les WebSockets
+du hub d'un compte (`SessionsTempsReel`) sont fermés au même moment : un WebSocket ouvert ne repasse pas par le cookie.
+Mots de passe : PBKDF2-HMAC-SHA512 à 210 000 itérations ; les empreintes à 100 000 restent vérifiables.
+
+**Mot de passe provisoire.** Un administrateur le donne depuis la page Compte, en redonnant son propre mot de passe
+(ses échecs comptent comme ceux de la connexion). Tant qu'il n'est pas changé (`doit_changer`), la session ne permet
+que de lire sa session, se déconnecter et changer son mot de passe : toute autre route de `/api` répond 403 avec le code
+`mot-de-passe-a-changer` (`/api/health` reste lisible), et le hub refuse la connexion. Il expire 72 h après sa création.
+Création, retrait, mot de passe provisoire et changement de mot de passe sont tracés dans `journal_comptes` (auteur,
+compte visé, action, adresse, date, organisation), jamais avec un mot de passe.
+
+**Une seule instance.** La révocation immédiate, le cache de validation, la fermeture des WebSockets et toutes les
+limites de débit (connexion, actions sur les comptes, assistant) vivent en mémoire de l'instance de l'API. Avec
+plusieurs instances derrière un répartiteur, la génération en base suffit encore à révoquer un cookie, mais au bout de
+10 s au plus (cache des autres instances), un WebSocket ouvert sur une autre instance reste ouvert, et chaque instance
+compte ses propres essais. Il faudrait alors un bus d'invalidation (Redis, PostgreSQL LISTEN/NOTIFY) et des compteurs
+partagés. Il n'y a pas non plus, pour l'instant, de limite de débit globale par compte sur `/api`.
 
 **Écritures.** Toute écriture sur `/api` (POST, PUT, PATCH, DELETE) doit porter l'en-tête `X-Evan: 1`, en plus de
 SameSite=Strict : un formulaire ou une image d'une page tierce ne sait pas le poser, et un script tiers doit d'abord

@@ -19,6 +19,12 @@ public interface IStore
     Task InitializeAsync(ReferenceData data, CancellationToken ct);
     void Enqueue(IEnumerable<MeasurementRow> rows);
     Task SaveAlarmAsync(string siteId, Alarme alarm, CancellationToken ct = default);
+    /// <summary>
+    /// Clôture annulée : l'alarme redevient ouverte en base. <see cref="SaveAlarmAsync"/> ne fait jamais repasser une
+    /// alarme résolue à « active » (garde contre une écriture en retard) ; cette écriture-ci le demande explicitement.
+    /// Un stockage sans cette garde n'a qu'à l'enregistrer comme les autres.
+    /// </summary>
+    Task ReopenAlarmAsync(string siteId, Alarme alarm, CancellationToken ct = default) => SaveAlarmAsync(siteId, alarm, ct);
     Task SaveEventAsync(string siteId, Evenement e, CancellationToken ct = default);
     Task SaveMachineStateAsync(string machineId, string etat, double vitesse, DateTimeOffset t, CancellationToken ct = default);
     Task<IReadOnlyList<Alarme>> AlarmsAsync(string siteId, DateTimeOffset from, DateTimeOffset to, string? machineId, CancellationToken ct = default);

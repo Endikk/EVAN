@@ -3,6 +3,8 @@
        stockage TimescaleDB sur une vraie base. -->
   <ItemGroup>
     <ProjectReference Include="..\..\src\EVAN.Infrastructure\EVAN.Infrastructure.csproj" />
+    <!-- Simulateur de démonstration : il part de la fin de l'historique simulé (usure), vérifié ici avec lui. -->
+    <ProjectReference Include="..\..\src\EVAN.Simulator\EVAN.Simulator.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Configuration" />

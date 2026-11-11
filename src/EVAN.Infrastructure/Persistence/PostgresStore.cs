@@ -88,6 +88,9 @@ public sealed partial class PostgresStore : IStore, IComptesStore, IAsyncDisposa
                 await using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(SchemaResource)!;
                 var sql = await new StreamReader(stream).ReadToEndAsync(ct);
                 await conn.ExecuteAsync(new CommandDefinition(sql, cancellationToken: ct));
+                // Migrations additives, chacune dans son fichier (PostgresStore.Carnet.cs) : rejouables, après le schéma.
+                await using var carnet = Assembly.GetExecutingAssembly().GetManifestResourceStream(CarnetResource)!;
+                await conn.ExecuteAsync(new CommandDefinition(await new StreamReader(carnet).ReadToEndAsync(ct), cancellationToken: ct));
                 await SeedAsync(conn, data, ct);
                 _organisationDemo = data.Demo.Organisation.Id;
                 _ready = true;
@@ -266,6 +269,31 @@ public sealed partial class PostgresStore : IStore, IComptesStore, IAsyncDisposa
                 a.Id, SiteId = siteId, a.MachineId, a.OrganeId, a.PointId, a.Code, a.Message, a.Gravite, a.Regle, a.Statut,
                 Horodatage = Utc(a.Horodatage),
                 FinLe = a.FinLe is { } f ? Utc(f) : (DateTime?)null,
+                a.Valeur, a.Unite, a.Seuil, a.Cause, a.AcquitteePar,
+                AcquitteeLe = a.AcquitteeLe is { } q ? Utc(q) : (DateTime?)null,
+                a.Repetitions,
+            },
+            cancellationToken: ct));
+    }
+
+    /// <summary>
+    /// Clôture annulée : l'alarme reprend son statut d'avant (active ou acquittée), sans fin. Seule écriture qui fasse
+    /// repasser une alarme résolue à ouverte ; elle passe par la même file que les autres, donc dans l'ordre.
+    /// </summary>
+    public async Task ReopenAlarmAsync(string siteId, Alarme a, CancellationToken ct = default)
+    {
+        await using var conn = await _db.OpenConnectionAsync(ct);
+        await conn.ExecuteAsync(new CommandDefinition(
+            """
+            INSERT INTO alarmes (id, site_id, machine_id, organe_id, point_id, code, message, gravite, regle, statut, horodatage, fin_le, valeur, unite, seuil, cause, acquittee_par, acquittee_le, repetitions)
+            VALUES (@Id, @SiteId, @MachineId, @OrganeId, @PointId, @Code, @Message, @Gravite, @Regle, @Statut, @Horodatage, NULL, @Valeur, @Unite, @Seuil, @Cause, @AcquitteePar, @AcquitteeLe, @Repetitions)
+            ON CONFLICT (id) DO UPDATE SET statut = EXCLUDED.statut, fin_le = NULL, acquittee_par = EXCLUDED.acquittee_par, acquittee_le = EXCLUDED.acquittee_le
+            WHERE alarmes.site_id = EXCLUDED.site_id
+            """,
+            new
+            {
+                a.Id, SiteId = siteId, a.MachineId, a.OrganeId, a.PointId, a.Code, a.Message, a.Gravite, a.Regle, a.Statut,
+                Horodatage = Utc(a.Horodatage),
                 a.Valeur, a.Unite, a.Seuil, a.Cause, a.AcquitteePar,
                 AcquitteeLe = a.AcquitteeLe is { } q ? Utc(q) : (DateTime?)null,
                 a.Repetitions,

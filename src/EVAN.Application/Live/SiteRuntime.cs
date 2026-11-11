@@ -6,6 +6,12 @@ using EVAN.Core.Domain.Machines;
 
 namespace EVAN.Application.Live;
 
+/// <summary>
+/// Ce qu'une clôture (« Intervention terminée ») a fermé sur une machine, pour pouvoir l'annuler dans les secondes qui
+/// suivent : les alarmes telles qu'elles étaient, l'heure, et l'organisation qui a clos (null : la démo sans compte).
+/// </summary>
+internal sealed record Cloture(long T, string MachineId, IReadOnlyList<Alarme> Alarmes, string? Organisation);
+
 /// <summary>État temps réel d'un site : dernières valeurs, états machine, alarmes, journal, trace de détection.</summary>
 internal sealed class SiteRuntime : RulesEngine.IContext
 {
@@ -31,6 +37,8 @@ internal sealed class SiteRuntime : RulesEngine.IContext
     public DetectionTrace? Trace;
     public bool TraceChanged;
     public RulesEngine Engine = null!;
+    /// <summary>Dernière clôture de chaque machine, gardée le temps de pouvoir l'annuler.</summary>
+    public readonly Dictionary<string, Cloture> Clotures = new();
 
     // Liaison : heure de réception côté API (pas celle du message), passerelle de chaque machine, passerelles hors ligne.
     public readonly Dictionary<string, DateTimeOffset> LastSeen = new();

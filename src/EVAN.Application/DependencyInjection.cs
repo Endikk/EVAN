@@ -1,3 +1,4 @@
+using EVAN.Application.Abstractions;
 using EVAN.Application.Assistant;
 using EVAN.Application.Comptes;
 using EVAN.Application.Connections;
@@ -24,6 +25,8 @@ public static class DependencyInjection
         services.AddSingleton<LiveService>();
         services.AddSingleton<ConnectionTestService>();
         services.AddSingleton<Energie>();
+        // Carnet sans base par défaut : l'infrastructure le remplace par PostgreSQL quand une base est configurée.
+        services.TryAddSingleton<ICarnetStore, CarnetSansBase>();
         services.AddSingleton<CarnetService>();
         services.AddSingleton<ExploitationService>();
         services.AddSingleton<EvanTools>();

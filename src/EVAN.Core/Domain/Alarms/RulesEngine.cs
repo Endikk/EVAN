@@ -27,9 +27,17 @@ public sealed class RulesEngine
         public Alarme? Alarm;
         public Alarme? Drift;
         public long LastDrift;
+        /// <summary>Début du retour à la normale après une intervention, tant qu'il dure.</summary>
+        public long? RepriseDepuis;
+        /// <summary>Échantillons consécutifs revenus dans la plage pendant la reprise.</summary>
+        public int RepriseOk;
     }
 
     private const int DriftWindow = 90;
+    /// <summary>Échantillons dans la plage qui terminent le retour à la normale (comme l'hystérésis).</summary>
+    private const int RepriseTicks = 3;
+    /// <summary>Au-delà, la mesure est de nouveau jugée même si elle n'est pas revenue : une réparation qui n'a pas tenu se voit.</summary>
+    private const long RepriseMaxMs = 60_000;
     private const double DriftHorizonS = 30 * 60;
     private const long RepeatWindowMs = 8L * 3600 * 1000;
     private const int RepeatCount = 3;
@@ -73,6 +81,16 @@ public sealed class RulesEngine
     {
         if (!_state.TryGetValue(p.Id, out var s)) _state[p.Id] = s = new State();
         var niveau = Classify(v, p.Seuils);
+        if (s.RepriseDepuis is { } depuis)
+        {
+            // Après une intervention, la mesure revient vers sa valeur normale en quelques secondes : elle n'est pas
+            // jugée pendant ce retour (sinon une alarme « à surveiller » renaissait aussitôt sur la machine qu'on venait
+            // de réparer), comme côté front (simulator.ts, RulesEngine.forget). Revenue, ou le délai passé, elle repart
+            // d'une page blanche, sans que sa remontée soit lue comme une dérive.
+            s.RepriseOk = niveau == "ok" ? s.RepriseOk + 1 : 0;
+            if (s.RepriseOk < RepriseTicks && t - depuis < RepriseMaxMs) return "ok";
+            _state[p.Id] = s = new State();
+        }
         s.Buf.Enqueue((t, v));
         while (s.Buf.Count > DriftWindow) s.Buf.Dequeue();
 
@@ -246,6 +264,9 @@ public sealed class RulesEngine
     {
         if (alarm.PointId is null) return;
         if (!_state.TryGetValue(alarm.PointId, out var s)) _state[alarm.PointId] = s = new State();
+        // Clôture annulée : le point n'est plus en retour à la normale, il garde l'alarme rouverte.
+        s.RepriseDepuis = null;
+        s.RepriseOk = 0;
         if (alarm.Regle == "derive")
         {
             s.Drift ??= alarm;
@@ -254,7 +275,21 @@ public sealed class RulesEngine
         if (s.Alarm is not null) return;
         s.Alarm = alarm;
         s.Niveau = alarm.Gravite == "critique" ? "alarme" : "attention";
+        s.OkTicks = 0;
     }
+
+    /// <summary>
+    /// Début du retour à la normale d'un point après une intervention : jusqu'à ce que la mesure soit revenue dans sa
+    /// plage (ou une minute au plus), elle ne lève rien, puis le moteur oublie tout ce qu'il en savait.
+    /// </summary>
+    public void BeginRecovery(string pointId, long t)
+    {
+        Forget(pointId);
+        _state[pointId] = new State { RepriseDepuis = t };
+    }
+
+    /// <summary>Oublie tout ce que le moteur sait d'un point (niveau, alarme tenue, tampon de dérive), comme forget côté front.</summary>
+    public void Forget(string pointId) => _state.Remove(pointId);
 
     public void Reset() => _state.Clear();
 

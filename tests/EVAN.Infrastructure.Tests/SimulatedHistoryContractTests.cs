@@ -92,6 +92,21 @@ public class SimulatedHistoryContractTests
 
     [Theory]
     [MemberData(nameof(Usines))]
+    public void Meme_usure_en_fin_d_historique(string usine)
+    {
+        var (r, models, _) = Usine(usine);
+        var points = models.SelectMany(m => m.Points).Where(p => p.Type == "usure").ToDictionary(p => p.Id);
+        var attendues = r.GetProperty("usure").EnumerateArray().ToList();
+        Assert.Equal(attendues.Count, points.Count);
+        foreach (var u in attendues)
+        {
+            var point = points[u.GetProperty("point").GetString()!];
+            Proche(u.GetProperty("v").GetDouble(), HistoriqueSimule.NiveauUsure(point.Id, point.Nominal), 1e-12, point.Id);
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(Usines))]
     public void Memes_echeances_et_derives_de_maintenance(string usine)
     {
         var (r, models, h) = Usine(usine);
@@ -105,6 +120,23 @@ public class SimulatedHistoryContractTests
             Assert.Equal(a.GetProperty("id").GetString(), e.Id);
             Assert.Equal(a.GetProperty("statut").GetString(), e.Statut);
             Proche(a.GetProperty("compteur").GetDouble(), e.Compteur, 1e-9, e.Id);
+            if (Nombre(a.GetProperty("echeance")) is { } ech) Proche(ech, e.EcheanceLe!.Value, 1e-9, e.Id);
+            else Assert.Null(e.EcheanceLe);
+        }
+
+        // Chaque tâche du plan consignée deux heures plus tôt : mêmes compteurs remis à zéro que dans le navigateur.
+        var apresSaisie = models.SelectMany(m => Maintenance.Echeances(h, m, Maintenant,
+            (m.Type?.Maintenance ?? []).Select(t => new Saisie($"s-{m.Machine.Id}-{t.Id}", m.Machine.Id, null, "preventive", Maintenant - 2 * Duree.Heure, t.Duree, t.Tache, null, "Contrat", t.Id)).ToList())).ToList();
+        var attenduesApres = r.GetProperty("maintenance").GetProperty("apresSaisie").EnumerateArray().ToList();
+        Assert.Equal(attenduesApres.Count, apresSaisie.Count);
+        for (var i = 0; i < attenduesApres.Count; i++)
+        {
+            var a = attenduesApres[i];
+            var e = apresSaisie[i];
+            Assert.Equal(a.GetProperty("id").GetString(), e.Id);
+            Assert.Equal(a.GetProperty("statut").GetString(), e.Statut);
+            Proche(a.GetProperty("compteur").GetDouble(), e.Compteur, 1e-9, e.Id);
+            Assert.Equal(Nombre(a.GetProperty("dernierPassage")) is { } dp ? (long)dp : null, e.DernierPassage);
             if (Nombre(a.GetProperty("echeance")) is { } ech) Proche(ech, e.EcheanceLe!.Value, 1e-9, e.Id);
             else Assert.Null(e.EcheanceLe);
         }

@@ -184,4 +184,71 @@ public class RulesEngineTests
         Assert.DoesNotContain(ctx.Events, e => e.Kind == "raised");
         Assert.Contains(ctx.Events, e => e.Kind == "cleared" && e.A.Id == "al-avant");
     }
+
+    [Fact]
+    public void Apres_une_intervention_la_mesure_qui_revient_a_la_normale_ne_leve_aucune_alarme()
+    {
+        var ctx = new CtxReprise();
+        var engine = new RulesEngine(ctx);
+        engine.Evaluate(Point, 240, 1000, true);
+        var critique = ctx.Events.Single(e => e.Kind == "raised").A;
+        engine.Resolve(critique.Id, 2000);
+        engine.BeginRecovery(Point.Id, 2000);
+
+        // Retour vers 180 N : la mesure repasse par la zone « à surveiller » (212 à 235 N) sans y lever d'alarme.
+        var niveaux = new[] { 238.0, 225, 214, 200, 190, 184, 181 }.Select((v, i) => engine.Evaluate(Point, v, 3000 + i * 1000, true)).ToList();
+
+        Assert.All(niveaux, n => Assert.Equal("ok", n));
+        Assert.Single(ctx.Events, e => e.Kind == "raised");
+        // Revenue à la normale, la mesure est de nouveau jugée : un nouveau franchissement lève une nouvelle alarme.
+        Assert.Equal("attention", engine.Evaluate(Point, 220, 20_000, true));
+        Assert.Contains(ctx.Events, e => e.Kind == "raised" && e.A.Gravite == "attention");
+    }
+
+    [Fact]
+    public void Une_mesure_qui_ne_revient_pas_a_la_normale_apres_l_intervention_est_de_nouveau_jugee()
+    {
+        var ctx = new CtxReprise();
+        var engine = new RulesEngine(ctx);
+        engine.BeginRecovery(Point.Id, 0);
+
+        Assert.Equal("ok", engine.Evaluate(Point, 240, 30_000, true));
+        Assert.DoesNotContain(ctx.Events, e => e.Kind == "raised");
+        // Passé le délai de reprise, une réparation qui n'a pas tenu se voit : l'alarme repart.
+        Assert.Equal("alarme", engine.Evaluate(Point, 240, 61_000, true));
+        Assert.Contains(ctx.Events, e => e.Kind == "raised" && e.A.Gravite == "critique");
+    }
+
+    [Fact]
+    public void Une_alarme_rouverte_reprend_sa_place_au_lieu_d_en_lever_une_seconde()
+    {
+        var ctx = new CtxReprise();
+        var engine = new RulesEngine(ctx);
+        engine.Evaluate(Point, 240, 1000, true);
+        var critique = ctx.Events.Single(e => e.Kind == "raised").A;
+        engine.Resolve(critique.Id, 2000);
+        engine.BeginRecovery(Point.Id, 2000);
+
+        // Clôture annulée : le moteur tient de nouveau l'alarme, la reprise de ce point s'arrête.
+        engine.Restore(critique);
+        Assert.Equal("alarme", engine.Evaluate(Point, 240, 3000, true));
+
+        Assert.Single(ctx.Events, e => e.Kind == "raised");
+        engine.Resolve(critique.Id, 4000);
+        Assert.Equal(2, ctx.Events.Count(e => e.Kind == "cleared" && e.A.Id == critique.Id));
+    }
+
+    [Fact]
+    public void Un_point_oublie_repart_d_une_page_blanche()
+    {
+        var ctx = new CtxReprise();
+        var engine = new RulesEngine(ctx);
+        engine.Evaluate(Point, 220, 1000, true);
+        Assert.Single(ctx.Events, e => e.Kind == "raised");
+
+        engine.Forget(Point.Id);
+        // Le moteur ne tient plus l'alarme d'attention : la mesure toujours haute en lève une nouvelle.
+        engine.Evaluate(Point, 220, 2000, true);
+        Assert.Equal(2, ctx.Events.Count(e => e.Kind == "raised"));
+    }
 }

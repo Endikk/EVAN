@@ -49,6 +49,9 @@ internal sealed class StoreWriter : IAsyncDisposable
 
     public void Alarm(string siteId, Alarme alarm) => Ajouter($"alarme {alarm.Id} ({alarm.Statut})", (s, ct) => s.SaveAlarmAsync(siteId, alarm, ct));
 
+    /// <summary>Clôture annulée : dans la même file, donc après la clôture qu'elle annule et avant toute clôture suivante.</summary>
+    public void AlarmReopened(string siteId, Alarme alarm) => Ajouter($"alarme {alarm.Id} rouverte", (s, ct) => s.ReopenAlarmAsync(siteId, alarm, ct));
+
     public void Event(string siteId, Evenement e) => Ajouter($"événement {e.Id}", (s, ct) => s.SaveEventAsync(siteId, e, ct));
 
     public void MachineState(string machineId, string etat, double vitesse, DateTimeOffset t) =>

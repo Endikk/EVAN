@@ -55,6 +55,32 @@ internal static class Bornes
             ?? (req.OrganeId is { Length: > 0 } organe && !OrganeDe(organe, req.MachineId) ? "Organe : il n'appartient pas à cette machine." : null);
     }
 
+    /// <summary>Durée d'une intervention planifiée, en minutes : une journée au plus, comme la fenêtre de planification.</summary>
+    public const double DureePrevueMaxMinutes = 24 * 60;
+    /// <summary>Date d'une intervention planifiée : un peu plus d'un an d'avance au plus, et pas plus ancienne que l'historique.</summary>
+    public static readonly TimeSpan AvancePlanification = TimeSpan.FromDays(400);
+
+    /// <summary>
+    /// Intervention planifiée. La date peut être passée : « Annuler » remet une intervention planifiée telle qu'elle était,
+    /// même si son heure est dépassée. Le point en dérive qui l'a fait planifier est un point de la même machine.
+    /// </summary>
+    public static string? Prevue(ExploitationEndpoints.PrevueRequest req, DateTimeOffset maintenant)
+    {
+        if (string.IsNullOrWhiteSpace(req.Titre) || string.IsNullOrWhiteSpace(req.MachineId)) return "Machine et intitulé requis.";
+        if (double.IsNaN(req.Duree) || req.Duree is <= 0 or > DureePrevueMaxMinutes) return $"Durée : plus de 0 et {DureePrevueMaxMinutes} minutes au plus.";
+        var date = DateTimeOffset.FromUnixTimeMilliseconds(Math.Clamp(req.Date, 0, DateTimeOffset.MaxValue.ToUnixTimeMilliseconds()));
+        if (date < maintenant - Anciennete || date > maintenant + AvancePlanification) return "Date hors de la période de planification.";
+        return Longueur(req.Titre, Titre, "Intitulé")
+            ?? Longueur(req.Auteur, Auteur, "Auteur")
+            ?? Longueur(req.Id, Identifiant, "Identifiant")
+            ?? Longueur(req.MachineId, Identifiant, "Machine")
+            ?? Longueur(req.OrganeId, Identifiant, "Organe")
+            ?? Longueur(req.TacheId, Identifiant, "Tâche")
+            ?? Longueur(req.PointId, Identifiant, "Point")
+            ?? (req.OrganeId is { Length: > 0 } organe && !OrganeDe(organe, req.MachineId) ? "Organe : il n'appartient pas à cette machine." : null)
+            ?? (req.PointId is { Length: > 0 } point && !point.StartsWith($"{req.MachineId}.o", StringComparison.Ordinal) ? "Point : il n'appartient pas à cette machine." : null);
+    }
+
     /// <summary>Un organe porte l'identifiant de sa machine : {machineId}.o{numero} (ReferenceData.OrganeId).</summary>
     private static bool OrganeDe(string organeId, string? machineId)
     {

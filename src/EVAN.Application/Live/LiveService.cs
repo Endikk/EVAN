@@ -21,6 +21,11 @@ public sealed class LiveService : IAsyncDisposable
     private static readonly TimeSpan EcartHorlogeMax = TimeSpan.FromDays(1);
     /// <summary>Reprise au redémarrage : alarmes non résolues de cette période.</summary>
     private static readonly TimeSpan RepriseAlarmes = TimeSpan.FromDays(7);
+    /// <summary>
+    /// Délai pendant lequel une clôture s'annule. L'avis qui propose « Annuler » reste 10 s à l'écran (12 s côté
+    /// simulateur du navigateur) ; la marge couvre le trajet de la requête.
+    /// </summary>
+    public static readonly TimeSpan AnnulationCloture = TimeSpan.FromSeconds(30);
 
     private volatile Registre _registre = Registre.Vide;
     /// <summary>Un chargement d'usine à la fois : chacun part de l'instantané laissé par le précédent.</summary>
@@ -320,7 +325,8 @@ public sealed class LiveService : IAsyncDisposable
             foreach (var (alarm, kind) in emitted)
             {
                 // Une alarme reprise au démarrage est déjà en base : on ne fait que la rediffuser.
-                if (kind != "restored") _writer.Alarm(site.SiteId, alarm);
+                if (kind == "reopened") _writer.AlarmReopened(site.SiteId, alarm);
+                else if (kind != "restored") _writer.Alarm(site.SiteId, alarm);
                 if (kind == "raised")
                 {
                     var m = site.Models.GetValueOrDefault(alarm.MachineId)?.Machine;
@@ -464,8 +470,12 @@ public sealed class LiveService : IAsyncDisposable
         return null;
     }
 
-    /// <summary>Intervention terminée : toutes les alarmes de la machine sont closes, le simulateur rétablit la mesure.</summary>
-    public async Task<Alarme?> ResolveAsync(string alarmId, string by)
+    /// <summary>
+    /// Intervention terminée : toutes les alarmes de la machine sont closes, le simulateur rétablit la mesure. Les points
+    /// de la machine entrent en retour à la normale (rien n'est levé tant que la mesure revient). La clôture reste
+    /// annulable quelques secondes par la même organisation (<paramref name="organisation"/>, null pour la démo sans compte).
+    /// </summary>
+    public async Task<Alarme?> ResolveAsync(string alarmId, string by, string? organisation = null)
     {
         foreach (var site in _registre.Sites.Values)
         {
@@ -477,7 +487,9 @@ public sealed class LiveService : IAsyncDisposable
                 if (i < 0) continue;
                 var target = site.Alarms[i];
                 var now = Now();
-                foreach (var a in site.Alarms.Where(a => a.MachineId == target.MachineId && a.Statut != "resolue").ToList())
+                var ouvertes = site.Alarms.Where(a => a.MachineId == target.MachineId && a.Statut != "resolue").ToList();
+                if (ouvertes.Count > 0) site.Clotures[target.MachineId] = new Cloture(now, target.MachineId, ouvertes, organisation);
+                foreach (var a in ouvertes)
                 {
                     site.Engine.Resolve(a.Id, now);
                     var j = site.Alarms.FindIndex(x => x.Id == a.Id);
@@ -486,6 +498,10 @@ public sealed class LiveService : IAsyncDisposable
                         site.Alarms[j] = site.Alarms[j] with { Statut = "resolue", FinLe = now };
                         site.Emitted.Add((site.Alarms[j], "cleared"));
                     }
+                }
+                if (site.Models.TryGetValue(target.MachineId, out var model))
+                {
+                    foreach (var p in model.Points) site.Engine.BeginRecovery(p.Id, now);
                 }
                 if (site.Trace?.MachineId == target.MachineId) site.Trace = null;
                 UpdateEffective(site, target.MachineId);
@@ -498,6 +514,63 @@ public sealed class LiveService : IAsyncDisposable
             return resolved;
         }
         return null;
+    }
+
+    /// <summary>
+    /// Annule une clôture faite à l'instant (« Intervention terminée » cliquée trop tôt) : les alarmes que cette clôture a
+    /// fermées sur la machine retrouvent leur état d'avant et le moteur de règles les tient de nouveau. Null si l'alarme
+    /// est inconnue, ou si sa machine n'a pas été close dans les <see cref="AnnulationCloture"/> par cette même
+    /// organisation (null pour la démo sans compte) : rien n'est alors modifié.
+    /// </summary>
+    public async Task<Alarme?> ReopenAsync(string alarmId, string by, string? organisation)
+    {
+        foreach (var site in _registre.Sites.Values)
+        {
+            Alarme rouverte;
+            Evenement e;
+            List<int> organes;
+            lock (site.Gate)
+            {
+                var i = site.Alarms.FindIndex(a => a.Id == alarmId);
+                if (i < 0) continue;
+                var machineId = site.Alarms[i].MachineId;
+                var now = Now();
+                if (!site.Clotures.TryGetValue(machineId, out var cloture) || cloture.Organisation != organisation
+                    || now - cloture.T > (long)AnnulationCloture.TotalMilliseconds || cloture.Alarmes.All(a => a.Id != alarmId))
+                    return null;
+                site.Clotures.Remove(machineId);
+                foreach (var avant in cloture.Alarmes)
+                {
+                    // Une alarme évincée de la liste depuis, ou déjà rouverte, reste comme elle est.
+                    var j = site.Alarms.FindIndex(a => a.Id == avant.Id);
+                    if (j < 0 || site.Alarms[j].Statut != "resolue") continue;
+                    site.Alarms[j] = avant;
+                    site.Engine.Restore(avant);
+                    site.Emitted.Add((avant, "reopened"));
+                }
+                UpdateEffective(site, machineId);
+                rouverte = site.Alarms[site.Alarms.FindIndex(a => a.Id == alarmId)];
+                // Organes des pannes rouvertes, levées sur une mesure : le simulateur y remet le défaut, comme le simulateur du
+                // navigateur. Un défaut de l'automate vient de la machine elle-même, et la passerelle d'une usine réelle
+                // n'écoute pas ce sujet.
+                organes = cloture.Alarmes.Where(a => a.Gravite == "critique" && a.Regle != "automate")
+                    .Select(a => OrganeNumero(a.OrganeId)).OfType<int>().Distinct().ToList();
+                e = AddEvent(site, "action", $"Clôture annulée, {rouverte.Code} rouverte.", machineId, by);
+            }
+            Dispatch(site);
+            await NotifyAsync(() => _notifier.EventAsync(site.SiteId, e));
+            foreach (var organe in organes)
+                await CommandAsync(Topics.SimulatorCommand(site.SiteId, "fault"), new FaultCommand(rouverte.MachineId, organe, "reouverture"));
+            return rouverte;
+        }
+        return null;
+    }
+
+    /// <summary>Numéro d'un organe « {machine}.o{numero} », ou null s'il n'a pas cette forme.</summary>
+    private static int? OrganeNumero(string organeId)
+    {
+        var i = organeId.LastIndexOf(".o", StringComparison.Ordinal);
+        return i >= 0 && int.TryParse(organeId.AsSpan(i + 2), out var n) ? n : null;
     }
 
     /// <summary>Panne de démonstration : choisit une machine en production et un organe, commande le simulateur, ouvre une trace.</summary>
@@ -614,6 +687,7 @@ public sealed class LiveService : IAsyncDisposable
                 _writer.Alarm(site.SiteId, a with { Statut = "resolue", FinLe = fin });
             site.Alarms.Clear();
             site.Events.Clear();
+            site.Clotures.Clear();
             site.Trace = null;
             site.Engine.Reset();
         }

@@ -61,6 +61,7 @@ internal sealed class BancUsines : IAsyncDisposable
     public readonly HttpClient Http;
     public readonly Bus Messages;
     public LiveService Live => _app.Services.GetRequiredService<LiveService>();
+    public IServiceProvider Services => _app.Services;
 
     private BancUsines(WebApplication app, Bus bus)
     {

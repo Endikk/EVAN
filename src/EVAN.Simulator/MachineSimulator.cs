@@ -1,6 +1,7 @@
 using EVAN.Core.Contracts;
 using EVAN.Core.Domain.Catalog;
 using EVAN.Core.Domain.Machines;
+using EVAN.Infrastructure.Simulation;
 
 namespace EVAN.Simulator;
 
@@ -47,7 +48,7 @@ public sealed class MachineSimulator
         {
             var (def, organe) = model.Defs[p.Id];
             // Démo : lampe UV de R04 en fin de vie, qui dérive doucement (détection par tendance).
-            var initial = Machine.Id == "m-r04" && def.Cle == "puissance_uv" ? 76.5 : Initial(def, index);
+            var initial = Machine.Id == "m-r04" && def.Cle == "puissance_uv" ? 76.5 : Initial(def, p.Id, index);
             _points.Add(new PointSim { Point = p, Def = def, Organe = organe, Value = initial });
         }
         if (Machine.Id == "m-pv01")
@@ -60,7 +61,11 @@ public sealed class MachineSimulator
 
     private double Gauss() => (_rnd.NextDouble() + _rnd.NextDouble() + _rnd.NextDouble() + _rnd.NextDouble() - 2) * 1.732;
 
-    private static double Initial(MesureDef d, int index) => d.Dynamique switch
+    /// <summary>
+    /// Valeur de départ. L'usure part de là où l'historique simulé s'arrête (comme le simulateur du navigateur) : la
+    /// supervision et le carnet de maintenance montrent le même compteur.
+    /// </summary>
+    private static double Initial(MesureDef d, string pointId, int index) => d.Type == "usure" ? HistoriqueSimule.NiveauUsure(pointId, d.Nominal) : d.Dynamique switch
     {
         "decroit" => d.Nominal - (d.Nominal - (d.Seuils.AttentionBas ?? d.Nominal * 0.2) * 1.2) * (index * 0.37 % 0.8),
         "compteur" => 18_000 + index * 4_250,

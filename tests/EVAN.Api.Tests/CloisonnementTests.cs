@@ -45,7 +45,13 @@ public class CloisonnementTests
         yield return (HttpMethod.Get, "/api/sites/site-b/energie", null);
         yield return (HttpMethod.Get, "/api/sites/site-b/arrets", null);
         yield return (HttpMethod.Get, "/api/sites/site-b/interventions", null);
-        yield return (HttpMethod.Post, "/api/sites/site-b/interventions", new { machineId = u.Machine, type = "curative", date = maintenant, duree = 10, titre = "Intrusion" });
+        yield return (HttpMethod.Post, "/api/sites/site-b/interventions", new { id = "sa-b", machineId = u.Machine, type = "curative", date = maintenant, duree = 10, titre = "Intrusion" });
+        // Pour B, la saisie qu'il vient de consigner ; pour les autres, elle n'a jamais existé.
+        yield return (HttpMethod.Put, "/api/sites/site-b/interventions/sa-b", new { machineId = u.Machine, type = "curative", date = maintenant, duree = 15, titre = "Intrusion" });
+        yield return (HttpMethod.Delete, "/api/sites/site-b/interventions/sa-b", null);
+        yield return (HttpMethod.Get, "/api/sites/site-b/interventions/prevues", null);
+        yield return (HttpMethod.Post, "/api/sites/site-b/interventions/prevues", new { id = "pv-b", machineId = u.Machine, titre = "Intrusion", date = maintenant + 86_400_000, duree = 30 });
+        yield return (HttpMethod.Delete, "/api/sites/site-b/interventions/prevues/pv-b", null);
         yield return (HttpMethod.Get, "/api/sites/site-b/passerelle/config", null);
         yield return (HttpMethod.Post, "/api/demo/site-b/fault", new { });
         yield return (HttpMethod.Post, "/api/demo/site-b/reset", new { });
@@ -54,6 +60,8 @@ public class CloisonnementTests
         yield return (HttpMethod.Get, $"/api/alarms/{u.Alarme}/chronologie", null);
         yield return (HttpMethod.Post, $"/api/alarms/{u.Alarme}/ack", new { });
         yield return (HttpMethod.Post, $"/api/alarms/{u.Alarme}/resolve", new { });
+        // Juste après la clôture : B l'annule, A ne voit même pas l'alarme.
+        yield return (HttpMethod.Post, $"/api/alarms/{u.Alarme}/reopen", new { });
         yield return (HttpMethod.Post, "/api/connections/test", new { machineId = u.Machine, protocole = "opcua", parametres = new Dictionary<string, string>(), siteId = "site-b" });
         // En dernier : pour B, elle remplace les machines que les routes précédentes désignent.
         yield return (HttpMethod.Put, "/api/sites/site-b", UsineExemple.Creer(banc.Data, "site-b", "intrus"));
@@ -176,6 +184,29 @@ public class CloisonnementTests
         Assert.DoesNotContain("site-b", Lire(outils.Organisation()));
         Assert.Contains("erreur", Lire(outils.Mesure("m-b-1", "tension")));
         Assert.Contains("erreur", Lire(outils.CarnetMaintenance("site-b")));
+    }
+
+    [Fact]
+    public async Task Une_intervention_planifiee_d_une_usine_reelle_reste_hors_de_l_assistant_et_du_MCP()
+    {
+        await using var banc = await BancApi.Demarrer();
+        var u = await Preparer(banc);
+        var demain = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + 86_400_000;
+        var planifiee = await u.B.Post("/api/sites/site-b/interventions/prevues", new { id = "pv-b", machineId = u.Machine, titre = "Changement du cylindre de B", date = demain, duree = 30 });
+        Assert.Equal(HttpStatusCode.Created, planifiee.StatusCode);
+        var outils = banc.Services.GetRequiredService<EvanTools>();
+        string Lire(object reponse) => JsonSerializer.Serialize(reponse, EvanTools.JsonOutils);
+
+        // Ni par l'usine, ni par la machine, ni au détour d'une usine de la démo.
+        Assert.Contains("erreur", Lire(outils.CarnetMaintenance("site-b")));
+        Assert.Contains("erreur", Lire(outils.CarnetMaintenance(null, u.Machine)));
+        foreach (var usine in new[] { "site-tours", "site-crissey" })
+        {
+            var carnet = Lire(outils.CarnetMaintenance(usine));
+            Assert.Contains("interventionsPlanifiees", carnet);
+            Assert.DoesNotContain("pv-b", carnet);
+            Assert.DoesNotContain("cylindre de B", carnet);
+        }
     }
 
     // ---------- Hub sans transport : contexte, groupes et clients simulés ----------

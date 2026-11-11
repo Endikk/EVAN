@@ -21,7 +21,8 @@ public sealed class OutilEvanAttribute(string nom, string titre) : Attribute
 /// <summary>
 /// Outils d'EVAN, définis une seule fois : l'assistant intégré (« Demander à EVAN ») les donne à Claude, le serveur MCP
 /// (EVAN.Mcp) les expose à tout client MCP (Claude Desktop, Claude Code, une application Laravel…). Tous en lecture
-/// seule : ils lisent l'historique, le carnet, l'énergie et l'état en direct, ils ne pilotent aucune machine.
+/// seule : ils lisent l'historique, le carnet et ses interventions planifiées, l'énergie et l'état en direct, ils ne
+/// pilotent aucune machine et ne planifient rien.
 /// </summary>
 public sealed class EvanTools(ExploitationService exploitation)
 {
@@ -89,7 +90,7 @@ public sealed class EvanTools(ExploitationService exploitation)
         exploitation.ChronologiePanne(alarme);
 
     [OutilEvan("carnet_maintenance", "Carnet de maintenance")]
-    [Description("Carnet de maintenance : indicateurs sur 7 jours (MTBF, MTTR, temps d'acquittement, part du préventif), tâches du plan à planifier ou en retard (systématiques et conditionnelles), dérives détectées avec la date probable du franchissement de seuil (maintenance prévisionnelle), dernières interventions et leur compte rendu.")]
+    [Description("Carnet de maintenance : indicateurs sur 7 jours (MTBF, MTTR, temps d'acquittement, part du préventif), tâches du plan à planifier ou en retard (systématiques et conditionnelles, avec l'intervention planifiée qui s'en charge), interventions planifiées de la plus proche à la plus lointaine (date, jour relatif, machine, organe, tâche du plan rattachée, statut : prevue ; en_retard quand sa tâche a déjà dépassé sa limite ; a_consigner quand son jour est passé sans qu'elle soit consignée), dérives détectées avec la date probable du franchissement de seuil (maintenance prévisionnelle), dernières interventions et leur compte rendu. Pour « qu'est-ce qui est prévu cette semaine » ou « quand est prévu le changement de lampe UV de R04 ».")]
     public object CarnetMaintenance(
         [Description("Usine : identifiant, nom ou ville.")] string? usine = null,
         [Description("Machine : identifiant, numéro ou nom ; toute l'usine si absent.")] string? machine = null) =>

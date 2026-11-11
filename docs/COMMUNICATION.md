@@ -100,7 +100,12 @@ Télémétrie :
    - **répétitif** : même code sur la même machine 3 fois en 8 h → règle « défaut répétitif » ;
    - **automate** : alarmes natives (signal discret, Alarms & Conditions, JMF `Down`) prises telles quelles.
 3. Chaque alarme est rattachée à l'**organe** et porte la **cause probable** du catalogue.
-4. Diffusion SignalR : lot de valeurs modifiées à 1 Hz, alarmes, événements et trace de détection immédiatement.
+4. « Intervention terminée » (`POST /api/alarms/{id}/resolve`) clôt toutes les alarmes de la machine et publie
+   `sim/cmd/resolve`. Les points de la machine passent en **retour à la normale** : rien n'est levé tant que la mesure
+   n'est pas revenue dans sa plage (3 échantillons, une minute au plus), puis le moteur en repart d'une page blanche. Une
+   clôture faite trop tôt s'annule dans les 30 s, par la même organisation (`POST /api/alarms/{id}/reopen`) : les alarmes
+   reprennent leur état d'avant et, pour une panne sur mesure, `sim/cmd/fault` remet le défaut au simulateur.
+5. Diffusion SignalR : lot de valeurs modifiées à 1 Hz, alarmes, événements et trace de détection immédiatement.
 
 ## 6. Sécurité
 

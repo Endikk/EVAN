@@ -36,7 +36,8 @@ public sealed class HistoriqueSimule : IHistorique
         var today = Core.Domain.Exploitation.Fuseau.Minuit(fuseau, Fin);
         Debut = today - 6 * Duree.Jour;
         var models = machines.ToList();
-        foreach (var model in models) Generer(model);
+        // Machine posée pendant la session (CreeLe) : pas encore d'historique, comme côté front (sim/history.ts).
+        foreach (var model in models.Where(m => m.Machine.CreeLe is null)) Generer(model);
         ScenarioRepetitif(models, today);
         // Tri stable, comme Array.prototype.sort côté navigateur.
         var triees = _alarmes.OrderByDescending(a => a.Horodatage).ToList();
@@ -148,7 +149,9 @@ public sealed class HistoriqueSimule : IHistorique
     /// <summary>Défaut répétitif scénarisé : casse d'échenillage sur la flexo, trois fois dans la dernière journée travaillée.</summary>
     private void ScenarioRepetitif(List<MachineModel> models, long today)
     {
-        var flexo = models.FirstOrDefault(x => x.Machine.Type == "flexo");
+        // Seulement sur une flexo qui a un historique : une presse posée pendant la session n'a pas de périodes, et le
+        // scénario ne s'y écrit pas (même choix que sim/history.ts).
+        var flexo = models.FirstOrDefault(x => x.Machine.Type == "flexo" && _periodes.ContainsKey(x.Machine.Id));
         var ech = flexo?.Organes.FirstOrDefault(o => o.Numero == 7);
         if (flexo is null || ech is null) return;
         var local = Core.Domain.Exploitation.Fuseau.Local(Fuseau, today).Date;
@@ -217,6 +220,13 @@ public sealed class HistoriqueSimule : IHistorique
 
     private static double Arrondi(double v) => Math.Abs(v) < 10 ? Math.Floor(v * 100 + 0.5) / 100 : Math.Floor(v * 10 + 0.5) / 10;
 
+    /// <summary>
+    /// Usure atteinte à la fin de l'historique : le nominal du catalogue, à 30 % près selon la machine (tirage stable sur
+    /// le point, même tirage que niveauUsure côté front), pour que deux machines du même type ne montrent pas le même
+    /// compteur. L'historique la fait croître jusque-là au même rythme ; la simulation en direct peut en partir.
+    /// </summary>
+    public static double NiveauUsure(string pointId, double nominal) => nominal * (0.7 + Aleatoire.HashNoise(Aleatoire.HashString(pointId), 3) * 0.6);
+
     /// <summary>Valeur historique d'une mesure à l'instant t (bruit lissé, cycles, dérives, glissement avant une panne).</summary>
     public double Valeur(MachineModel model, PointDeMesure point, long t)
     {
@@ -260,7 +270,7 @@ public sealed class HistoriqueSimule : IHistorique
         }
         else if (def.Dynamique == "croit")
         {
-            if (def.Type == "usure") v = def.Nominal - (double)(Fin - t) / Duree.Jour * (def.Nominal * 0.015);
+            if (def.Type == "usure") v = NiveauUsure(point.Id, def.Nominal) - (double)(Fin - t) / Duree.Jour * (def.Nominal * 0.015);
             else
             {
                 const long cycle = 70 * Duree.Minute;

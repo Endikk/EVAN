@@ -1,4 +1,5 @@
 using EVAN.Application.Abstractions;
+using EVAN.Application.Exploitation;
 using EVAN.Application.Live;
 using EVAN.Core.Domain.Catalog;
 using Microsoft.Extensions.Hosting;
@@ -8,9 +9,10 @@ namespace EVAN.Infrastructure.Persistence;
 
 /// <summary>
 /// Crée le schéma et l'usine d'exemple au démarrage, sans bloquer l'API si la base tarde (elle est attendue sans limite),
-/// puis reprend du temps réel ce que la base garde : usines enregistrées par les organisations, alarmes ouvertes et journal.
+/// puis reprend du temps réel ce que la base garde : usines enregistrées par les organisations, alarmes ouvertes, journal
+/// et carnet de maintenance.
 /// </summary>
-internal sealed class StoreInitializer(IStore store, ReferenceData data, LiveService live, ILogger<StoreInitializer> log) : BackgroundService
+internal sealed class StoreInitializer(IStore store, ReferenceData data, LiveService live, CarnetService carnet, ILogger<StoreInitializer> log) : BackgroundService
 {
     private static readonly TimeSpan AttenteMax = TimeSpan.FromSeconds(30);
 
@@ -35,6 +37,8 @@ internal sealed class StoreInitializer(IStore store, ReferenceData data, LiveSer
             try
             {
                 await live.RestoreAsync(ct);
+                // Après les usines : le carnet de chacune est relu en base.
+                await carnet.RestoreAsync(ct);
                 return;
             }
             catch (Exception ex) when (!ct.IsCancellationRequested)

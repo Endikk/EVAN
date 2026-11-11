@@ -40,7 +40,12 @@ public static class DependencyInjection
     {
         var cs = config.GetConnectionString("Evan");
         if (string.IsNullOrWhiteSpace(cs)) services.AddSingleton<IStore, MemoryStore>();
-        else services.AddSingleton<IStore>(sp => new PostgresStore(cs, sp.GetRequiredService<ILogger<PostgresStore>>()));
+        else
+        {
+            services.AddSingleton<IStore>(sp => new PostgresStore(cs, sp.GetRequiredService<ILogger<PostgresStore>>()));
+            // Carnet de maintenance dans la même base ; sans base, il reste dans la mémoire de CarnetService.
+            services.AddSingleton<ICarnetStore>(sp => (ICarnetStore)sp.GetRequiredService<IStore>());
+        }
         // Comptes et organisations : même stockage, même base.
         services.AddSingleton<IComptesStore>(sp => (IComptesStore)sp.GetRequiredService<IStore>());
         services.AddHostedService<StoreInitializer>();
