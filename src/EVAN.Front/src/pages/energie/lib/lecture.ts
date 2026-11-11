@@ -55,10 +55,14 @@ export interface Verdict {
   ton: Ton;
 }
 
-/** La phrase du haut : combien, combien d'euros, et quelle part sans rien produire. */
-export function verdictEnergie(b: BilanUsine, periode: Periode): Verdict {
+/**
+ * La phrase du haut : combien, combien d'euros, et quelle part sans rien produire. `sujet` nomme la machine quand
+ * l'écran est filtré sur une seule (« R07 a consommé »), sinon c'est l'usine.
+ */
+export function verdictEnergie(b: BilanUsine, periode: Periode, sujet?: string): Verdict {
   const total = b.total.total;
   const quand = LIBELLE_PERIODE[periode];
+  const qui = sujet ?? 'l’usine';
   if (!(total > 0)) {
     return {
       ton: 'neutre',
@@ -68,7 +72,7 @@ export function verdictEnergie(b: BilanUsine, periode: Periode): Verdict {
   }
   const part = b.horsProduction;
   const ton = tonHorsProduction(part);
-  const base = `${quand}, l’usine a consommé ${kwh(total)}, soit ${euros(b.total.cout)}`;
+  const base = `${quand}, ${qui} a consommé ${kwh(total)}, soit ${euros(b.total.cout)}`;
   if (part >= 0.995) return { ton, verdict: `${base}, sans rien produire.`, suite: `Toute l’énergie est partie ${OU[pertesTriees(b)[0] ?? 'arret']}.` };
   if (part < 0.005) return { ton, verdict: `${base}, presque tout pour produire.` };
   const [a, bb] = pertesTriees(b);
@@ -96,45 +100,69 @@ export function surCent(b: BilanUsine): Record<EtatEnergie, number> {
   return out;
 }
 
-/** Leçon de « Où part l'énergie », en une ligne : le reste se lit sur les barres. */
+/**
+ * Leçon de « Où part l'énergie », en une ligne : le reste se lit sur les barres. La part de production est arrondie
+ * comme le pourcentage de sa ligne, juste dessous : « 89 » et « 89 % », jamais « 88 » à côté de « 89 % ».
+ */
 export function phraseRepartition(b: BilanUsine): string {
   if (!(b.total.total > 0)) return 'Rien à répartir sur cette période.';
-  return `Sur 100 kWh consommés, ${surCent(b).marche} ont servi à produire.`;
+  return `Sur 100 kWh consommés, ${Math.round((b.total.kwh.marche / b.total.total) * 100)} ont servi à produire.`;
 }
 
-/** Ce que lit un lecteur d'écran sur la courbe de charge : le pic, puis ce que l'usine tire encore quand rien ne produit. */
-export function phraseCourbe(l: LectureCourbe, periode: Periode, prix: number): string {
+/**
+ * Ce que lit un lecteur d'écran sur la courbe de charge : le pic, puis ce que l'usine (ou la machine choisie, `sujet`)
+ * tire encore quand rien ne produit.
+ */
+export function phraseCourbe(l: LectureCourbe, periode: Periode, prix: number, sujet = 'l’usine'): string {
   if (!l.pic) return 'Aucune puissance appelée sur cette période.';
   const pic = `Le pic : ${kw(l.pic.kw)}, ${fmtMoment(l.pic.t)}.`;
   if (l.talon === undefined) return `${pic} Les machines ont travaillé sans interruption sur la période.`;
   const quand = l.nuits && l.weekEnd ? 'La nuit et le week-end' : l.weekEnd ? 'Le week-end' : 'La nuit';
   const sur = periode === '7j' ? 'sur 7 jours' : 'sur 24 heures';
-  return `${pic} ${quand}, rien ne produit mais l’usine tire encore ${kw(l.talon)} : ${kwh(l.kwhCreux)} ${sur}, soit ${euros(l.kwhCreux * prix)}.`;
+  return `${pic} ${quand}, rien ne produit mais ${sujet} tire encore ${kw(l.talon)} : ${kwh(l.kwhCreux)} ${sur}, soit ${euros(l.kwhCreux * prix)}.`;
 }
 
 /**
  * Leçon de la courbe de charge, en une ligne : ce que l'usine tire encore quand rien ne produit, et ce que ça coûte.
- * Le pic se lit sur la courbe (pointillés) et dans sa légende.
+ * Le pic se lit sur la courbe (un trait fin à sa hauteur) et dans sa légende.
  */
-export function leconCourbe(l: LectureCourbe, periode: Periode, prix: number): string {
+export function leconCourbe(l: LectureCourbe, periode: Periode, prix: number, sujet = 'l’usine'): string {
   if (!l.pic) return 'Aucune puissance appelée sur cette période.';
   if (l.talon === undefined) return 'Les machines ont travaillé sans interruption sur la période.';
   const quand = l.nuits && l.weekEnd ? 'La nuit et le week-end' : l.weekEnd ? 'Le week-end' : 'La nuit';
   const sur = periode === '7j' ? 'sur 7 jours' : 'sur 24 heures';
-  return `${quand}, l’usine tire encore ${kw(l.talon)} sans produire : ${euros(l.kwhCreux * prix)} ${sur}.`;
+  return `${quand}, ${sujet} tire encore ${kw(l.talon)} sans produire : ${euros(l.kwhCreux * prix)} ${sur}.`;
 }
 
 const majuscule = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /**
  * Leçon de l'énergie par jour, en une ligne : un jour sans production s'il y en a un (ce que coûte la seule veille),
- * sinon le jour le plus chargé. Le total de chaque jour est écrit au-dessus de sa colonne.
+ * sinon le jour le plus chargé. Le total de chaque jour est écrit au-dessus de sa colonne. Le jour `enCours` (pas fini)
+ * n'entre pas dans la comparaison : à 6 h du matin, il n'a encore rien produit sans être un jour sans production.
  */
-export function phraseParJour(jours: { jour: number; kwh: Record<EtatEnergie, number>; total: number }[]): string {
-  const avec = jours.filter((d) => d.total > 0);
+export function phraseParJour(jours: { jour: number; kwh: Record<EtatEnergie, number>; total: number }[], enCours?: number): string {
+  const avec = jours.filter((d) => d.total > 0 && d.jour !== enCours);
   if (!avec.length) return 'Aucune consommation sur ces 7 jours.';
   const sansProduction = avec.find((d) => d.kwh.marche === 0);
   if (sansProduction) return `${majuscule(fmtJourLong(sansProduction.jour))}, sans rien produire : ${kwh(sansProduction.total)} de veille.`;
   const max = avec.reduce((a, d) => (d.total > a.total ? d : a));
   return `Le jour le plus chargé : ${fmtJourLong(max.jour)}, ${kwh(max.total)}.`;
+}
+
+/** Ce qu'une machine a dépensé sans produire : réglages, veille et pannes sous tension (kWh). */
+export const horsProductionKwh = (k: Record<EtatEnergie, number>) => k.calage + k.arret + k.panne;
+
+/**
+ * Leçon du bloc « Par machine » : la machine qui dépense le plus sans produire, en kWh et en euros. C'est par elle que
+ * le graphique est classé (pas par la consommation totale, qui suit surtout la taille de la machine).
+ */
+export function leconParMachine(b: BilanUsine, prix: number): string {
+  const pire = b.parMachine.reduce<BilanUsine['parMachine'][number] | undefined>(
+    (a, x) => (!a || horsProductionKwh(x.bilan.kwh) > horsProductionKwh(a.bilan.kwh) ? x : a),
+    undefined,
+  );
+  const k = pire ? horsProductionKwh(pire.bilan.kwh) : 0;
+  if (!pire || !(k > 0)) return 'Aucune machine n’a dépensé d’énergie sans produire.';
+  return `${pire.machine.numero} dépense le plus sans produire : ${kwh(k)}, soit ${euros(k * prix)}.`;
 }

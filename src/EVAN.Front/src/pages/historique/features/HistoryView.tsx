@@ -7,7 +7,7 @@
  */
 import { niveauDe } from '@/domain/niveaux';
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
-import { History as IconeHistorique } from 'lucide-react';
+import { History as IconeHistorique, Zap } from 'lucide-react';
 import { useProject } from '@/store/project';
 import { useLive } from '@/store/live';
 import { useUi } from '@/store/ui';
@@ -16,18 +16,11 @@ import type { Alarme, Machine } from '@/domain/types';
 import { getHistory, H, markRepetitive } from '@/sim/history';
 import { pointInPolygon } from '@/geo/geodesy';
 import { PageIntro, montrerBloc } from '@/ui/explain';
-import {
-  bilan,
-  bilanAlarmes,
-  critiquesParJour,
-  ligneMachine,
-  pannesParOrgane,
-  pannesRecurrentes,
-  trsParJour,
-  type Periode,
-} from '../lib/calculs';
+import { Filtres } from '@/widgets/charts/Filtres';
+import { openPage } from '@/widgets/shell/navigation';
+import { bilan, bilanAlarmes, critiquesParTranche, ligneMachine, pannesParOrgane, pannesRecurrentes, trsParJour, type Periode } from '../lib/calculs';
 import { minusculeInitiale, verdictHistorique } from '../lib/phrases';
-import { Filtres } from './Filtres';
+import { useEtroit } from '../lib/useEtroit';
 import { Reperes } from './Reperes';
 import { ArretsEtCarte, PannesParOrgane } from './Arrets';
 import { Courbe } from './Courbe';
@@ -35,6 +28,9 @@ import { EfficaciteJours, EfficaciteMachines } from './Efficacite';
 import { AlarmesParJour, PannesRecurrentes } from './Alarmes';
 import { Journal } from './Journal';
 import { guideHistorique } from './guide';
+
+/** Étape de l'historique dans la navigation (openPage(7, …)). */
+const ETAPE_HISTORIQUE = 7;
 
 function Section({ titre, rang }: { titre: string; rang: number }) {
   return (
@@ -56,7 +52,9 @@ export function HistoryView() {
   // Machine désignée par un autre écran ou par la visite guidée : l'écran se filtre sur elle.
   const pageMachineId = useUi((s) => s.pageMachineId);
   useEffect(() => {
-    if (!pageMachineId) return;
+    // « Voir son énergie » pose la machine pour l'écran Énergie pendant que celui-ci est encore affiché : il ne la prend
+    // que s'il est bien l'écran ouvert.
+    if (!pageMachineId || useUi.getState().step !== ETAPE_HISTORIQUE) return;
     setMachineId(pageMachineId);
     setPointId('');
     useUi.getState().setPageMachineId(undefined);
@@ -73,6 +71,8 @@ export function HistoryView() {
   const lignesTous = useMemo(() => avecHistorique.map((m) => ligneMachine(h, m, from, now)), [avecHistorique, h, from, now]);
   const lignes = useMemo(() => (machineId ? lignesTous.filter((l) => l.m.id === machineId) : lignesTous), [lignesTous, machineId]);
   const b = useMemo(() => bilan(lignes), [lignes]);
+  // L'atelier entier, pour situer la machine choisie (durée moyenne d'un réglage).
+  const bTous = useMemo(() => bilan(lignesTous), [lignesTous]);
 
   const alarmesTous = useMemo(
     () =>
@@ -85,7 +85,7 @@ export function HistoryView() {
   const ba = useMemo(() => bilanAlarmes(alarmes), [alarmes]);
   const organes = useMemo(() => pannesParOrgane(lignes, modeles, !!machineId), [lignes, modeles, machineId]);
   const jours = useMemo(() => trsParJour(lignes, h, from), [lignes, h, from]);
-  const critiquesJour = useMemo(() => critiquesParJour(alarmes, from, now), [alarmes, from, now]);
+  const critiquesJour = useMemo(() => critiquesParTranche(alarmes, periode, from, now), [alarmes, periode, from, now]);
   const recurrentes = useMemo(() => pannesRecurrentes(alarmes, machines, now), [alarmes, machines, now]);
 
   const machine = machines.find((m) => m.id === machineId);
@@ -111,24 +111,38 @@ export function HistoryView() {
   }, []);
 
   const organeVerdict = machine && organes[0] ? minusculeInitiale(organes[0].nom.replace(/^\d+\.\s*/, '')) : undefined;
-  const v = verdictHistorique(periode, b, machine, organeVerdict);
-  const guide = useMemo(() => guideHistorique({ D: b.D, P: b.P, Q: b.Q }), [b.D, b.P, b.Q]);
+  const v = verdictHistorique(periode, b, machine, organeVerdict, bTous);
+  // Sur téléphone, la carte des arrêts n'est pas montrée (le graphique des arrêts dit la même chose, lisible) : le
+  // guide ne la présente pas.
+  const etroit = useEtroit();
+  const reglagesDabord = b.calage >= b.panne;
+  const guide = useMemo(() => guideHistorique({ D: b.D, P: b.P, Q: b.Q }, { carte: !etroit, reglagesDabord }), [b.D, b.P, b.Q, etroit, reglagesDabord]);
+  const lienEnergie = machine && (
+    <button type="button" className="btn sm ghost hf-lien" onClick={() => void openPage(9, machine.id)}>
+      <Zap aria-hidden /> Voir son énergie
+    </button>
+  );
 
   return (
     <div className="history hist">
       <PageIntro titre="Historique" icone={IconeHistorique} verdict={v.verdict} ton={v.ton} suite={v.suite} guide={guide} simule />
-      <Filtres periode={periode} onPeriode={setPeriode} machineId={machineId} onMachine={choisir} machines={machines} rang={1} />
+      <Filtres periode={periode} onPeriode={setPeriode} machineId={machineId} onMachine={choisir} machines={machines} rang={1} lien={lienEnergie} />
       <Reperes b={b} machine={machine} ba={ba} machines={machines} organeDe={organeDe} rang={2} />
 
       <div className="history-grid hist-grille">
         <Section titre="Où le temps s’est perdu" rang={4} />
-        <ArretsEtCarte lignes={lignesTous} zoneDe={zoneDe} selectionId={machineId} onChoisir={basculer} rang={5} />
+        <ArretsEtCarte lignes={lignesTous} zoneDe={zoneDe} selectionId={machineId} onChoisir={basculer} carte={!etroit} rang={5} />
         <PannesParOrgane organes={organes} totalPanne={b.panne} machine={machine} rang={7} />
         <PannesRecurrentes pannes={recurrentes} rang={8} />
 
         <Section titre="L’efficacité des machines" rang={9} />
         <EfficaciteMachines lignes={lignesTous} selectionId={machineId} onChoisir={basculer} rang={10} />
-        <EfficaciteJours jours={jours} perimetre={machine ? `${machine.numero} seulement.` : 'Toutes les machines, pondérées par leur temps d’ouverture.'} rang={11} />
+        <EfficaciteJours
+          jours={jours}
+          periode={periode}
+          perimetre={machine ? `${machine.numero} seulement.` : 'Toutes les machines, pondérées par leur temps d’ouverture.'}
+          rang={11}
+        />
 
         <Section titre="Les mesures et les alarmes" rang={12} />
         {machineCourbe && modeleCourbe && (
@@ -146,7 +160,7 @@ export function HistoryView() {
             rang={13}
           />
         )}
-        <AlarmesParJour jours={critiquesJour} rang={14} />
+        <AlarmesParJour tranches={critiquesJour} periode={periode} rang={14} />
         <Journal alarmes={alarmes} machines={machines} modeles={modeles} periode={periode} now={now} onVoirCourbe={voirCourbe} rang={15} />
       </div>
     </div>

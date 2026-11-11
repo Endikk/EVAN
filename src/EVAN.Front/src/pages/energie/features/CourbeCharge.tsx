@@ -1,7 +1,7 @@
 /**
- * Courbe de charge : la puissance tirée par l'usine au fil du temps. Les bandes grisées sont les creux lus dans les
- * données (rien ne produit ni ne se règle) : la nuit, le week-end. Ce qui reste au-dessus de zéro dans une bande,
- * c'est la veille. Le pic (pointillés) fixe la puissance à souscrire.
+ * Courbe de charge : la puissance tirée par l'usine au fil du temps, à l'encre du texte (elle mène l'écran). Les
+ * bandes grisées sont les creux lus dans les données (rien ne produit ni ne se règle) : la nuit, le week-end. Ce qui
+ * reste au-dessus de zéro dans une bande, c'est la veille. Le pic, un filet à sa hauteur, fixe la puissance à souscrire.
  *
  * À l'écran : le titre, une ligne de leçon et la légende (qui porte la valeur du pic). La lecture du graphique est dans
  * le « ? » ; la phrase complète reste pour les lecteurs d'écran.
@@ -14,13 +14,14 @@ import { uniteAxe } from '@/widgets/charts/axes';
 import { graduations, type LectureCourbe, type PointCharge } from '../lib/courbe';
 import { fmtHeure, fmtJourCourt, fmtMoment, kw, kwh } from '../lib/format';
 
+/** Graduations : la règle CSS de styles/graphiques.css (mono 11 px, --text-3) passe devant ces attributs. */
 const AXE = { fontSize: 11, fill: 'var(--text-3)' };
 
 /** Lecture du graphique, dans le « ? » du titre. */
 function aideCourbe(l: LectureCourbe): string {
   const veille = l.talon !== undefined ? `, ${kwh(l.kwhCreux)} sur la période` : '';
   const quand = l.pic ? ` (${fmtMoment(l.pic.t)})` : '';
-  return `Dans les bandes grisées, rien ne produit : ce qui reste au-dessus de zéro est de la veille${veille}. Le pic en pointillés${quand} fixe la puissance à souscrire.`;
+  return `Dans les bandes grisées, rien ne produit : ce qui reste au-dessus de zéro est de la veille${veille}. Le pic, le trait fin horizontal${quand}, fixe la puissance à souscrire.`;
 }
 
 interface Props {
@@ -40,7 +41,7 @@ function EtiquetteCreux({ viewBox, texte }: { viewBox?: { x?: number; y?: number
   const largeur = viewBox?.width ?? 0;
   if (largeur < texte.length * 6.5 + 8) return null;
   return (
-    <text x={(viewBox?.x ?? 0) + largeur / 2} y={(viewBox?.y ?? 0) + 14} textAnchor="middle" fontSize={11} fill="var(--text-3)">
+    <text x={(viewBox?.x ?? 0) + largeur / 2} y={(viewBox?.y ?? 0) + 16} textAnchor="middle" fontSize={11} fill="var(--text-3)">
       {texte}
     </text>
   );
@@ -81,8 +82,8 @@ export function CourbeCharge({ points, lecture, phrase, lecon, surPlusieursJours
                 key={c.debut}
                 x1={c.debut}
                 x2={c.fin}
-                fill="var(--idle)"
-                fillOpacity={0.13}
+                fill="var(--bande)"
+                fillOpacity={1}
                 stroke="none"
                 ifOverflow="hidden"
                 label={(p: { viewBox?: { x?: number; y?: number; width?: number } }) => <EtiquetteCreux viewBox={p.viewBox} texte={c.nature} />}
@@ -98,7 +99,7 @@ export function CourbeCharge({ points, lecture, phrase, lecon, surPlusieursJours
               tick={AXE}
               tickLine={false}
               axisLine={{ stroke: 'var(--grid)' }}
-              minTickGap={8}
+              minTickGap={16}
             />
             <YAxis
               tick={AXE}
@@ -108,7 +109,7 @@ export function CourbeCharge({ points, lecture, phrase, lecon, surPlusieursJours
               tickFormatter={(v: number) => fmtNombre(v)}
               label={uniteAxe('kW')}
             />
-            {pic && <ReferenceLine y={pic.kw} stroke="var(--text-3)" strokeDasharray="4 3" />}
+            {pic && <ReferenceLine y={pic.kw} stroke="var(--text-3)" strokeWidth={1} />}
             <Tooltip
               cursor={{ stroke: 'var(--text-3)', strokeWidth: 1 }}
               content={({ active, payload }) => {
@@ -123,7 +124,8 @@ export function CourbeCharge({ points, lecture, phrase, lecon, surPlusieursJours
                 );
               }}
             />
-            <Area type="stepAfter" dataKey="kw" stroke="var(--series-1)" strokeWidth={2} fill="var(--series-1)" fillOpacity={0.12} isAnimationActive={false} dot={false} />
+            {/* Un voile très léger sous la courbe : l'énergie est cette surface, mais c'est le trait qui se lit. */}
+            <Area type="stepAfter" dataKey="kw" stroke="var(--series-1)" strokeWidth={1.5} fill="var(--series-1)" fillOpacity={0.06} isAnimationActive={false} dot={false} />
             {pic && <ReferenceDot x={pic.t} y={pic.kw} r={4.5} fill="var(--series-1)" stroke="var(--surface)" strokeWidth={2} ifOverflow="visible" />}
           </AreaChart>
         </ResponsiveContainer>

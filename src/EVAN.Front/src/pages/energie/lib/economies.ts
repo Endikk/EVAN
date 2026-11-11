@@ -1,8 +1,13 @@
 /**
  * « Où économiser » : chaque gisement d'économie devient une action dite en clair (quoi faire), avec ce qu'elle
  * rapporterait sur un an et le calcul pas à pas. Tous les chiffres viennent de l'historique et des réglages de l'écran.
+ *
+ * Deux règles pour ne pas promettre plus que ce qui est vrai. Le calcul part toujours des 7 derniers jours, quelle que
+ * soit la période affichée : une somme par an ne doit pas changer du simple au double avec un bouton. Et une somme qui
+ * suppose de tout supprimer (plus aucun réglage, plus aucune veille) est un plafond, écrit « jusqu'à » : on dit aussi
+ * ce que rapporte un seul réglage évité, ce qui est à portée de main.
  */
-import type { BilanUsine, Gisement } from '@/analytics/energy';
+import { bilanUsine, gisements, type BilanUsine, type Gisement, type Parametres } from '@/analytics/energy';
 import { MACHINE_TYPES } from '@/domain/catalog';
 import type { Machine } from '@/domain/types';
 import type { History } from '@/sim/history';
@@ -10,6 +15,7 @@ import { fmtNombre } from '@/ui/format';
 import { euros, fmtJours, kw, kwh, pourcent, prixKwh } from './format';
 
 const H = 3_600_000;
+const DAY = 24 * H;
 
 export interface ActionEco {
   cle: string;
@@ -19,7 +25,12 @@ export interface ActionEco {
   pourquoi: string;
   euroAn: number;
   kwhAn: number;
-  /** Part de l'énergie de l'usine concernée. */
+  /**
+   * La somme suppose de supprimer toute la perte (tous les réglages, toute la veille) : c'est un plafond, écrit
+   * « jusqu'à ». Faux pour une machine ramenée à la moyenne de ses semblables : là, la somme est l'écart lui-même.
+   */
+  plafond: boolean;
+  /** Part de l'énergie concernée (de l'usine, ou de la machine choisie). */
   part: number;
   /** Le calcul, une étape par ligne. */
   calcul: string[];
@@ -66,9 +77,12 @@ function actionCalage(g: Gisement, c: ContexteEco): ActionEco {
   return {
     cle: 'calage',
     titre: 'Regrouper les travaux pour faire moins de réglages',
-    pourquoi: 'C’est ce que coûtent les réglages (calages) en électricité sur un an. Chaque calage évité en retire une part.',
+    pourquoi: c.calages.nombre
+      ? `Le plafond : ce que coûteraient tous les réglages (calages) en électricité sur un an, si l’on n’en faisait plus aucun. Chaque calage évité rapporte environ ${euros(parCalage * c.prix)}.`
+      : 'Le plafond : ce que coûteraient tous les réglages (calages) en électricité sur un an, si l’on n’en faisait plus aucun.',
     euroAn: g.euroAn,
     kwhAn: g.kwhAn,
+    plafond: true,
     part: g.part,
     calcul: [
       c.calages.nombre
@@ -86,9 +100,10 @@ function actionVeille(g: Gisement, c: ContexteEco): ActionEco {
   return {
     cle: 'veille',
     titre: 'Couper ce qui reste allumé quand rien ne produit',
-    pourquoi: 'C’est ce que coûte la veille sur un an : machines, sécheurs et armoires restés sous tension sans produire.',
+    pourquoi: 'Le plafond : ce que coûte la veille sur un an, si tout était coupé dès que rien ne produit. Machines, sécheurs et armoires restent sous tension sans produire.',
     euroAn: g.euroAn,
     kwhAn: g.kwhAn,
+    plafond: true,
     part: g.part,
     calcul: [
       `Sur la période observée (${fmtJours(c.jours)}), la veille a consommé ${kwh(kwhP)}.`,
@@ -106,9 +121,11 @@ function actionPanne(g: Gisement, c: ContexteEco): ActionEco {
   return {
     cle: 'panne',
     titre: 'Réparer plus vite, ou couper la machine en panne',
-    pourquoi: 'Une machine en panne reste sous tension pendant la réparation. Chaque heure gagnée sur la réparation retire une part de cette somme.',
+    pourquoi:
+      'Le plafond : ce que coûtent sur un an les machines restées sous tension pendant leurs pannes. Chaque heure gagnée sur une réparation en retire une part.',
     euroAn: g.euroAn,
     kwhAn: g.kwhAn,
+    plafond: true,
     part: g.part,
     calcul: [
       c.pannes.nombre
@@ -131,9 +148,10 @@ function actionMachine(g: Extract<Gisement, { id: 'machine' }>, c: ContexteEco):
   return {
     cle: `machine-${g.machineId}`,
     titre: `Chercher pourquoi ${nom} consomme plus que ses semblables`,
-    pourquoi: `${nom} tire ${pourcent(g.ecart)} d’électricité de plus par ${unite.replace(/s$/, '')} que la moyenne des ${semblables}. Revenir à cette moyenne rapporterait cette somme.`,
+    pourquoi: `${nom} tire ${pourcent(g.ecart)} d’électricité de plus par ${unite.replace(/s$/, '')} que la moyenne des ${semblables}. Revenir à cette moyenne rapporterait environ cette somme.`,
     euroAn: g.euroAn,
     kwhAn: g.kwhAn,
+    plafond: false,
     part: g.part,
     calcul: [
       `${nom} : ${fmtNombre(g.intensite, 2)} kWh pour 1 000 ${unite}. Moyenne des ${semblables} : ${fmtNombre(g.moyenne, 2)} kWh.`,
@@ -158,4 +176,34 @@ export function actionsEconomie(pistes: Gisement[], c: ContexteEco): ActionEco[]
       return actionPanne(g, c);
     })
     .sort((a, b) => b.euroAn - a.euroAn);
+}
+
+/**
+ * Les actions d'économie de l'écran, toujours calculées sur les 7 derniers jours (tout l'historique), quelle que soit
+ * la période affichée. Avec une machine choisie : ses propres pertes, ramenées à sa consommation, et son écart face aux
+ * machines du même type s'il y en a un. `talon` est la puissance tirée quand rien ne produit, lue sur la courbe de
+ * charge des mêmes 7 jours.
+ */
+export function economiesSur7Jours(h: History, machines: Machine[], machineId: string, now: number, params: Parametres, talon?: number): ActionEco[] {
+  const avecHistorique = machines.filter((m) => !m.creeLe);
+  const vues = machineId ? avecHistorique.filter((m) => m.id === machineId) : avecHistorique;
+  const jours = (now - h.debut) / DAY;
+  const tous = bilanUsine(h, avecHistorique, h.debut, now, params);
+  const vue = machineId ? bilanUsine(h, vues, h.debut, now, params) : tous;
+  // L'écart d'une machine à ses semblables se mesure sur tout l'atelier ; sa part se ramène ensuite à la machine.
+  const ecart = machineId
+    ? gisements(tous, jours, params)
+        .filter((g) => g.id === 'machine' && g.machineId === machineId)
+        .map((g) => ({ ...g, part: vue.total.total ? (g.part * tous.total.total) / vue.total.total : 0 }))
+    : [];
+  const pistes = [...gisements(vue, jours, params), ...ecart];
+  return actionsEconomie(pistes, {
+    bilan: vue,
+    jours,
+    prix: params.prixKwh,
+    machines,
+    calages: compterPeriodes(h, vues, h.debut, now, 'calage'),
+    pannes: compterPeriodes(h, vues, h.debut, now, 'panne'),
+    talon,
+  });
 }

@@ -1,49 +1,21 @@
 /* ============================================================
-   Historique : verdict, filtres, repères, cartes à leçon, journal, volet d'alarme, schéma du TRS.
+   Historique : verdict, repères, cartes à leçon, journal, volet d'alarme, schéma du TRS. La barre des filtres est
+   partagée avec l'énergie (widgets/charts/Filtres.tsx) : ses règles sont dans styles/graphiques.css.
    Les règles propres à l'écran sont préfixées par .hist ; celles du volet et du schéma sont rendues dans le body
    (portail), elles portent donc leur propre préfixe.
    ============================================================ */
 
-/* ---------- Ce que montre l'écran : période et machine ---------- */
-.hist-filtres {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px 32px;
-  margin: 0 0 16px;
-}
-.hf-groupe {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-.hf-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-2);
-}
-.hf-label svg {
-  width: var(--icon);
-  height: var(--icon);
-  color: var(--accent-text);
-}
-/* La liste de la machine : même hauteur que le choix de la période (40 px), assez large pour le nom le plus long
-   de la démo, pour que la barre ne bouge pas quand on change de machine. */
-.hist-filtres .choix {
-  width: auto;
-  min-width: 260px;
-}
-.hf-retirer {
-  color: var(--text-2);
-}
-
-/* ---------- Repères, puis les autres chiffres en une rangée ---------- */
+/* ---------- Repères : un qui mène, deux compacts, puis les autres chiffres en une rangée ---------- */
+/* L'efficacité occupe la colonne large sur deux rangées ; les deux repères compacts s'empilent à côté d'elle. */
 .hist-reperes {
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+}
+.hist-reperes .rp-mene {
+  grid-row: span 2;
+  padding: 24px;
+}
+.hist-reperes .rp-mene .rp-jauge {
+  margin-top: auto;
 }
 .hist-autres {
   margin-top: 16px;
@@ -56,9 +28,9 @@
 }
 .hist-section {
   margin: 16px 0 -4px;
-  font-size: 17px;
-  font-weight: 650;
-  letter-spacing: -0.01em;
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0;
   color: var(--text);
 }
 .hist-cellule {
@@ -72,6 +44,9 @@
 }
 
 /* ---------- Une carte : titre et « ? », une ligne de leçon (kit : TitreCarte), puis le graphique ---------- */
+.hist .hist-carte {
+  padding: 20px;
+}
 .hist-carte .tc-actions {
   flex-wrap: wrap;
 }
@@ -85,11 +60,11 @@
   min-width: 0;
 }
 .hc-contexte {
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   color: var(--text-3);
 }
 .hc-contexte b {
-  font-weight: 650;
+  font-weight: var(--fw-medium);
   color: var(--text-2);
 }
 .hc-choix .choix {
@@ -113,8 +88,8 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
   color: var(--text-3);
 }
 /* Chaque liste a la largeur de son choix le plus long : la recherche ne se décale pas quand on filtre. */
@@ -154,10 +129,48 @@
     height: 44px;
   }
 }
+/* Combien d'alarmes restent quand le journal est filtré : vide (et sans place) tant qu'aucun filtre n'est posé. */
+.hj-compte {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  margin: -4px 0 12px;
+  font-size: var(--fs-md);
+  color: var(--text-2);
+}
+.hj-compte:empty {
+  margin: 0;
+}
+.hj-compte b {
+  color: var(--text);
+  font-weight: var(--fw-medium);
+}
+/* Détail d'un organe regroupé par type, dans la bulle : une machine par ligne, ses heures à droite. */
+.hist-tip-liste {
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: auto auto;
+  column-gap: 12px;
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+}
+.hist-tip-liste li {
+  display: contents;
+}
+.hist-tip-liste b {
+  font-weight: var(--fw-medium);
+  color: var(--text);
+}
+.hist-tip-liste .num {
+  text-align: right;
+}
 .hj-jour h4 {
   margin: 16px 0 4px;
-  font-size: 13px;
-  font-weight: 650;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
   color: var(--text-2);
 }
 .hj-jour ul {
@@ -168,7 +181,7 @@
 }
 .hj-ligne {
   display: grid;
-  grid-template-columns: 74px minmax(0, 1fr) auto 18px;
+  grid-template-columns: 72px minmax(0, 1fr) auto 16px;
   align-items: center;
   gap: 4px 16px;
   width: 100%;
@@ -195,7 +208,7 @@
   gap: 8px;
   align-self: start;
   padding-top: 1px;
-  font-size: 13px;
+  font-size: var(--fs-md);
   color: var(--text-2);
 }
 /* Une alarme résolue est du passé réglé : sa forme reste (carré critique, triangle d'attention), sa couleur s'efface.
@@ -214,16 +227,16 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 4px 8px;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
   color: var(--text);
 }
 .hj-quoi .chip {
   height: 22px;
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
 }
 .hj-ou {
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   color: var(--text-3);
 }
 /* La durée, en chiffre, et sous elle un mot seulement si l'alarme n'est pas réglée. */
@@ -232,14 +245,14 @@
   flex-direction: column;
   align-items: flex-end;
   gap: 4px;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
   color: var(--text-2);
   white-space: nowrap;
 }
 .hj-etat {
-  font-size: 12px;
-  font-weight: 650;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
 }
 .hj-etat.active {
   color: var(--crit);
@@ -270,7 +283,7 @@
   color: var(--warn);
 }
 .hist-volet .guide-tete h2 {
-  font-size: 18px;
+  font-size: var(--fs-xl);
   line-height: 1.3;
 }
 .hv-statut {
@@ -282,8 +295,8 @@
   border-radius: 999px;
   background: var(--surface-2);
   border: 1px solid var(--border);
-  font-size: 12.5px;
-  font-weight: 600;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
   color: var(--text-2);
 }
 .hv-bloc {
@@ -291,13 +304,13 @@
 }
 .hv-bloc h3 {
   margin: 0 0 8px;
-  font-size: 14px;
-  font-weight: 650;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
   color: var(--text);
 }
 .hv-bloc p {
   margin: 0 0 8px;
-  font-size: 14px;
+  font-size: var(--fs-base);
   line-height: 1.55;
   color: var(--text-2);
 }
@@ -309,7 +322,7 @@
 }
 .hv-code {
   margin: 16px 0 0;
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   color: var(--text-3);
 }
 
@@ -330,11 +343,11 @@
   flex-wrap: wrap;
   align-items: baseline;
   gap: 4px 8px;
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   color: var(--text);
 }
 .st-textes small {
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
   color: var(--text-3);
 }
 .st-piste {
@@ -360,10 +373,10 @@
   animation-delay: calc(350ms + var(--i, 0) * 520ms);
 }
 .st-fin .st-barre {
-  background: var(--accent-2);
+  background: var(--series-1);
 }
 .st-fin .st-textes {
-  font-weight: 650;
+  font-weight: var(--fw-medium);
 }
 @keyframes st-coupe {
   from {
@@ -372,7 +385,7 @@
 }
 .schema-trs figcaption {
   margin-top: 4px;
-  font-size: 13px;
+  font-size: var(--fs-md);
   color: var(--text-2);
 }
 .schema-trs figcaption b {
@@ -381,16 +394,15 @@
 
 /* ---------- Téléphone ---------- */
 @media (max-width: 760px) {
-  .hf-groupe {
-    flex-wrap: wrap;
-    width: 100%;
-  }
-  .hist-filtres .choix {
-    flex: 1;
-    min-width: 0;
-  }
   .hist-reperes {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .hist-reperes .rp-mene {
+    grid-row: auto;
+    padding: 20px;
+  }
+  .hist .hist-carte {
+    padding: 16px;
   }
   .hist-carte .tc-actions,
   .hc-suivi {
@@ -413,7 +425,7 @@
   }
   /* Sur téléphone, la durée passe sous le texte : le nom de l'alarme garde toute la largeur. */
   .hj-ligne {
-    grid-template-columns: 62px minmax(0, 1fr) 16px;
+    grid-template-columns: 64px minmax(0, 1fr) 16px;
     gap: 4px 8px;
     padding: 8px 4px;
   }

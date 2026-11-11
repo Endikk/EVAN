@@ -62,7 +62,12 @@ export function AlarmeVolet({ alarme: a, machine, organe, courbe, now, onFermer,
   useEffect(() => {
     const avant = document.activeElement as HTMLElement | null;
     fermer.current?.focus();
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onFermer();
+    // Une bulle ouverte dans le volet a déjà consommé Échap (defaultPrevented) : le volet reste ouvert.
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || e.defaultPrevented) return;
+      e.preventDefault();
+      onFermer();
+    };
     window.addEventListener('keydown', onKey);
     return () => {
       window.removeEventListener('keydown', onKey);

@@ -10,29 +10,29 @@
 .hbar.arrivee .recharts-bar-rectangle {
   transform-box: fill-box;
   transform-origin: 0 50%;
-  animation: barre-x 700ms var(--ease-out) backwards;
+  animation: barre-x var(--dur-entree) var(--ease-out) backwards;
 }
 .hbar.arrivee .hbar-s1 .recharts-bar-rectangle {
-  animation-delay: 180ms;
+  animation-delay: 120ms;
 }
 .hbar.arrivee .hbar-s2 .recharts-bar-rectangle {
-  animation-delay: 300ms;
+  animation-delay: 200ms;
 }
 .hbar.arrivee .hbar-s3 .recharts-bar-rectangle {
-  animation-delay: 420ms;
+  animation-delay: 280ms;
 }
 
 /* Colonnes par jour : elles montent depuis l'axe. */
 .chart-colonnes.arrivee .recharts-bar-rectangle {
   transform-box: fill-box;
   transform-origin: 50% 100%;
-  animation: barre-y 650ms var(--ease-out) backwards;
+  animation: barre-y var(--dur-entree) var(--ease-out) backwards;
 }
 
 /* Les valeurs écrites arrivent une fois les barres posées. */
 .hbar.arrivee .recharts-label-list,
 .chart-colonnes.arrivee .recharts-label-list {
-  animation: valeurs 320ms var(--ease) 480ms backwards;
+  animation: valeurs var(--dur) var(--ease) 360ms backwards;
 }
 
 @keyframes barre-x {
@@ -51,46 +51,86 @@
   }
 }
 
-/* Valeur écrite dans un segment : encre sombre sur les couleurs vives du thème nuit, claire sur les couleurs
-   plus soutenues du thème jour. Le contraste tient dans les deux cas. */
-.hbar-dans {
-  fill: var(--bg);
-}
-:root[data-theme='light'] .hbar-dans {
-  fill: var(--surface);
+/* Valeur écrite au bout d'une barre ou sur le chapeau d'une colonne : un chiffre exact, en retrait derrière la marque.
+   Un liseré de la couleur de la carte, peint sous le texte, le garde lisible quand un trait de repère le traverse. */
+.ch-valeur {
+  font-family: var(--mono);
+  font-size: var(--fs-xs);
+  fill: var(--text-3);
+  font-variant-numeric: tabular-nums;
+  paint-order: stroke;
+  stroke: var(--surface);
+  stroke-width: 4px;
+  stroke-linejoin: round;
 }
 
-/* Hachures d'une série distinguée par un motif (réglage à côté d'une panne). */
+/* Hachures d'une série distinguée par un motif : ton sur ton, à peine plus clair que la marque. */
 .hbar-hachure {
   fill: var(--surface);
-  fill-opacity: 0.38;
+  fill-opacity: 0.22;
 }
 
-/* Pastilles de légende en formes : trait, plage, carré, hachures, repère. */
+/* Noms au bout des courbes (efficacité jour par jour) : une colonne à droite du tracé, chacun à la hauteur de son
+   dernier point, précédé d'un trait de la couleur de sa courbe. */
+.ch-fins {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+.ch-fins span {
+  position: absolute;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transform: translateY(-50%);
+  font-size: var(--fs-xs);
+  line-height: 1;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+.ch-fins span.mene {
+  color: var(--text);
+  font-weight: var(--fw-medium);
+}
+.ch-fins i {
+  flex: none;
+  width: 8px;
+  height: 2px;
+  border-radius: 1px;
+}
+
+/* Pastilles de légende en formes : trait, plage, carré, hachures, repère. Les séries d'état prennent l'icône de
+   leur état (StatusIcon) : la forme dit l'état autant que la couleur. */
+.chart-legend .status-icon {
+  flex: none;
+}
 .chart-legend i.cl-trait {
   width: 14px;
-  height: 3px;
-  border-radius: 2px;
+  height: 2px;
+  border-radius: 1px;
 }
-/* Plage normale : gris calme, comme la bande qu'elle désigne (le normal ne prend pas de couleur). */
+/* Plage normale : voile neutre, comme la bande qu'elle désigne (le normal ne prend pas de couleur). */
 .chart-legend i.cl-plage {
-  background: var(--idle-soft);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--idle) 60%, transparent);
+  background: var(--bande);
+  box-shadow: inset 0 0 0 1px var(--bande-bord);
 }
 .chart-legend i.cl-carre {
   width: 9px;
   height: 9px;
-  border-radius: 1px;
+  border-radius: 2px;
   background: var(--crit);
 }
 .chart-legend i.cl-hachures {
-  background: repeating-linear-gradient(45deg, var(--c) 0 3px, color-mix(in srgb, var(--c) 45%, var(--surface)) 3px 5px);
+  background: repeating-linear-gradient(45deg, var(--c) 0 3px, color-mix(in srgb, var(--c) 70%, var(--surface)) 3px 5px);
 }
 .chart-legend i.cl-repere {
-  width: 2px;
+  width: 1px;
   height: 14px;
   border-radius: 0;
-  background: repeating-linear-gradient(180deg, var(--text-2) 0 4px, transparent 4px 7px);
+  background: var(--text-2);
 }
 
 /* Carte des arrêts : une machine cliquable se désigne aussi au clavier. */
@@ -98,6 +138,30 @@
   outline: none;
 }
 .heatplan g[role='button']:focus-visible rect {
-  stroke: var(--accent-text);
-  stroke-width: 3px;
+  stroke: var(--text);
+  stroke-width: 2px;
+}
+
+/* Barres horizontales choisissables : un libellé est un bouton. Le focus clavier dessine son cadre au vermillon (la
+   couleur du focus dans EVAN) autour du libellé ; l'anneau du navigateur, qui ne suit pas la forme, est retiré. */
+.hbar-ligne {
+  outline: none;
+}
+.hbar-focus {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2px;
+}
+/* Ce que fera le choix d'une ligne, au bas de sa bulle. */
+.ch-indice {
+  margin-top: 4px;
+  font-size: var(--fs-xs);
+}
+
+/* Étiquettes du plan des pannes : un liseré du fond du plan, peint sous le texte, les garde lisibles quand elles
+   croisent un mur ou le filet d'une zone. Son épaisseur, en mètres du plan, est posée par HeatPlan. */
+.heatplan .hp-texte {
+  paint-order: stroke;
+  stroke: var(--surface-2);
+  stroke-linejoin: round;
 }

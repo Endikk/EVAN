@@ -5,13 +5,28 @@
    ============================================================ */
 
 .history.energie {
-  /* Le nuage de pixels de la tête déborde un peu à droite (marge négative) : l'écran ne doit jamais défiler de côté. */
+  /* L'écran ne défile jamais de côté, même si une légende longue déborde sur un téléphone. */
   overflow-x: hidden;
 }
 
 /* ---------- Repères, rangée des chiffres de second rang, réglages repliés ---------- */
+/* La consommation mène : colonne large sur deux rangées, sa note (le coût) visible. La part dépensée sans produire
+   et la puissance du moment s'empilent en compact à côté (ui/explain/explain.css, .rp-compact). */
 .energie .en-reperes {
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+}
+.energie .en-reperes .rp-mene {
+  grid-row: span 2;
+  padding: 24px;
+}
+.energie .en-reperes .rp-mene .rp-note {
+  margin-top: auto;
+  font-size: var(--fs-base);
+  color: var(--text-2);
+}
+/* Les cartes de la grille : 20 px de retrait, comme celles de l'historique. */
+.energie .history-grid > .card {
+  padding: 20px;
 }
 .energie .en-plus {
   margin: 8px 0 16px;
@@ -26,30 +41,39 @@
 
 /* ---------- Courbe de charge ---------- */
 .energie .en-courbe-chart {
-  height: 250px;
+  height: 280px;
 }
 .energie .en-legende i.en-leg-trait {
   width: 14px;
-  height: 3px;
-  border-radius: 2px;
+  height: 2px;
+  border-radius: 1px;
   background: var(--series-1);
 }
+/* « Rien ne produit » : le même voile neutre que les bandes du graphique. */
 .energie .en-legende i.en-leg-creux {
-  background: color-mix(in srgb, var(--idle) 28%, transparent);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--idle) 45%, transparent);
+  background: var(--bande);
+  box-shadow: inset 0 0 0 1px var(--bande-bord);
 }
+/* Le pic : un filet, comme sur la courbe. */
 .energie .en-legende i.en-leg-pic {
   width: 14px;
-  height: 0;
+  height: 1px;
   border-radius: 0;
-  border-top: 2px dashed var(--text-3);
+  background: var(--text-3);
+}
+.energie .en-legende .num {
+  font-family: var(--mono);
+  font-size: var(--fs-xs);
+  color: var(--text-3);
 }
 .energie .en-legende .faint {
-  font-weight: 450;
+  font-weight: var(--fw-regular);
 }
 
-/* ---------- Où part l'énergie : une barre qui se remplit par état ---------- */
-/* La carte a la hauteur de la courbe voisine : ses quatre lignes se répartissent sur toute la hauteur. */
+/* ---------- Où part l'énergie : une liste classée à barres fines ---------- */
+/* Une ligne par état : forme, nom, kWh en mono discret, part à droite ; dessous, une barre de 4 px sur toute la
+   largeur, à la teinte posée de l'état. Les lignes sont séparées par un filet et se répartissent sur la hauteur de
+   la courbe voisine. */
 .energie .en-repartition {
   display: flex;
   flex-direction: column;
@@ -60,44 +84,51 @@
 }
 .en-parts {
   list-style: none;
-  margin: 4px 0 0;
+  margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 16px;
 }
 .en-parts li {
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
   color: var(--text);
+}
+.en-parts li:last-child {
+  border-bottom: 1px solid var(--border);
 }
 .en-part-tete {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13.5px;
+  font-size: var(--fs-base);
 }
 .en-part-tete .status-icon {
+  flex: none;
   color: var(--c);
 }
 .en-part-nom {
   flex: 1;
   min-width: 0;
-  font-weight: 560;
+  color: var(--text-2);
 }
 .en-part-kwh {
-  font-size: 12.5px;
+  font-family: var(--mono);
+  font-size: var(--fs-xs);
   color: var(--text-3);
 }
 .en-part-tete b {
-  min-width: 52px;
+  min-width: 56px;
   text-align: right;
-  font-size: 15px;
-  font-weight: 680;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-medium);
+  font-variant-numeric: tabular-nums;
 }
 .en-part-barre {
   position: relative;
-  height: 8px;
-  margin-top: 8px;
-  border-radius: var(--r-xs);
+  height: 4px;
+  margin: 8px 0 0 20px;
+  border-radius: 2px;
   background: var(--surface-3);
   overflow: hidden;
 }
@@ -105,11 +136,11 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: var(--c);
+  background: color-mix(in srgb, var(--c) var(--ton-pose), var(--surface));
   transform-origin: left center;
-  transition: transform 900ms var(--ease-out);
-  animation: en-remplir 1100ms var(--ease-out) backwards;
-  animation-delay: calc(260ms + var(--i, 0) * 110ms);
+  transition: transform var(--dur-entree) var(--ease-out);
+  animation: en-remplir 600ms var(--ease-out) backwards;
+  animation-delay: calc(200ms + var(--i, 0) * 80ms);
 }
 @keyframes en-remplir {
   from {
@@ -126,10 +157,11 @@
   flex-direction: column;
   gap: 4px;
 }
-/* Une ligne : rang, quoi faire, gain par an, chevron ; la barre dessous. Le pourquoi est dans le volet. */
+/* Une ligne : rang, quoi faire, gain par an, chevron ; la barre dessous, à l'encre discrète (c'est une grandeur,
+   pas un état). Le pourquoi est dans le volet. */
 .en-action {
   display: grid;
-  grid-template-columns: 26px minmax(0, 1fr) auto 16px;
+  grid-template-columns: 24px minmax(0, 1fr) auto 16px;
   grid-template-areas:
     'rang texte gain chevron'
     '. barre barre .';
@@ -164,21 +196,18 @@
 }
 .en-action-rang {
   grid-area: rang;
-  display: grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  border-radius: var(--r-sm);
-  background: var(--accent-soft);
-  color: var(--accent-text);
-  font-size: 12px;
-  font-weight: 700;
+  align-self: start;
+  padding-top: 2px;
+  font-family: var(--mono);
+  font-size: var(--fs-sm);
+  color: var(--text-3);
+  text-align: right;
 }
 .en-action-titre {
   grid-area: texte;
   min-width: 0;
-  font-size: 14px;
-  font-weight: 620;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
   line-height: 1.35;
 }
 .en-action-gain {
@@ -189,12 +218,13 @@
   white-space: nowrap;
 }
 .en-action-gain b {
-  font-size: 18px;
-  font-weight: 680;
-  letter-spacing: -0.01em;
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
 }
 .en-action-gain small {
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--text-3);
 }
 .en-action-chevron {
@@ -205,7 +235,7 @@
   transition: color var(--dur) var(--ease);
 }
 .en-action:hover .en-action-chevron {
-  color: var(--accent-text);
+  color: var(--text);
 }
 .en-action-barre {
   grid-area: barre;
@@ -219,29 +249,29 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: var(--accent-2);
+  background: var(--text-3);
   transform-origin: left center;
-  transition: transform 900ms var(--ease-out);
-  animation: en-remplir 1000ms var(--ease-out) backwards;
-  animation-delay: calc(420ms + var(--i, 0) * 110ms);
+  transition: transform var(--dur-entree) var(--ease-out);
+  animation: en-remplir 600ms var(--ease-out) backwards;
+  animation-delay: calc(300ms + var(--i, 0) * 80ms);
 }
 
 /* ---------- Volet du calcul ---------- */
 .en-volet-gain {
   margin: -8px 0 8px;
-  font-size: 14px;
+  font-size: var(--fs-base);
   color: var(--text-2);
 }
 .en-volet-gain b {
-  font-size: 24px;
-  font-weight: 700;
+  font-size: var(--fs-3xl);
+  font-weight: var(--fw-medium);
   color: var(--text);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
 }
 .en-volet-titre {
   margin: 24px 0 8px;
-  font-size: 14px;
-  font-weight: 650;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-medium);
 }
 .en-calcul {
   margin: 0;
@@ -254,11 +284,11 @@
 }
 .en-calcul li {
   position: relative;
-  padding: 8px 8px 8px 38px;
+  padding: 8px 8px 8px 40px;
   border-radius: var(--r-sm);
   background: var(--surface-2);
   border: 1px solid var(--border);
-  font-size: 13.5px;
+  font-size: var(--fs-base);
   line-height: 1.5;
   color: var(--text);
   counter-increment: etape;
@@ -269,26 +299,26 @@
 .en-calcul li::before {
   content: counter(etape);
   position: absolute;
-  left: 10px;
-  top: 9px;
+  left: 12px;
+  top: 8px;
   width: 20px;
   height: 20px;
   border-radius: var(--r-sm);
   display: grid;
   place-items: center;
-  font-size: 11.5px;
-  font-weight: 700;
-  color: var(--accent-text);
-  background: var(--accent-soft);
+  font-family: var(--mono);
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+  background: var(--surface-3);
 }
 .en-volet-hyp {
   margin: 8px 0 0;
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   color: var(--text-3);
 }
 .en-volet-conseil {
   margin: 0;
-  font-size: 13.5px;
+  font-size: var(--fs-base);
   line-height: 1.55;
   color: var(--text-2);
 }
@@ -310,12 +340,12 @@
   align-items: center;
 }
 .en-champ-tete label {
-  font-size: 12.5px;
-  font-weight: 600;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
   color: var(--text-2);
 }
 .en-champs small {
-  font-size: 12px;
+  font-size: var(--fs-sm);
   line-height: 1.45;
   color: var(--text-3);
 }
@@ -326,7 +356,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
+  font-size: var(--fs-md);
   color: var(--text-2);
 }
 .en-saisie .input {
@@ -345,7 +375,7 @@
 }
 .en-reglages-resultat {
   margin: 0;
-  font-size: 13.5px;
+  font-size: var(--fs-base);
   color: var(--text-2);
 }
 .en-reglages-resultat b {
@@ -365,7 +395,7 @@
   overflow: visible;
 }
 .en-schema-pt text {
-  font-size: 12px;
+  font-size: var(--fs-sm);
   fill: var(--text-2);
 }
 .en-pt-axe {
@@ -374,45 +404,37 @@
 }
 .en-pt-niveau {
   stroke: var(--series-1);
-  stroke-width: 2.5;
+  stroke-width: 2;
 }
-/* L'aire sous la puissance se remplit de gauche à droite : l'énergie, c'est cette surface. */
+/* L'aire sous la puissance se remplit de gauche à droite, une fois à l'ouverture du guide : l'énergie, c'est cette
+   surface. Le résultat apparaît quand elle est pleine. Rien ne tourne en boucle : ce schéma n'est pas en direct. */
 .en-pt-aire {
   fill: var(--series-1);
-  fill-opacity: 0.2;
+  fill-opacity: 0.16;
   transform-box: fill-box;
   transform-origin: left center;
-  animation: en-pt-remplir 5s var(--ease-out) infinite;
+  animation: en-pt-remplir 1600ms var(--ease-out) 300ms backwards;
 }
 .en-schema-pt text.en-pt-resultat {
-  font-size: 16px;
-  font-weight: 700;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-medium);
   fill: var(--text);
-  animation: en-pt-resultat 5s var(--ease) infinite;
+  animation: en-pt-resultat var(--dur-entree) var(--ease) 1700ms backwards;
 }
 @keyframes en-pt-remplir {
-  0% {
+  from {
     transform: scaleX(0);
-  }
-  40%,
-  100% {
-    transform: scaleX(1);
   }
 }
 @keyframes en-pt-resultat {
-  0%,
-  36% {
+  from {
     opacity: 0;
-  }
-  48%,
-  100% {
-    opacity: 1;
   }
 }
 .en-schema-pt figcaption,
 .en-schema-cent figcaption {
   margin-top: 8px;
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   line-height: 1.5;
   color: var(--text-2);
 }
@@ -454,10 +476,42 @@
   background: var(--c);
 }
 
+/* ---------- Par machine ---------- */
+.en-tip {
+  margin-top: 4px;
+}
+/* Huit colonnes ne tiennent pas sur un téléphone : le tableau défile de côté dans son cadre, sans écraser les chiffres. */
+.energie .en-table-defile {
+  overflow-x: auto;
+}
+.energie .en-table-defile .table {
+  table-layout: auto;
+  min-width: 720px;
+}
+.energie .en-table-defile tfoot th,
+.energie .en-table-defile tfoot td {
+  border-top: 1px solid var(--border-strong);
+  font-weight: var(--fw-medium);
+  color: var(--text);
+}
+.energie .en-table-defile tr[aria-current='true'] td {
+  background: var(--accent-soft);
+}
+
 /* ---------- Téléphone ---------- */
 @media (max-width: 760px) {
   .energie .details-apercu {
     display: none;
+  }
+  .energie .en-reperes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .energie .en-reperes .rp-mene {
+    grid-row: auto;
+    padding: 20px;
+  }
+  .energie .history-grid > .card {
+    padding: 16px;
   }
   .en-champs {
     grid-template-columns: minmax(0, 1fr);
@@ -467,7 +521,7 @@
     white-space: normal;
   }
   .en-action {
-    grid-template-columns: 24px minmax(0, 1fr) 14px;
+    grid-template-columns: 24px minmax(0, 1fr) 16px;
     grid-template-areas:
       'rang texte chevron'
       '. gain .'
@@ -482,5 +536,5 @@
 /* Montant en euros dans la note d'un repère : la somme qui compte, lisible d'un coup d'œil. */
 .en-note-fort {
   color: var(--text);
-  font-weight: 650;
+  font-weight: var(--fw-medium);
 }

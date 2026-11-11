@@ -18,6 +18,8 @@ export interface LigneMachine {
   ouverture: number;
   /** Nombre d'arrêts sur panne. */
   nPannes: number;
+  /** Nombre de réglages (calages) : avec leur durée totale, il dit si l'atelier règle souvent ou longtemps. */
+  nCalages: number;
   /** Temps de panne par organe (ms). */
   parOrgane: ReadonlyMap<string, number>;
   /** Disponibilité, vitesse, qualité et efficacité (0 à 1). Absentes si la machine n'a pas été ouverte. */
@@ -38,6 +40,7 @@ export function ligneMachine(h: History, m: Machine, from: number, to: number): 
   let marche = 0;
   let ouverture = 0;
   let nPannes = 0;
+  let nCalages = 0;
   const parOrgane = new Map<string, number>();
   for (const p of h.periodes[m.id] ?? []) {
     const d = chevauchement(p.debut, p.fin, from, to);
@@ -47,10 +50,12 @@ export function ligneMachine(h: History, m: Machine, from: number, to: number): 
       panne += d;
       nPannes++;
       if (p.organeId) parOrgane.set(p.organeId, (parOrgane.get(p.organeId) ?? 0) + d);
-    } else if (p.etat === 'calage') calage += d;
-    else if (p.etat === 'marche') marche += d;
+    } else if (p.etat === 'calage') {
+      calage += d;
+      nCalages++;
+    } else if (p.etat === 'marche') marche += d;
   }
-  const base = { m, panne, calage, marche, ouverture, nPannes, parOrgane };
+  const base = { m, panne, calage, marche, ouverture, nPannes, nCalages, parOrgane };
   // Vitesse et qualité viennent du TRS journalier, pondéré par le temps d'ouverture de chaque jour touché.
   const jours = (h.trs[m.id] ?? []).filter((j) => j.jour + DAY > from && j.ouvertureMin > 0);
   const poids = jours.reduce((s, j) => s + j.ouvertureMin, 0);
@@ -67,6 +72,7 @@ export interface Bilan {
   calage: number;
   ouverture: number;
   nPannes: number;
+  nCalages: number;
   /** Moyennes pondérées par le temps d'ouverture, absentes si aucune machine n'a été ouverte. */
   trs?: number;
   D?: number;
@@ -87,6 +93,7 @@ export function bilan(lignes: LigneMachine[]): Bilan {
     calage: somme(lignes.map((l) => l.calage)),
     ouverture: somme(lignes.map((l) => l.ouverture)),
     nPannes: somme(lignes.map((l) => l.nPannes)),
+    nCalages: somme(lignes.map((l) => l.nCalages)),
     trs: moyenne('trs'),
     D: moyenne('D'),
     P: moyenne('P'),
@@ -134,6 +141,11 @@ export interface LigneOrgane {
   /** Type de machine, quand les organes de toutes les machines sont regroupés. */
   type?: string;
   ms: number;
+  /**
+   * Quand les organes sont regroupés par type, ce que chaque machine y a perdu, de la plus touchée à la moins touchée :
+   * la barre dit « le rembobineur des rotatives offset », la bulle dit sur lesquelles.
+   */
+  machines?: { numero: string; ms: number }[];
 }
 
 /**
@@ -154,10 +166,14 @@ export function pannesParOrgane(lignes: LigneMachine[], modeles: ReadonlyMap<str
         nom: uneMachine && o ? `${o.numero}. ${o.nom}` : nom,
         type: uneMachine ? undefined : (modele?.type?.libelle ?? l.m.type),
         ms: (prec?.ms ?? 0) + ms,
+        machines: uneMachine ? undefined : [...(prec?.machines ?? []), { numero: l.m.numero, ms }],
       });
     }
   }
-  return [...cumul.values()].sort((a, b) => b.ms - a.ms).slice(0, limite);
+  return [...cumul.values()]
+    .sort((a, b) => b.ms - a.ms)
+    .slice(0, limite)
+    .map((o) => (o.machines ? { ...o, machines: [...o.machines].sort((a, b) => b.ms - a.ms) } : o));
 }
 
 export interface JourTrs {
@@ -200,6 +216,40 @@ export function critiquesParJour(alarmes: Alarme[], from: number, now: number): 
   return [...jours.entries()].sort((a, b) => a[0] - b[0]).map(([t, v]) => ({ t, v }));
 }
 
+/** Une colonne d'alarmes : son début, sa fin, le nombre d'alarmes critiques entre les deux. */
+export interface TrancheAlarmes {
+  t: number;
+  fin: number;
+  v: number;
+}
+
+/** Largeur d'une tranche sur 24 heures : six colonnes, calées sur l'horloge (0 h, 4 h, 8 h…). */
+const TRANCHE_24H = 4;
+
+/**
+ * Alarmes critiques par colonne. Sur 7 jours, une colonne par jour, de minuit à minuit. Sur 24 heures, une colonne par
+ * tranche de 4 heures : une colonne « jeudi » qui ne compterait que depuis midi dirait autre chose que la même
+ * colonne sur 7 jours. La première tranche commence au début de la fenêtre, pas avant.
+ */
+export function critiquesParTranche(alarmes: Alarme[], periode: Periode, from: number, now: number): TrancheAlarmes[] {
+  if (periode === '7j') {
+    return critiquesParJour(alarmes, from, now).map(({ t, v }) => {
+      const fin = new Date(t);
+      fin.setDate(fin.getDate() + 1);
+      return { t, fin: fin.getTime(), v };
+    });
+  }
+  const bornes = [from];
+  const d = new Date(from);
+  d.setHours(Math.floor(d.getHours() / TRANCHE_24H) * TRANCHE_24H + TRANCHE_24H, 0, 0, 0);
+  for (; d.getTime() < now; d.setHours(d.getHours() + TRANCHE_24H)) bornes.push(d.getTime());
+  const critiques = alarmes.filter((a) => a.gravite === 'critique' && a.horodatage >= from && a.horodatage < now);
+  return bornes.map((t, i) => {
+    const fin = bornes[i + 1] ?? now;
+    return { t, fin, v: critiques.filter((a) => a.horodatage >= t && a.horodatage < fin).length };
+  });
+}
+
 export interface PanneRecurrente {
   id: string;
   code: string;
@@ -210,7 +260,10 @@ export interface PanneRecurrente {
   ms: number;
 }
 
-/** Les pannes (alarmes critiques) regroupées par code et par machine. */
+/**
+ * Les pannes (alarmes critiques) regroupées par code et par machine, seulement celles qui sont revenues : une panne
+ * survenue une seule fois n'est pas « une panne qui revient ».
+ */
 export function pannesRecurrentes(alarmes: Alarme[], machines: Machine[], now: number): PanneRecurrente[] {
   const parCle = new Map<string, PanneRecurrente>();
   for (const a of alarmes) {
@@ -228,7 +281,7 @@ export function pannesRecurrentes(alarmes: Alarme[], machines: Machine[], now: n
       ms: (prec?.ms ?? 0) + ms,
     });
   }
-  return [...parCle.values()];
+  return [...parCle.values()].filter((p) => p.n >= 2);
 }
 
 /** Graduations lisibles de l'axe du temps : chaque minuit sur 7 jours, toutes les 4 h sur 24 h. */

@@ -5,7 +5,7 @@
  * complètes sont dans le volet ouvert au clic, et dites au lecteur d'écran. Ses filtres (gravité, type, recherche) ne touchent que le journal et son export ; le reste
  * de l'écran suit la période et la machine.
  */
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { ChevronRight, Download, Search } from 'lucide-react';
 import type { Alarme, Machine } from '@/domain/types';
 import type { MachineModel } from '@/domain/catalog';
@@ -14,6 +14,7 @@ import { Select, type OptionChoix } from '@/ui/Select';
 import { StatusIcon } from '@/ui/status';
 import { focusAlarm } from '@/widgets/shell/navigation';
 import { journalCsv, telecharger } from '../lib/csv';
+import { ETAT_COURT, TYPE_ALARME } from '../lib/libelles';
 import { dureeCourte, periodeEnFin } from '../lib/phrases';
 import type { Periode } from '../lib/calculs';
 import { AlarmeVolet, STATUT_ALARME, dureeAlarme } from './AlarmeVolet';
@@ -22,25 +23,27 @@ import { Carte } from './Carte';
 const PREMIERES = 15;
 const PAQUET = 25;
 
-/** Ce qui n'est pas réglé, en peu de mots : une alarme résolue n'en porte pas (la ligne reste grise). */
-const ETAT_COURT: Partial<Record<Alarme['statut'], string>> = {
-  active: 'Pas prise en charge',
-  acquittee: 'Prise en charge',
-};
-
-const TYPES: Record<Alarme['regle'], string> = {
-  seuil: 'Limite dépassée',
-  derive: 'Dérive',
-  repetitif: 'Défaut répétitif',
-  automate: 'Signalée par l’automate',
-};
-
-const GRAVITES: OptionChoix[] = [
-  { value: '', label: 'Toutes' },
+const GRAVITES = [
   { value: 'critique', label: 'Critiques (la machine s’arrête)' },
   { value: 'attention', label: 'Attention' },
 ];
-const CHOIX_TYPES: OptionChoix[] = [{ value: '', label: 'Tous' }, ...Object.entries(TYPES).map(([value, label]) => ({ value, label }))];
+const TYPES = Object.entries(TYPE_ALARME).map(([value, label]) => ({ value, label }));
+
+const enAlarmes = (n: number) => (n === 0 ? 'Aucune alarme' : n === 1 ? '1 alarme' : `${n} alarmes`);
+
+/**
+ * Les choix d'un filtre, chacun avec le nombre d'alarmes qu'il montrerait. Un choix qui ne montrerait rien reste dans
+ * la liste (on voit qu'il existe) mais ne se choisit pas : sinon on tombe sur un journal vide sans comprendre pourquoi.
+ */
+function avecNombres(choix: { value: string; label: string }[], tous: string, compter: (v: string) => number, courant: string): OptionChoix[] {
+  return [
+    { value: '', label: tous },
+    ...choix.map((c) => {
+      const n = compter(c.value);
+      return { ...c, detail: enAlarmes(n), disabled: n === 0 && c.value !== courant };
+    }),
+  ];
+}
 
 const jourLong = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
 const enJour = (t: number) => {
@@ -90,6 +93,26 @@ export function Journal({ alarmes, machines, modeles, periode, now, onVoirCourbe
     return out;
   }, [liste, n]);
 
+  // Les nombres de chaque choix tiennent compte des autres filtres : « Attention » dit combien il en reste avec le type
+  // et la recherche en cours.
+  const optionsGravite = useMemo(
+    () => avecNombres(GRAVITES, 'Toutes', (v) => alarmes.filter((a) => a.gravite === v && (!regle || a.regle === regle)).length, gravite),
+    [alarmes, regle, gravite],
+  );
+  const optionsType = useMemo(
+    () => avecNombres(TYPES, 'Tous', (v) => alarmes.filter((a) => a.regle === v && (!gravite || a.gravite === gravite)).length, regle),
+    [alarmes, gravite, regle],
+  );
+  const filtre = !!(gravite || regle || q.trim());
+  const recherche = useRef<HTMLInputElement>(null);
+  // Le bouton disparaît avec les filtres : le focus passe à la recherche plutôt que de tomber sur la page.
+  const effacer = () => {
+    setGravite('');
+    setRegle('');
+    setQ('');
+    recherche.current?.focus();
+  };
+
   const nRep = useMemo(() => new Set(alarmes.filter((a) => a.regle === 'repetitif').map((a) => `${a.machineId}|${a.code}`)).size, [alarmes]);
   const ouverte = ouverteId ? alarmes.find((a) => a.id === ouverteId) : undefined;
   const fermer = useCallback(() => setOuverteId(undefined), []);
@@ -124,20 +147,33 @@ export function Journal({ alarmes, machines, modeles, periode, now, onVoirCourbe
       <div className="hj-filtres" role="group" aria-label="Trier le journal">
         <label className="hj-champ">
           <span>Gravité</span>
-          <Select taille="sm" className="hj-gravite" value={gravite} onChange={setGravite} options={GRAVITES} />
+          <Select taille="sm" className="hj-gravite" value={gravite} onChange={setGravite} options={optionsGravite} />
         </label>
         <label className="hj-champ">
           <span>Type</span>
-          <Select taille="sm" className="hj-type" value={regle} onChange={setRegle} options={CHOIX_TYPES} />
+          <Select taille="sm" className="hj-type" value={regle} onChange={setRegle} options={optionsType} />
         </label>
         <label className="hj-champ hj-cherche">
           <span>Chercher</span>
           <span className="hj-cherche-boite">
             <Search aria-hidden />
-            <input className="input" type="search" placeholder="Casse, UV, découpe, code…" value={q} onChange={(e) => setQ(e.target.value)} />
+            <input ref={recherche} className="input" type="search" placeholder="Casse, UV, découpe, code…" value={q} onChange={(e) => setQ(e.target.value)} />
           </span>
         </label>
       </div>
+      {/* Un journal filtré le dit : combien d'alarmes restent sur combien, et comment tout revoir. */}
+      <p className="hj-compte" aria-live="polite">
+        {filtre && (
+          <>
+            <span>
+              <b className="num">{liste.length}</b> sur {enAlarmes(alarmes.length).toLowerCase()} {liste.length > 1 ? 'correspondent' : 'correspond'} à ces filtres.
+            </span>
+            <button type="button" className="btn sm ghost" onClick={effacer}>
+              Effacer les filtres
+            </button>
+          </>
+        )}
+      </p>
 
       {liste.length === 0 ? (
         <p className="muted hj-vide">{alarmes.length ? 'Aucune alarme ne correspond à ces filtres.' : 'Rien à signaler sur la période.'}</p>

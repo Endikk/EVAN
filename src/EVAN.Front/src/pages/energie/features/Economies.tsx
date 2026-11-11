@@ -1,6 +1,8 @@
 /**
  * Où économiser : les actions rangées de la plus rentable à la moins rentable. Chaque ligne dit quoi faire, ce que ça
  * rapporterait sur un an et sa barre ; un clic ouvre le volet qui dit pourquoi et refait le calcul, étape par étape.
+ * Une somme qui suppose de supprimer toute la perte s'écrit « jusqu'à » : c'est un plafond, pas une promesse. Les
+ * sommes partent toujours des 7 derniers jours : le bouton de période ne les change pas.
  */
 import { useCallback, useState, type CSSProperties } from 'react';
 import { Calculator, ChevronRight } from 'lucide-react';
@@ -13,18 +15,21 @@ import { Volet } from './Volet';
 interface Props {
   actions: ActionEco[];
   prix: number;
+  /** De quoi parle la part : « l’usine », ou la machine choisie. */
+  perimetre: string;
   style?: CSSProperties;
 }
 
-function DetailAction({ action, fermer }: { action: ActionEco; fermer: () => void }) {
+function DetailAction({ action, perimetre, fermer }: { action: ActionEco; perimetre: string; fermer: () => void }) {
   return (
     <Volet surtitre="Où économiser" titre={action.titre} icone={<Calculator />} fermer={fermer}>
       <p className="guide-resume">{action.pourquoi}</p>
       <p className="en-volet-gain">
+        {action.plafond ? 'Jusqu’à ' : 'Environ '}
         <b className="num">{euros(action.euroAn)}</b> par an
         <span className="faint">
           {' '}
-          · {kwh(action.kwhAn)} · {pourcent(action.part, 1)} de l’électricité de l’usine
+          · {kwh(action.kwhAn)} · {pourcent(action.part, 1)} de l’électricité de {perimetre}
         </span>
       </p>
       <h3 className="en-volet-titre">Le calcul</h3>
@@ -35,14 +40,17 @@ function DetailAction({ action, fermer }: { action: ActionEco; fermer: () => voi
           </li>
         ))}
       </ol>
-      <p className="en-volet-hyp">On suppose que la période observée se répète toute l’année.</p>
+      <p className="en-volet-hyp">
+        On suppose que les 7 derniers jours se répètent toute l’année.
+        {action.plafond && ' C’est un plafond : il serait atteint en supprimant toute cette perte.'}
+      </p>
       <h3 className="en-volet-titre">Comment s’y prendre</h3>
       <p className="en-volet-conseil">{action.conseil}</p>
     </Volet>
   );
 }
 
-export function Economies({ actions, prix, style }: Props) {
+export function Economies({ actions, prix, perimetre, style }: Props) {
   const [ouverte, setOuverte] = useState<string>();
   const fermer = useCallback(() => setOuverte(undefined), []);
   const action = actions.find((a) => a.cle === ouverte);
@@ -53,8 +61,8 @@ export function Economies({ actions, prix, style }: Props) {
       <TitreCarte
         titre="Où économiser"
         id="en-economies-titre"
-        aide={`De la plus rentable à la moins rentable, ramenées à un an au prix de ${prixKwh(prix)} le kWh. Chaque action ouvre son calcul pas à pas.`}
-        lecon={actions.length ? undefined : 'Aucune piste d’économie sur cette période : rien n’est parti hors production.'}
+        aide={`De la plus rentable à la moins rentable, calculées sur les 7 derniers jours quelle que soit la période choisie, ramenées à un an au prix de ${prixKwh(prix)} le kWh. « Jusqu’à » marque un plafond : il faudrait supprimer toute la perte pour l’atteindre. Chaque action ouvre son calcul pas à pas.`}
+        lecon={actions.length ? undefined : 'Aucune piste d’économie sur 7 jours : rien n’est parti hors production.'}
       />
       {actions.length > 0 && (
         <ol className="en-actions">
@@ -66,6 +74,7 @@ export function Economies({ actions, prix, style }: Props) {
                 </span>
                 <b className="en-action-titre">{a.titre}</b>
                 <span className="en-action-gain">
+                  <small>{a.plafond ? 'jusqu’à' : 'environ'}</small>
                   <b>
                     <AnimatedNumber value={a.euroAn} format={euros} />
                   </b>
@@ -80,7 +89,7 @@ export function Economies({ actions, prix, style }: Props) {
           ))}
         </ol>
       )}
-      {action && <DetailAction action={action} fermer={fermer} />}
+      {action && <DetailAction action={action} perimetre={perimetre} fermer={fermer} />}
     </section>
   );
 }

@@ -5,7 +5,7 @@ import type { History } from '@/sim/history';
 import { courbeParActivite, graduations, lireCourbe } from './courbe';
 import { compterPeriodes } from './economies';
 import { fmtJours } from './format';
-import { leconCourbe, phraseCourbe, phraseParJour, surCent, tonHorsProduction, verdictEnergie } from './lecture';
+import { leconCourbe, leconParMachine, phraseCourbe, phraseParJour, phraseRepartition, surCent, tonHorsProduction, verdictEnergie } from './lecture';
 
 const H = 3_600_000;
 const NB = ' ';
@@ -59,6 +59,15 @@ describe('verdict de l’écran énergie', () => {
     expect(v.verdict).toMatch(/sans rien produire\.$/);
     expect(v.suite).toBe('Toute l’énergie est partie en veille.');
     expect(v.ton).toBe('crit');
+  });
+
+  it('nomme la machine choisie à la place de l’usine', () => {
+    expect(verdictEnergie(bilan({ marche: 900, calage: 50, arret: 50, panne: 0 }), '7j', 'R07').verdict.startsWith('Sur 7 jours, R07 a consommé')).toBe(true);
+  });
+
+  it('arrondit la part de production comme la ligne de « Où part l’énergie »', () => {
+    // 885,5 sur 1 000 : la ligne dit 89 %, la phrase dit 89 aussi.
+    expect(phraseRepartition(bilan({ marche: 885.5, calage: 50, arret: 64.5, panne: 0 }))).toBe('Sur 100 kWh consommés, 89 ont servi à produire.');
   });
 
   it('nomme la seule perte quand il n’y en a qu’une', () => {
@@ -133,6 +142,23 @@ describe('énergie par jour et calcul des économies', () => {
     const jour = (j: number, marche: number, arret: number) => ({ jour: lundi + j * 24 * H, kwh: { marche, calage: 0, arret, panne: 0 }, total: marche + arret });
     expect(phraseParJour([jour(0, 7000, 100), jour(6, 0, 569)])).toBe(`Dimanche 11, sans rien produire : 569${NB}kWh de veille.`);
     expect(phraseParJour([jour(0, 7000, 100), jour(1, 5000, 80)])).toBe(`Le jour le plus chargé : lundi 5, 7${' '}100${NB}kWh.`);
+  });
+
+  it('laisse le jour en cours hors de la comparaison : pas fini, il n’est pas un jour sans production', () => {
+    const jour = (j: number, marche: number, arret: number) => ({ jour: lundi + j * 24 * H, kwh: { marche, calage: 0, arret, panne: 0 }, total: marche + arret });
+    const jours = [jour(0, 7000, 100), jour(1, 0, 40)];
+
+    expect(phraseParJour(jours, lundi + 24 * H)).toBe(`Le jour le plus chargé : lundi 5, 7${'\u202f'}100${NB}kWh.`);
+  });
+
+  it('nomme la machine qui dépense le plus sans produire, en kWh et en euros', () => {
+    const b = bilan({ marche: 900, calage: 50, arret: 50, panne: 0 });
+    const m = (numero: string, calage: number) => ({
+      machine: { ...flexo, id: numero, numero },
+      bilan: { kwh: { marche: 1000, calage, arret: 0, panne: 0 }, total: 1000 + calage, production: 0, unite: 'étiquettes', co2: 0, cout: 0 },
+    });
+
+    expect(leconParMachine({ ...b, parMachine: [m('R01', 10), m('R07', 400)] }, 0.15)).toBe(`R07 dépense le plus sans produire : 400${NB}kWh, soit 60${NB}€.`);
   });
 
   it('compte les calages et leur durée sur la fenêtre seulement', () => {

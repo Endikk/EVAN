@@ -18,6 +18,9 @@ const nf1 = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 });
 export const heures = (ms: number) => `${nf1.format(ms / H)}\u00a0h`;
 /** « 73 % » */
 export const pourcent = (v: number) => `${Math.round(v * 100)}\u00a0%`;
+/** « mer. 4 » : le jour sous une colonne ou un point de courbe, assez court pour que sept jours tiennent côte à côte. */
+const jourAxe = new Intl.DateTimeFormat('fr-FR', { weekday: 'short', day: 'numeric' });
+export const fmtJourAxe = (t: number) => jourAxe.format(t);
 /** « 3,2 % » sous 10 %, où l'arrondi à l'unité écraserait les écarts ; « 73 % » au-delà. */
 export const pourcentFin = (v: number) => (v < 0.1 ? `${nf1.format(v * 100)}\u00a0%` : pourcent(v));
 
@@ -64,6 +67,25 @@ export function niveauPannes(part: number): { ton: Ton; mot: string } {
 
 const cause = (l: { panne: number; calage: number }) => (l.calage >= l.panne ? 'pour des réglages' : 'en panne');
 
+/** Durée moyenne d'un réglage, absente s'il n'y en a pas eu. */
+export const reglageMoyen = (b: { calage: number; nCalages: number }) => (b.nCalages ? b.calage / b.nCalages : undefined);
+
+/**
+ * Pourquoi les réglages pèsent : combien, et combien de temps chacun, face à la moyenne de l'atelier. Sans le nombre,
+ * « 14 h de réglages » ne dit pas s'il faut en faire moins ou les faire plus vite.
+ * « 31 réglages de 27 minutes en moyenne (atelier : 22 minutes) »
+ */
+export function detailReglages(b: { calage: number; nCalages: number }, atelier?: { calage: number; nCalages: number }): string | undefined {
+  const moyen = reglageMoyen(b);
+  if (moyen === undefined) return undefined;
+  const ref = atelier && atelier !== b ? reglageMoyen(atelier) : undefined;
+  const nombre = b.nCalages === 1 ? '1 réglage' : `${b.nCalages} réglages`;
+  // L'atelier n'est cité que si l'écart dit quelque chose : à une minute près, la comparaison serait du bruit.
+  const ecartNet = ref !== undefined && Math.abs(moyen - ref) >= 0.1 * ref && Math.round(ref / 60_000) !== Math.round(moyen / 60_000);
+  const comparaison = ecartNet ? ` (atelier : ${dureeEnMots(ref)})` : '';
+  return `${nombre} de ${dureeEnMots(moyen)} en moyenne${comparaison}`;
+}
+
 export interface Verdict {
   verdict: string;
   suite?: string;
@@ -73,10 +95,14 @@ export interface Verdict {
 /**
  * La phrase du haut. Elle rappelle toujours la période, et la machine quand l'écran est filtré sur une seule :
  * « Sur 7 jours, les machines ont produit 73 % du temps possible. » puis « R07 s’arrête le plus : 15,8 h, surtout
- * pour des réglages. » C'est elle qui nomme la machine la plus arrêtée : la leçon du graphique des arrêts ne le
- * redit pas.
+ * pour des réglages, 31 réglages de 27 minutes en moyenne. » C'est elle qui nomme la machine la plus arrêtée : la
+ * leçon du graphique des arrêts ne le redit pas.
+ *
+ * Quand les réglages l'emportent, la suite dit combien et combien de temps chacun, face à `atelier` (toutes les
+ * machines) : c'est là qu'est la leçon. L'organe le plus touché par les pannes n'est nommé que si les pannes
+ * l'emportent.
  */
-export function verdictHistorique(periode: Periode, b: Bilan, machine?: { numero: string; creeLe?: number }, organe?: string): Verdict {
+export function verdictHistorique(periode: Periode, b: Bilan, machine?: { numero: string; creeLe?: number }, organe?: string, atelier?: Bilan): Verdict {
   const sur = surLaPeriode(periode);
   if (machine?.creeLe) return { verdict: `${machine.numero} vient d’être ajoutée : elle n’a pas encore d’historique.`, ton: 'neutre' };
   if (!b.lignes.length) return { verdict: 'Pas encore d’historique : les machines ajoutées récemment n’ont pas de passé à montrer.', ton: 'neutre' };
@@ -94,16 +120,23 @@ export function verdictHistorique(periode: Periode, b: Bilan, machine?: { numero
   if (machine) {
     const total = b.panne + b.calage;
     if (!total) return { verdict, suite: 'Elle ne s’est arrêtée ni pour une panne ni pour un réglage.', ton };
+    const reglages = b.calage >= b.panne ? detailReglages(b, atelier) : undefined;
+    if (reglages) {
+      const quoi = b.panne ? 'surtout des réglages' : 'que des réglages';
+      return { verdict, suite: `${heures(total)} d’arrêt, ${quoi} : ${reglages}.`, ton };
+    }
     const detail = !b.panne
       ? `${heures(total)} d’arrêt, que des réglages.`
       : !b.calage
         ? `${heures(total)} d’arrêt, que des pannes.`
         : `${heures(total)} d’arrêt, dont ${heures(b.panne)} de pannes.`;
-    return { verdict, suite: organe ? `${detail} Organe le plus touché : ${organe}.` : detail, ton };
+    return { verdict, suite: organe && b.panne > b.calage ? `${detail} Organe le plus touché : ${organe}.` : detail, ton };
   }
   const pire = [...b.lignes].sort((x, y) => y.panne + y.calage - (x.panne + x.calage))[0];
   if (!pire || pire.panne + pire.calage === 0) return { verdict, suite: 'Aucun arrêt sur la période.', ton };
-  return { verdict, suite: `${pire.m.numero} s’arrête le plus : ${heures(pire.panne + pire.calage)}, surtout ${cause(pire)}.`, ton };
+  const debut = `${pire.m.numero} s’arrête le plus : ${heures(pire.panne + pire.calage)}, surtout ${cause(pire)}`;
+  const reglages = pire.calage >= pire.panne ? detailReglages(pire, b) : undefined;
+  return { verdict, suite: reglages ? `${debut}, ${reglages}.` : `${debut}.`, ton };
 }
 
 /**
@@ -194,18 +227,22 @@ export function leconJours(jours: JourTrs[]): string {
   return `Ce qui coûte le plus : ${PERTE[pire]}.`;
 }
 
-/** Leçon des alarmes critiques par jour : le jour le plus chargé (le total est dans la rangée des chiffres, en haut). */
-export function leconAlarmesJour(jours: { t: number; v: number }[], fmtJour: (t: number) => string): string {
+/**
+ * Leçon des alarmes critiques par colonne : le jour le plus chargé, ou sur 24 heures la tranche de 4 heures la plus
+ * chargée (le total est dans la rangée des chiffres, en haut). `nommer` dit la colonne : « mar. 10 nov. », « de 16:00
+ * à 20:00 ».
+ */
+export function leconAlarmesJour<T extends { t: number; v: number }>(jours: T[], nommer: (j: T) => string, parTranche = false): string {
   const total = jours.reduce((s, j) => s + j.v, 0);
   if (!total) return 'Aucune alarme critique sur la période.';
   const pic = jours.reduce((a, b) => (b.v > a.v ? b : a));
   // La date courte finit par un point (« 14 oct. ») : elle ne termine pas la phrase.
-  return `Jour le plus chargé : ${fmtJour(pic.t)}, ${pic.v} alarme${pic.v > 1 ? 's' : ''}.`;
+  return `${parTranche ? 'Tranche la plus chargée' : 'Jour le plus chargé'} : ${nommer(pic)}, ${pic.v} alarme${pic.v > 1 ? 's' : ''}.`;
 }
 
 /** Leçon des pannes qui reviennent. */
 export function leconRecurrentes(top: PanneRecurrente | undefined, parDuree: boolean): string {
-  if (!top) return 'Aucune panne sur la période.';
+  if (!top) return 'Aucune panne n’est revenue sur la période.';
   const quoi = `« ${top.message} » sur ${top.numero}`;
   if (parDuree) return `${quoi} coûte le plus : ${heures(top.ms)} en ${top.n} fois.`;
   return `${quoi} revient le plus : ${top.n} fois.`;

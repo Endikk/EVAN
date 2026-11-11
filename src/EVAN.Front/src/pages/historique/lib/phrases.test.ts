@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Machine } from '@/domain/types';
 import { H } from '@/sim/history';
 import { bilan, type LigneMachine } from './calculs';
-import { dureeCourte, dureeEnMots, leconArrets, leconCourbe, leconJours, minusculeInitiale, verdictHistorique } from './phrases';
+import { dureeCourte, dureeEnMots, leconAlarmesJour, leconArrets, leconCourbe, leconJours, leconRecurrentes, minusculeInitiale, verdictHistorique } from './phrases';
 
 const machine = (numero: string): Machine => ({
   id: numero,
@@ -15,13 +15,14 @@ const machine = (numero: string): Machine => ({
   modele: { url: '' },
 });
 
-const ligne = (numero: string, panneH: number, calageH: number, trs?: number): LigneMachine => ({
+const ligne = (numero: string, panneH: number, calageH: number, trs?: number, nCalages = 0): LigneMachine => ({
   m: machine(numero),
   panne: panneH * H,
   calage: calageH * H,
   marche: 10 * H,
   ouverture: (10 + panneH + calageH) * H,
   nPannes: panneH ? 2 : 0,
+  nCalages,
   parOrgane: new Map(),
   ...(trs !== undefined && { D: 0.9, P: 0.9, Q: 0.9, trs }),
 });
@@ -62,7 +63,8 @@ describe('verdict de l’historique', () => {
     const v = verdictHistorique('24h', b, { numero: 'R07' }, 'rembobineur');
 
     expect(v.verdict.startsWith('Sur les dernières 24\u00a0heures, R07 a produit')).toBe(true);
-    expect(v.suite).toBe('15,8\u00a0h d’arrêt, dont 3,6\u00a0h de pannes. Organe le plus touché : rembobineur.');
+    // Les réglages l'emportent : l'organe des pannes n'est pas la leçon, il n'est pas nommé.
+    expect(v.suite).toBe('15,8\u00a0h d’arrêt, dont 3,6\u00a0h de pannes.');
   });
 
   it('ne parle pas de « 0 h de pannes » quand la machine ne s’est arrêtée que pour des réglages', () => {
@@ -71,6 +73,22 @@ describe('verdict de l’historique', () => {
     const v = verdictHistorique('24h', b, { numero: 'R07' });
 
     expect(v.suite).toBe('2,2\u00a0h d’arrêt, que des réglages.');
+  });
+
+  it('dit combien de réglages et combien de temps chacun quand ils l’emportent, face à l’atelier', () => {
+    const r07 = ligne('R07', 2, 12, 0.69, 24);
+    const atelier = bilan([r07, ligne('R01', 1, 6, 0.8, 24)]);
+
+    expect(verdictHistorique('7j', atelier).suite).toBe('R07 s’arrête le plus : 14\u00a0h, surtout pour des réglages, 24 réglages de 30\u00a0minutes en moyenne (atelier : 23\u00a0minutes).');
+    expect(verdictHistorique('7j', bilan([r07]), { numero: 'R07' }, 'rembobineur', atelier).suite).toBe(
+      '14\u00a0h d’arrêt, surtout des réglages : 24 réglages de 30\u00a0minutes en moyenne (atelier : 23\u00a0minutes).',
+    );
+  });
+
+  it('ne nomme l’organe des pannes que si les pannes l’emportent', () => {
+    const b = bilan([ligne('R07', 3, 2, 0.69, 4)]);
+
+    expect(verdictHistorique('7j', b, { numero: 'R07' }, 'rembobineur').suite).toBe('5\u00a0h d’arrêt, dont 3\u00a0h de pannes. Organe le plus touché : rembobineur.');
   });
 
   it('ne donne pas de chiffre quand aucune machine n’a tourné', () => {
@@ -121,6 +139,20 @@ describe('leçons des graphiques', () => {
     ];
 
     expect(leconJours(jours)).toBe('Ce qui coûte le plus : les arrêts.');
+  });
+
+  it('nomme le jour, ou sur 24 heures la tranche, la plus chargée en alarmes', () => {
+    const tranches = [
+      { t: 1, v: 1 },
+      { t: 2, v: 3 },
+    ];
+
+    expect(leconAlarmesJour(tranches, (j) => `jour ${j.t}`)).toBe('Jour le plus chargé : jour 2, 3 alarmes.');
+    expect(leconAlarmesJour(tranches, (j) => `de ${j.t} à ${j.t + 1}`, true)).toBe('Tranche la plus chargée : de 2 à 3, 3 alarmes.');
+  });
+
+  it('dit qu’aucune panne n’est revenue plutôt qu’« aucune panne »', () => {
+    expect(leconRecurrentes(undefined, false)).toBe('Aucune panne n’est revenue sur la période.');
   });
 
   it('garde les sigles en majuscules en milieu de phrase', () => {

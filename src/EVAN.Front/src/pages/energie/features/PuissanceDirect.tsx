@@ -23,12 +23,23 @@ export function PuissanceDirect({ machines, pic, libellePeriode }: Props) {
   const enProduction = useLive((s) => machines.filter((m) => !s.machines[m.id]?.horsLigne && (s.machines[m.id]?.etat === 'marche' || s.machines[m.id]?.etat === 'attention')).length);
 
   if (!recu) {
-    return <Repere titre="Puissance tirée en ce moment" terme="puissance" valeur="…" unite="kW" note="En attente des premières mesures des machines." guide="puissance" />;
+    return (
+      <Repere
+        titre="Puissance tirée en ce moment"
+        className="rp-compact"
+        terme="puissance"
+        valeur="…"
+        unite="kW"
+        note="En attente des premières mesures des machines."
+        guide="puissance"
+      />
+    );
   }
   const machinesTexte = `${enProduction} machine${enProduction > 1 ? 's' : ''} sur ${machines.length} en production`;
   return (
     <Repere
       titre="Puissance tirée en ce moment"
+      className="rp-compact"
       terme="puissance"
       valeur={kw}
       format={(v) => fmtNombre(v)}

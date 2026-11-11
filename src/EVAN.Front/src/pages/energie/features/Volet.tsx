@@ -23,7 +23,12 @@ export function Volet({ surtitre, titre, icone, fermer, children }: Props) {
     const avant = document.activeElement as HTMLElement | null;
     fermerRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') return fermer();
+      if (e.key === 'Escape') {
+        // Une bulle ouverte dans le volet a déjà consommé Échap : le volet reste ouvert.
+        if (e.defaultPrevented) return;
+        e.preventDefault();
+        return fermer();
+      }
       if (e.key !== 'Tab' || !voletRef.current) return;
       // Le focus tourne dans le volet tant qu'il est ouvert : derrière, l'écran est inerte.
       const focusables = voletRef.current.querySelectorAll<HTMLElement>('button, [href], input, [tabindex]:not([tabindex="-1"])');

@@ -1,10 +1,11 @@
 /**
- * Où part l'énergie : une ligne par état, avec sa barre qui se remplit jusqu'à sa part. Chaque état garde sa couleur
- * et sa forme dans tout EVAN (rond plein : production, losange : réglage, rond creux : veille, carré : panne).
+ * Où part l'énergie : une liste classée, une ligne par état, avec sa barre fine qui se remplit jusqu'à sa part. Chaque
+ * état garde sa couleur et sa forme dans tout EVAN (rond plein : production, losange : réglage, rond creux : veille,
+ * carré : panne).
  *
  * La production est en vert (--ok), la couleur de « machine en marche » sur la supervision : l'œil retrouve le même
- * code d'un écran à l'autre, et le vert dit « énergie utile » face aux pertes. Le rouge EVAN reste à la courbe de
- * charge, qui montre la puissance totale.
+ * code d'un écran à l'autre, et le vert dit « énergie utile » face aux pertes. La courbe de charge, à côté, reste à
+ * l'encre : elle montre la puissance totale, qui n'est pas un état.
  */
 import type { CSSProperties } from 'react';
 import type { BilanUsine } from '@/analytics/energy';

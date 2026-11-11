@@ -84,9 +84,19 @@ export function guideEnergie(machines: Machine[], cent: Record<EtatEnergie, numb
         cible: 'verdict',
         texte: (
           <p>
-            Elle résume la période choisie (24 heures ou 7 jours) : ce que l’usine a consommé, ce que ça coûte, et la part dépensée sans rien produire. Où
+            Elle résume la période choisie (24 heures ou 7 jours) : ce que l’usine, ou la machine choisie, a consommé, ce que ça coûte, et la part dépensée sans rien produire. Où
             cette part est partie se lit sur les barres de « Où part l’énergie ». Au-delà de {pourcent(SEUIL_ATTENTION)} de l’énergie partie ainsi, le repère passe en orange ;
             au-delà de {pourcent(SEUIL_PROBLEME)}, en rouge.
+          </p>
+        ),
+      },
+      {
+        titre: 'Période et machine',
+        cible: 'filtres',
+        texte: (
+          <p>
+            Les mêmes choix que dans l’historique : 24 heures ou 7 jours, et une machine si vous voulez ne regarder qu’elle. Tout l’écran suit, sauf « Par machine », qui
+            garde toutes les machines pour situer celle-ci parmi les autres. « Voir son historique » ouvre ses arrêts et ses alarmes.
           </p>
         ),
       },
@@ -111,7 +121,7 @@ export function guideEnergie(machines: Machine[], cent: Record<EtatEnergie, numb
         texte: (
           <p>
             Sous les repères, une rangée : les émissions de CO₂ et l’électricité pour 1 000 étiquettes. Juste dessous, repliés, le prix du kWh et le facteur
-            d’émission. Changez le prix de votre contrat : tous les euros de l’écran suivent.
+            d’émission. Changez le prix de votre contrat : tous les euros de l’écran suivent, et il est retenu pour cette usine d’une visite à l’autre.
           </p>
         ),
       },
@@ -125,7 +135,7 @@ export function guideEnergie(machines: Machine[], cent: Record<EtatEnergie, numb
               week-end. Ce qui reste au-dessus de zéro dans ces bandes, c’est la veille : sécheurs UV, armoires, entraînements restés sous tension.
             </p>
             <p>
-              Le pic (pointillés, sa valeur dans la légende) est la puissance la plus forte de la période : c’est lui que l’abonnement électrique doit
+              Le pic (le trait fin horizontal, sa valeur dans la légende) est la puissance la plus forte de la période : c’est lui que l’abonnement électrique doit
               couvrir.
             </p>
           </>
@@ -143,27 +153,39 @@ export function guideEnergie(machines: Machine[], cent: Record<EtatEnergie, numb
         ),
       },
       {
+        titre: 'Par machine',
+        cible: 'par-machine',
+        texte: (
+          <p>
+            Ce que chaque machine a dépensé sans produire (réglages, veille, pannes sous tension), en kWh et en euros, de la plus dépensière à la moins dépensière.
+            Au survol, sa consommation totale et son électricité pour 1 000 étiquettes, comparée aux autres machines du même type. Une presse qui consomme plus que
+            ses semblables mérite un contrôle du séchage UV. Un clic la choisit pour tout l’écran.
+          </p>
+        ),
+      },
+      {
         titre: 'Où économiser',
         cible: 'economies',
         texte: (
-          <p>
-            Les actions sont rangées de la plus rentable à la moins rentable. Chaque somme est ramenée à un an, au prix du kWh réglé plus haut. Une action
-            ouvre un volet : pourquoi elle rapporte, le calcul pas à pas, et comment s’y prendre dans l’atelier.
-          </p>
+          <>
+            <p>
+              Les actions sont rangées de la plus rentable à la moins rentable. Chaque somme part des 7 derniers jours, quelle que soit la période choisie, et
+              se ramène à un an au prix du kWh réglé plus haut.
+            </p>
+            <p>
+              « Jusqu’à » marque un plafond : il faudrait supprimer toute la perte (plus aucun réglage, plus aucune veille) pour l’atteindre. Le volet de chaque
+              action dit aussi ce que rapporte un pas plus modeste, comme un réglage évité, refait le calcul et dit comment s’y prendre dans l’atelier.
+            </p>
+          </>
         ),
       },
       {
         titre: 'Énergie par jour',
         cible: 'par-jour',
-        texte: <p>Une colonne par jour, de minuit à minuit, découpée comme plus haut. Un jour sans production montre ce que coûte la seule veille.</p>,
-      },
-      {
-        titre: 'Machine par machine',
-        cible: 'par-machine',
         texte: (
           <p>
-            Repliée en bas : l’énergie de chaque machine. Au survol, son électricité pour 1 000 étiquettes, comparée aux machines du même type. Une presse qui
-            consomme plus que ses semblables mérite un contrôle du séchage UV.
+            Une colonne par jour, de minuit à minuit, découpée comme plus haut, toujours sur les 7 derniers jours. Un jour sans production montre ce que coûte la
+            seule veille. La dernière colonne, plus pâle, est le jour en cours : il n’est pas fini.
           </p>
         ),
       },
@@ -177,6 +199,6 @@ export function guideEnergie(machines: Machine[], cent: Record<EtatEnergie, numb
         ),
       },
     ],
-    termes: ['kwh', 'puissance', 'courbeCharge', 'veille', 'calage', 'co2'],
+    termes: ['kwh', 'puissance', 'courbeCharge', 'horsProduction', 'veille', 'calage', 'co2'],
   };
 }

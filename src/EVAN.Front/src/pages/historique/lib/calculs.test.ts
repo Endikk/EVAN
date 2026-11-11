@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { Alarme, Machine } from '@/domain/types';
 import { DAY, H, type History } from '@/sim/history';
-import { bilan, bilanAlarmes, ligneMachine, tenueMesure } from './calculs';
+import { bilan, bilanAlarmes, critiquesParTranche, ligneMachine, pannesParOrgane, pannesRecurrentes, tenueMesure } from './calculs';
+import type { MachineModel } from '@/domain/catalog';
 
 const m: Machine = { id: 'r1', batimentId: 'b', type: 'flexo', nom: 'Presse', numero: 'R01', position: [0, 0], rotationDeg: 0, modele: { url: '' } };
 const debut = Date.UTC(2026, 9, 5);
@@ -32,6 +33,8 @@ describe('temps d’arrêt et efficacité d’une machine', () => {
     expect(l.panne).toBe(H);
     expect(l.calage).toBe(H);
     expect(l.nPannes).toBe(1);
+    expect(l.nCalages).toBe(1);
+    expect(bilan([l]).nCalages).toBe(1);
     expect(l.parOrgane.get('uv')).toBe(H);
     expect(l.D).toBeCloseTo(0.75);
     expect(l.trs).toBeCloseTo(0.75 * 0.9 * 0.95);
@@ -84,5 +87,65 @@ describe('tenue d’une mesure', () => {
     expect(t.n).toBe(3);
     expect(t.part).toBeCloseTo(2 / 3);
     expect(t.creuxALArret).toBe(true);
+  });
+});
+
+describe('pannes par organe', () => {
+  it('dit sur quelles machines tombe un organe regroupé par type, de la plus touchée à la moins touchée', () => {
+    const m2: Machine = { ...m, id: 'r2', numero: 'R02' };
+    const modele = { type: { libelle: 'Presse flexo' }, organes: [{ id: 'uv', numero: 3, nom: 'Séchage UV' }] } as unknown as MachineModel;
+    const ligne = (mm: Machine, ms: number) => ({ ...ligneMachine(histoire, m, debut, debut + DAY), m: mm, parOrgane: new Map([['uv', ms]]) });
+
+    const [uv] = pannesParOrgane([ligne(m, H), ligne(m2, 2 * H)], new Map([['r1', modele], ['r2', modele]]), false);
+
+    expect(uv.ms).toBe(3 * H);
+    expect(uv.machines).toEqual([
+      { numero: 'R02', ms: 2 * H },
+      { numero: 'R01', ms: H },
+    ]);
+  });
+});
+
+describe('alarmes dans le temps', () => {
+  const critique = (id: string, t: number, code = 'UV-06'): Alarme => ({
+    id,
+    code,
+    message: 'Puissance UV insuffisante',
+    gravite: 'critique',
+    machineId: 'r1',
+    organeId: 'uv',
+    horodatage: t,
+    finLe: t + 10 * 60_000,
+    statut: 'resolue',
+    regle: 'seuil',
+  });
+
+  it('ne garde que les pannes revenues au moins deux fois', () => {
+    const p = pannesRecurrentes([critique('a', debut), critique('b', debut + H), critique('c', debut + 2 * H, 'DC-07')], [m], debut + DAY);
+
+    expect(p.map((x) => [x.code, x.n])).toEqual([['UV-06', 2]]);
+  });
+
+  it('compte sur 24 heures par tranches de 4 heures calées sur l’horloge, la première partant du début de la fenêtre', () => {
+    // De 12 h 30 un jour à 12 h 30 le lendemain (heure de Paris).
+    const from = new Date(2026, 10, 9, 12, 30).getTime();
+    const now = from + DAY;
+    const alarmes = [critique('a', from + 10 * 60_000), critique('b', new Date(2026, 10, 9, 17, 0).getTime()), critique('c', from - H)];
+
+    const tranches = critiquesParTranche(alarmes, '24h', from, now);
+
+    expect(tranches.map((x) => new Date(x.t).getHours())).toEqual([12, 16, 20, 0, 4, 8, 12]);
+    expect(tranches[0].t).toBe(from);
+    expect(tranches[tranches.length - 1].fin).toBe(now);
+    expect(tranches.map((x) => x.v)).toEqual([1, 1, 0, 0, 0, 0, 0]);
+  });
+
+  it('compte sur 7 jours de minuit à minuit', () => {
+    const lundi = new Date(2026, 10, 9).getTime();
+
+    const jours = critiquesParTranche([critique('a', lundi + 3 * H)], '7j', lundi, lundi + 2 * DAY - H);
+
+    expect(jours).toHaveLength(2);
+    expect(jours[0]).toEqual({ t: lundi, fin: lundi + DAY, v: 1 });
   });
 });

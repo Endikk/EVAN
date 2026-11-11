@@ -4,7 +4,7 @@
  * bonnes étiquettes) : la barre du temps d'ouverture se découpe sous les yeux du lecteur.
  */
 import type { CSSProperties } from 'react';
-import type { GuideEcran } from '@/ui/explain';
+import type { GuideBloc, GuideEcran } from '@/ui/explain';
 import { pourcent } from '../lib/phrases';
 
 interface Parts {
@@ -43,7 +43,25 @@ export function SchemaTrs({ D, P, Q }: Parts) {
   );
 }
 
-export function guideHistorique(parts: Parts): GuideEcran {
+interface Options {
+  /** La carte des arrêts est à l'écran (pas sur téléphone). */
+  carte: boolean;
+  /** Les réglages pèsent plus que les pannes : leur repère vient en premier, le guide suit le même ordre. */
+  reglagesDabord: boolean;
+}
+
+export function guideHistorique(parts: Parts, { carte, reglagesDabord }: Options): GuideEcran {
+  const panne: GuideBloc = {
+    titre: 'Temps perdu en pannes',
+    cible: 'rep-panne',
+    texte: 'Le total des arrêts non prévus, comme une casse de bande ou un outil de découpe usé. Les réglages ne comptent pas ici.',
+  };
+  const reglages: GuideBloc = {
+    titre: 'Temps perdu en réglages',
+    cible: 'rep-reglages',
+    texte:
+      'Le temps passé à régler les machines avant une nouvelle série : clichés, encres, repérage. Son « ? » dit combien de réglages et combien de temps chacun en moyenne : en faire moins, ou les faire plus vite, ne se décide pas de la même façon.',
+  };
   return {
     id: 'historique',
     titre: 'L’historique de l’atelier',
@@ -58,7 +76,8 @@ export function guideHistorique(parts: Parts): GuideEcran {
       {
         titre: 'Période et machine',
         cible: 'filtres',
-        texte: 'Choisissez 24 heures ou 7 jours, et une machine si vous voulez ne regarder qu’elle. Tout l’écran suit ce choix. Cliquer une barre ou une machine sur la carte fait la même chose.',
+        texte:
+          'Choisissez 24 heures ou 7 jours, et une machine si vous voulez ne regarder qu’elle. Tout l’écran suit ce choix. Cliquer une barre ou une machine sur la carte fait la même chose. Tant qu’une machine est choisie, une pastille en haut de l’écran le rappelle, et « Voir son énergie » ouvre sa consommation.',
       },
       {
         titre: 'Efficacité des machines',
@@ -74,31 +93,27 @@ export function guideHistorique(parts: Parts): GuideEcran {
           </>
         ),
       },
-      {
-        titre: 'Temps perdu en pannes',
-        cible: 'rep-panne',
-        texte: 'Le total des arrêts non prévus, comme une casse de bande ou un outil de découpe usé. Les réglages ne comptent pas ici.',
-      },
-      {
-        titre: 'Temps pour réparer',
-        cible: 'rep-mttr',
-        texte: 'Le temps moyen entre l’alarme et la remise en route. S’il monte, regardez si les pièces et les bonnes personnes sont disponibles au bon moment.',
-      },
+      ...(reglagesDabord ? [reglages, panne] : [panne, reglages]),
       {
         titre: 'Les autres chiffres',
         cible: 'autres-chiffres',
-        texte: 'Disponibilité, vitesse et bonnes étiquettes sont les trois parts de l’efficacité. Suivent le temps passé en réglages, les alarmes critiques, le délai avant qu’une alarme soit prise en charge et le nombre de machines comptées. Le « ? » de chacun dit ce qu’il mesure.',
+        texte:
+          'Disponibilité, vitesse et bonnes étiquettes sont les trois parts de l’efficacité. Suivent le temps pour réparer (de l’alarme à la remise en route), les alarmes critiques, le délai avant qu’une alarme soit prise en charge et le nombre de machines comptées. Le « ? » de chacun dit ce qu’il mesure.',
       },
       {
         titre: 'Temps d’arrêt par machine',
         cible: 'arrets-machines',
-        texte: 'Une barre par machine, de la plus arrêtée à la moins arrêtée. La partie pleine, ce sont les pannes. La partie hachurée, ce sont les réglages (calage) : changer de clichés ou d’encres avant une nouvelle série. Cliquez une machine pour ne regarder qu’elle dans tout l’écran, cliquez-la de nouveau pour revenir à l’atelier.',
+        texte: 'Une barre par machine, de la plus arrêtée à la moins arrêtée. La partie rouge, ce sont les pannes. La partie bleue, ce sont les réglages (calage) : changer de clichés ou d’encres avant une nouvelle série. Cliquez une machine pour ne regarder qu’elle dans tout l’écran, cliquez-la de nouveau pour revenir à l’atelier.',
       },
-      {
-        titre: 'Carte des arrêts',
-        cible: 'carte',
-        texte: 'Le plan de l’atelier vu de dessus. Plus une machine est rouge foncé, plus elle a passé de temps en panne. Le chiffre sous chaque machine donne ces heures.',
-      },
+      ...(carte
+        ? [
+            {
+              titre: 'Carte des arrêts',
+              cible: 'carte-arrets',
+              texte: 'Le plan de l’atelier vu de dessus. Plus le rouge d’une machine est soutenu, plus elle a passé de temps en panne. Le chiffre sous chaque machine donne ces heures.',
+            },
+          ]
+        : []),
       {
         titre: 'Pannes par organe',
         cible: 'organes',
@@ -107,17 +122,17 @@ export function guideHistorique(parts: Parts): GuideEcran {
       {
         titre: 'Les pannes qui reviennent',
         cible: 'recurrentes',
-        texte: 'Chaque barre est une panne précise sur une machine, comptée en nombre de fois ou en temps perdu. Une panne qui revient souvent est le signe d’une cause qui n’a pas été réglée : c’est par elle qu’il faut commencer.',
+        texte: 'Chaque barre est une panne précise sur une machine, revenue au moins deux fois, comptée en nombre de fois ou en temps perdu. Une panne qui revient souvent est le signe d’une cause qui n’a pas été réglée : c’est par elle qu’il faut commencer.',
       },
       {
         titre: 'Efficacité, machine par machine',
         cible: 'trs-machines',
-        texte: 'La même efficacité que plus haut, calculée pour chaque machine. Le trait pointillé marque le repère de 85 %. Survolez une barre pour voir ce qui la fait baisser.',
+        texte: 'La même efficacité que plus haut, calculée pour chaque machine. Le trait vertical marque le repère de 85 %. Survolez une barre pour voir ce qui la fait baisser.',
       },
       {
         titre: 'Efficacité, jour par jour',
         cible: 'trs-jours',
-        texte: 'La courbe orange, la plus épaisse, est l’efficacité. Les trois autres disent d’où viennent les pertes : temps de marche, vitesse, bonnes étiquettes. La plus basse montre ce qui coûte le plus.',
+        texte: 'La courbe la plus marquée, avec ses points, est l’efficacité. Les trois autres, en gris, disent d’où viennent les pertes : disponibilité, vitesse, bonnes étiquettes. La plus basse montre ce qui coûte le plus. Un jour où l’atelier est fermé, le dimanche par exemple, n’a pas de point.',
       },
       {
         titre: 'Courbe de mesure',
@@ -135,7 +150,7 @@ export function guideHistorique(parts: Parts): GuideEcran {
       {
         titre: 'Alarmes critiques par jour',
         cible: 'alarmes-jour',
-        texte: 'Combien d’alarmes critiques chaque jour. Une alarme critique arrête la machine. Un jour qui dépasse nettement les autres mérite un coup d’œil au journal juste en dessous.',
+        texte: 'Combien d’alarmes critiques chaque jour, ou sur 24 heures par tranche de 4 heures. Une alarme critique arrête la machine. Une colonne qui dépasse nettement les autres mérite un coup d’œil au journal juste en dessous.',
       },
       {
         titre: 'Journal des alarmes',
