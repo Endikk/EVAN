@@ -69,18 +69,18 @@
       "url": "src/EVAN.Front/src/pages/landing/features/LandingStage.tsx"
     },
     {
-      "texte": "IMPRESSION FLEXO",
+      "texte": "Presse flexo 8 groupes",
       "nature": "libellé",
       "source": "\"Procédé\": \"Flexographie, 8 groupes\"",
       "url": "data/kit/machines.json",
-      "note": "Bandeau de l'écran du pupitre, repris de l'image d'origine du modèle flexo.glb."
+      "note": "Titre des deux écrans du pupitre, dessinés par data/kit/blender/textures/sources/ecrans.cjs."
     },
     {
-      "texte": "DÉCOUPE",
+      "texte": "Finition · dorure, découpe, échenillage",
       "nature": "libellé",
-      "source": "\"nom\": \"Postes de découpe\"",
-      "url": "data/kit/machines.json",
-      "note": "Bandeau de l'écran de découpe, repris de l'image d'origine du modèle flexo.glb."
+      "source": "sousTitre: 'Finition · dorure, découpe, échenillage'",
+      "url": "data/kit/blender/textures/sources/ecrans.cjs",
+      "note": "Sous-titre de l'écran de découpe : les postes de la fiche machine (dorure à froid, découpe, échenillage)."
     },
     {
       "texte": "Contrôler le passage du film",
@@ -95,9 +95,9 @@
       "url": "src/EVAN.Front/src/pages/landing/index.tsx"
     },
     {
-      "texte": "simulation",
+      "texte": "Données simulées",
       "nature": "mention",
-      "source": "ctx.fillText('simulation', L - 44, 187);",
+      "source": "ctx.fillText('Données simulées', z.x + z.w - 12, z.y + 19);",
       "url": "src/EVAN.Front/src/pages/landing/features/EcransPresse.tsx",
       "note": "Les écrans de la presse disent qu'ils montrent la presse simulée de la page."
     },
@@ -125,6 +125,41 @@
       "source": "label: `Les ${PRESSE.organes.length} pièces`",
       "url": "src/EVAN.Front/src/pages/landing/lib/sections.ts",
       "note": "Neuf organes surveillés dans le catalogue pour la presse flexo."
+    },
+    {
+      "texte": "Impression · groupes 1 à 8, séchage UV",
+      "nature": "libellé",
+      "source": "sousTitre: 'Impression · groupes 1 à 8, séchage UV'",
+      "url": "data/kit/blender/textures/sources/ecrans.cjs",
+      "note": "Sous-titre de l'écran d'impression : les huit groupes et le séchage UV de la fiche machine."
+    },
+    {
+      "texte": "Aucune alarme active",
+      "nature": "état",
+      "source": "panne ? 'Défaut en cours : machine arrêtée' : 'Aucune alarme active'",
+      "url": "src/EVAN.Front/src/pages/landing/features/EcransPresse.tsx",
+      "note": "Bandeau d'état de l'écran quand la presse tourne."
+    },
+    {
+      "texte": "Défaut en cours : machine arrêtée",
+      "nature": "état",
+      "source": "panne ? 'Défaut en cours : machine arrêtée' : 'Aucune alarme active'",
+      "url": "src/EVAN.Front/src/pages/landing/features/EcransPresse.tsx",
+      "note": "Bandeau d'état de l'écran pendant la panne du film."
+    },
+    {
+      "texte": "Vitesse en direct, dernières secondes",
+      "nature": "libellé",
+      "source": "`Vitesse en direct, dernières secondes (${unite})`",
+      "url": "src/EVAN.Front/src/pages/landing/features/EcransPresse.tsx",
+      "note": "Courbe tracée avec l'historique réel de la vitesse affichée."
+    },
+    {
+      "texte": "Mesures du pupitre",
+      "nature": "fait",
+      "source": "Les valeurs affichées sont les nominales de data/catalog.json",
+      "url": "data/kit/blender/textures/sources/ecrans.cjs",
+      "note": "Tuiles de l'écran (tension, diamètre, viscosité, pression…) : nominales du catalogue, celles que la simulation affiche au repos."
     }
   ],
   "images": [
@@ -144,8 +179,8 @@
       "url": "src/EVAN.Front/src/pages/landing/features/LandingStage.tsx"
     },
     {
-      "montre": "Les barres des écrans de la presse sont l'historique de la vitesse affichée, une barre toutes les 8 images ; avant le démarrage, elles sont à zéro.",
-      "source": "const PAS_BARRE = 8;",
+      "montre": "La courbe des écrans de la presse trace l'historique de la vitesse affichée, un point toutes les 8 images ; avant le démarrage, elle est à zéro.",
+      "source": "const PAS_POINT = 8;",
       "url": "src/EVAN.Front/src/pages/landing/features/EcransPresse.tsx"
     },
     {

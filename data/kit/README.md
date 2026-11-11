@@ -11,6 +11,8 @@ Contenu :
 - Unité : mètre. Axe vertical : Y. Le socle d'atelier est inclus (nœuds `socle_N`).
 - Textures intégrées dans chaque fichier, sans transformation de texture (répétitions déjà appliquées aux coordonnées UV).
 - Ouverture directe dans Blender (Fichier > Importer > glTF 2.0), Three.js, Babylon.js, Unity (glTFast) ou Unreal.
+- Chaque modèle est construit par un script Blender (`blender/<machine>.py`) ; toutes les machines sont réunies
+  dans le projet `blender/kit.blend`, une scène par machine. Voir `blender/README.md`.
 
 Nœuds utiles :
 

@@ -20,7 +20,6 @@ import { EcransPresse } from './EcransPresse';
 import { EclairagePresse, REGLAGE_REPOS, type Reglage } from './EclairagePresse';
 import { bande, centrer, hauteur, largeur, type Cadrage, type Pt, type Rect } from '../lib/cadrage';
 import { Studio, usePrecompiler } from '../realisme/Studio';
-import { DetailsPresse } from '../realisme/DetailsPresse';
 import { HABILLAGE_PRESSE } from '../realisme/matieres';
 
 /**
@@ -69,7 +68,7 @@ const organ = (n: number): [number, number, number] => {
 const DORURE = organ(5);
 
 /**
- * Ce que le film regarde : le moyeu du dernier rouleau (rembobineur, organe 8 ; nœud rotatif_54 du modèle, centré en
+ * Ce que le film regarde : le moyeu du dernier rouleau (rembobineur, organe 8 ; bobine du modèle centrée en
  * (3,22 ; 1 ; 0), 0,44 m de large), où le point d'état se pose, et la dorure à froid, où il court quand elle casse.
  */
 const SUJETS: Sujets = {
@@ -502,7 +501,6 @@ function Scene({ vue, cadre, dark, reduced, onReady, film = null, phaseFilm = 'f
               ghost={GHOST}
               habillage={HABILLAGE_PRESSE}
             />
-            <DetailsPresse url={MODEL_URL} estompe={st.focus ? GHOST : null} />
           </group>
           <Ready onReady={onReady} immediat={film?.mode === 'capture'} />
           {film && <EclairagePresse presse={presse} piece={DORURE} rayon={0.2} alerte={c.crit} reglage={eclairage} />}

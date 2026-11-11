@@ -324,15 +324,6 @@ export function materiauPhysique(c: Classe, source: THREE.MeshStandardMaterial, 
   return m;
 }
 
-/** Matière neuve d'une classe, pour les pièces ajoutées au modèle (vis, paliers, poignées). */
-export function matiere(c: Classe, couleur: THREE.ColorRepresentation, reglages: THREE.MeshPhysicalMaterialParameters = {}): THREE.MeshPhysicalMaterial {
-  const source = new THREE.MeshStandardMaterial({ color: couleur });
-  const m = materiauPhysique(c, source, c === 'chrome' || c === 'acier' ? new THREE.Vector3(0, 1, 0) : undefined);
-  source.dispose();
-  m.setValues(reglages);
-  return m;
-}
-
 /** Ce qui porte une ombre : ni le sol, ni les carters transparents. */
 export const porteOmbre = (c: Classe | null) => (c ? RECETTES[c].ombre : false);
 
