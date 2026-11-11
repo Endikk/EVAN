@@ -15,13 +15,13 @@ export interface Clip {
 }
 
 export const CLIPS: Record<EtapeParcours, Clip> = {
-  1: { nom: '1-localiser', duree: 12833 },
-  2: { nom: '2-plan', duree: 11567 },
-  3: { nom: '3-machines', duree: 9767 },
-  4: { nom: '4-organes', duree: 11267 },
-  5: { nom: '5-connexion', duree: 16433 },
-  6: { nom: '6-supervision', duree: 15667 },
-  7: { nom: '7-historique', duree: 11033 },
+  1: { nom: '1-localiser', duree: 12867 },
+  2: { nom: '2-plan', duree: 11533 },
+  3: { nom: '3-machines', duree: 9733 },
+  4: { nom: '4-organes', duree: 11200 },
+  5: { nom: '5-connexion', duree: 16467 },
+  6: { nom: '6-supervision', duree: 12667 },
+  7: { nom: '7-historique', duree: 11067 },
 };
 
 const fichier = (c: Clip, jour: boolean) => `/parcours/${c.nom}${jour ? '-jour' : ''}`;
