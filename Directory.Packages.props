@@ -7,14 +7,14 @@
   </PropertyGroup>
 
   <ItemGroup Label="Hébergement et configuration">
-    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="9.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting.WindowsServices" Version="9.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.Http" Version="9.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="9.0.23" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.23" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.23" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="9.0.23" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.23" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting.WindowsServices" Version="9.0.23" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="9.0.23" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.23" />
   </ItemGroup>
 
   <ItemGroup Label="Messagerie et données">
@@ -25,24 +25,24 @@
   </ItemGroup>
 
   <ItemGroup Label="Protocoles machines (passerelle)">
-    <PackageVersion Include="OPCFoundation.NetStandard.Opc.Ua.Client" Version="1.5.378.182" />
+    <PackageVersion Include="OPCFoundation.NetStandard.Opc.Ua.Client" Version="1.5.378.196" />
     <PackageVersion Include="FluentModbus" Version="5.3.2" />
     <PackageVersion Include="S7netplus" Version="0.20.0" />
   </ItemGroup>
 
   <ItemGroup Label="IA : assistant (Claude) et serveur MCP">
-    <PackageVersion Include="Anthropic" Version="12.54.1" />
-    <PackageVersion Include="Microsoft.Extensions.AI" Version="10.10.0" />
-    <PackageVersion Include="Microsoft.Extensions.AI.Abstractions" Version="10.10.1" />
-    <PackageVersion Include="ModelContextProtocol.AspNetCore" Version="2.2.0" />
+    <PackageVersion Include="Anthropic" Version="12.60.0" />
+    <PackageVersion Include="Microsoft.Extensions.AI" Version="10.11.0" />
+    <PackageVersion Include="Microsoft.Extensions.AI.Abstractions" Version="10.11.0" />
+    <PackageVersion Include="ModelContextProtocol.AspNetCore" Version="2.4.0" />
   </ItemGroup>
 
   <ItemGroup Label="Observabilité : OpenTelemetry (API et passerelle seulement, export OTLP à la demande)">
-    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.20.0" />
-    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.20.0" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.20.0" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.20.0" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.20.0" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.21.0" />
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.21.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.21.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.21.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.21.0" />
     <!-- Même version que Npgsql. -->
     <PackageVersion Include="Npgsql.OpenTelemetry" Version="10.0.3" />
   </ItemGroup>
@@ -51,7 +51,7 @@
     <!-- Serveur de test ASP.NET Core : même version que le framework visé. -->
     <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="9.0.20" Condition="'$(TargetFramework)' == 'net9.0'" />
     <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.12" Condition="'$(TargetFramework)' != 'net9.0'" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.2" />
     <!-- PostgreSQL et TimescaleDB jetables pour les tests d'intégration du stockage (Docker requis, sinon tests ignorés). -->
     <PackageVersion Include="Testcontainers.PostgreSql" Version="4.16.0" />
     <PackageVersion Include="xunit" Version="2.9.3" />
