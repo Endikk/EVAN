@@ -13,7 +13,7 @@ COPY src/ src/
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages,sharing=locked \
     dotnet publish "src/${PROJECT}/${PROJECT}.csproj" -c Release -o /app -p:UseAppHost=false
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0
+FROM mcr.microsoft.com/dotnet/aspnet:11.0
 ARG PROJECT=EVAN.Api
 ENV APP=${PROJECT}
 WORKDIR /app
