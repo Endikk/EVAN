@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 # Image .NET 10 d'un projet du back (EVAN.Api, EVAN.Simulator, EVAN.Gateway) : PROJECT=nom du dossier sous src/.
 # Contexte de build : racine du dépôt (réglages communs, data/ et sources ; voir dotnet.Dockerfile.dockerignore).
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:11.0 AS build
 ARG PROJECT=EVAN.Api
 WORKDIR /repo
 COPY Directory.Build.props Directory.Packages.props ./
