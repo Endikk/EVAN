@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/media/film.avif" width="100%" alt="Film de présentation d'EVAN, 55 secondes. Quatorze machines tournent, l'une s'arrête. Viennent ensuite les cinq étapes de configuration sur les écrans réels, les huit machines du kit en 3D, les neuf organes de la presse Gallus Labelmaster 440 dont l'échenillage qui passe au rouge, la panne suivie en direct dans la supervision jusqu'à l'organe, puis l'historique, la maintenance, l'énergie et la vue de plusieurs usines.">
+  <img src="docs/media/film.avif" width="100%" alt="Film de présentation d'EVAN, une minute. Quatorze machines tournent, l'une s'arrête. Viennent ensuite les cinq étapes de configuration sur les écrans réels, les huit machines du kit en 3D, les neuf organes de la presse Gallus Labelmaster 440 dont l'échenillage qui passe au rouge, la panne suivie en direct dans la supervision jusqu'à l'organe, puis l'historique, la maintenance, l'énergie et la vue de plusieurs usines. Le film se termine sur les chiffres de la démo : 8 machines modélisées, 43 organes, 113 mesures, 5 protocoles, 10 écrans, 2 usines.">
 </p>
 
 <p align="center"><sub>
@@ -126,6 +126,9 @@ Le moteur de règles et l'historique simulé existent deux fois, dans le navigat
 back. `data/tests/` décrit les cas une fois et les deux suites les rejouent à l'identique. Les tests du stockage lancent
 leur propre TimescaleDB par Testcontainers et sont ignorés sans Docker. Le bout en bout demande Chromium
 (`npx playwright install chromium`, une fois). Détails : [ARCHITECTURE.md](docs/ARCHITECTURE.md) § 9.
+
+Le film du haut de cette page se refait avec `tests/e2e/film-produit/construire.sh`, serveur de développement du front
+lancé sur le port 5199 : il filme l'application réelle et rend les modèles du kit image par image.
 
 ## Dépôt
 
