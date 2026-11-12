@@ -33,7 +33,7 @@
   <ItemGroup Label="IA : assistant (Claude) et serveur MCP">
     <PackageVersion Include="Anthropic" Version="12.54.1" />
     <PackageVersion Include="Microsoft.Extensions.AI" Version="10.10.0" />
-    <PackageVersion Include="Microsoft.Extensions.AI.Abstractions" Version="10.10.1" />
+    <PackageVersion Include="Microsoft.Extensions.AI.Abstractions" Version="11.0.0" />
     <PackageVersion Include="ModelContextProtocol.AspNetCore" Version="2.2.0" />
   </ItemGroup>
 
