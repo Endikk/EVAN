@@ -1,6 +1,6 @@
 /**
  * Rend le film d'ouverture de l'accueil image par image, pour le relire : la page est ouverte en `?film=capture`,
- * chaque image est placée par window.__evanFilm.aller(f) puis photographiée. Docs : docs/film-accueil/ledger.md.
+ * chaque image est placée par window.__evanFilm.aller(f) puis photographiée.
  *
  *   node film/capture.mjs --sortie /tmp/film/bureau --taille 1728x1000
  *   node film/capture.mjs --sortie /tmp/film/tel --taille 390x844 --dpr 2 --theme jour --pas 3

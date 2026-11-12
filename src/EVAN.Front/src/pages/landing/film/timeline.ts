@@ -63,7 +63,7 @@ export function bezier(x1: number, y1: number, x2: number, y2: number): (x: numb
   };
 }
 
-/** Le vocabulaire de mouvement du film (docs/film-accueil/brief.md, « Bible de style »). */
+/** Le vocabulaire de mouvement du film : chaque déplacement prend l'une de ces courbes. */
 export const COURBES = {
   /** Arrivée : part vite, se pose longuement. */
   arrivee: bezier(0.2, 0.9, 0.1, 1),

@@ -29,10 +29,17 @@ internal static class CompressionHub
     {
         public bool IsWebSocketRequest => ws.IsWebSocketRequest;
 
-        public Task<WebSocket> AcceptAsync(WebSocketAcceptContext context)
-        {
-            context.DangerousEnableCompression = true;
-            return ws.AcceptAsync(context);
-        }
+        // Une copie, jamais le contexte reçu : sans argument, AcceptWebSocketAsync passe une instance partagée par tout
+        // le processus, et l'activer sur place l'activerait pour toutes les acceptations suivantes.
+        public Task<WebSocket> AcceptAsync(WebSocketAcceptContext context) =>
+            ws.AcceptAsync(new WebSocketAcceptContext
+            {
+                SubProtocol = context.SubProtocol,
+                KeepAliveInterval = context.KeepAliveInterval,
+                KeepAliveTimeout = context.KeepAliveTimeout,
+                DisableServerContextTakeover = context.DisableServerContextTakeover,
+                ServerMaxWindowBits = context.ServerMaxWindowBits,
+                DangerousEnableCompression = true,
+            });
     }
 }

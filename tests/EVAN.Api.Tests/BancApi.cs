@@ -51,7 +51,9 @@ internal sealed class BancApi : IAsyncDisposable
         Store = store;
     }
 
-    public static async Task<BancApi> Demarrer(Dictionary<string, string?>? reglages = null, TimeProvider? horloge = null)
+    /// <param name="remplacer">Services enregistrés après ceux de l'API, qui remplacent les siens.</param>
+    public static async Task<BancApi> Demarrer(Dictionary<string, string?>? reglages = null, TimeProvider? horloge = null,
+        Action<IServiceCollection>? remplacer = null)
     {
         var builder = WebApplication.CreateBuilder();
         // Horloge réglable (durée des sessions, expiration du mot de passe provisoire) : enregistrée avant les modules,
@@ -69,6 +71,7 @@ internal sealed class BancApi : IAsyncDisposable
             .AddSingleton<IHistoryReader, SimulatedHistoryReader>()
             .AddEvanApplication()
             .AddEvanApi(builder.Configuration);
+        remplacer?.Invoke(builder.Services);
         var app = builder.Build();
         app.UseEvanApi();
         await app.StartAsync();

@@ -123,7 +123,7 @@ async function searchAdresse(q: string, signal: AbortSignal, near?: LngLat, limi
 export function communeDe(adresse: string | undefined): string | undefined {
   const brut = adresse?.match(/\b\d{5}\s+([^,\d]+?)(?:\s+CEDEX(?:\s*\d+)?)?\s*(?:,|$)/i)?.[1]?.trim();
   if (!brut) return undefined;
-  // Les adresses SIRENE sont en capitales : « VAL DE REUIL » → « Val de Reuil ».
+  // Les adresses SIRENE sont en capitales : « SAINT PIERRE DES CORPS » → « Saint Pierre des Corps ».
   const petits = new Set(['de', 'du', 'des', 'la', 'le', 'les', 'sur', 'sous', 'en', 'lez', 'lès', 'et', 'aux', 'au']);
   return brut
     .toLowerCase()

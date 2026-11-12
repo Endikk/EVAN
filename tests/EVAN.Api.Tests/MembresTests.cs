@@ -234,7 +234,9 @@ public class MembresTests
     [Fact]
     public async Task Les_actions_sur_les_comptes_sont_limitees_par_administrateur()
     {
-        await using var banc = await BancApi.Demarrer();
+        // Dix empreintes à 210 000 itérations prennent plus de 10 s sur un runner chargé : avec l'attente réelle, une
+        // action revenait en cours de test. Une heure d'attente garde la rafale pleine quelle que soit la machine.
+        await using var banc = await BancApi.Demarrer(remplacer: s => s.AddSingleton(_ => new ActionsMembres(TimeSpan.FromHours(1))));
         var admin = await banc.Organisation("Imprimerie Dupont", "admin@dupont.fr");
         var paulId = await Creer(admin, "paul@dupont.fr");
 

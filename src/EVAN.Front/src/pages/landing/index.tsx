@@ -8,7 +8,7 @@
  *
  * Sur un écran étroit ou en portrait, tout s'empile : le titre, la presse, les vues, les deux actions.
  *
- * À la première visite, un film de 5,5 s ouvre la page (film/, docs/film-accueil/) : un travelling le long de la presse
+ * À la première visite, un film de 5,5 s ouvre la page (film/) : un travelling le long de la presse
  * que la lumière d'EVAN balaie et met en route, jusqu'au dernier rouleau, dont le point devient celui du titre. Le moindre
  * geste le termine.
  *

@@ -56,4 +56,15 @@ public class CompressionHubTests
     {
         Assert.False(await CompressionDemandee("/mcp"));
     }
+
+    /// <summary>
+    /// Sans argument, AcceptWebSocketAsync passe un contexte d'acceptation partagé par tout le processus : l'activer
+    /// sur place l'activait aussi pour toutes les acceptations suivantes, quelle que soit la route.
+    /// </summary>
+    [Fact]
+    public async Task Le_hub_ne_change_pas_les_acceptations_suivantes()
+    {
+        Assert.True(await CompressionDemandee($"{SupervisionHub.Route}?id=abc"));
+        Assert.False(await CompressionDemandee("/mcp"));
+    }
 }

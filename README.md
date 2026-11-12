@@ -11,6 +11,11 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/Endikk/EVAN/actions/workflows/ci.yml"><img src="https://github.com/Endikk/EVAN/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/licence-MIT-1f4e79" alt="Licence MIT"></a>
+</p>
+
+<p align="center">
   <img src="docs/media/film.avif" width="100%" alt="Film de présentation d'EVAN, une minute. Quatorze machines tournent, l'une s'arrête. Viennent ensuite les cinq étapes de configuration sur les écrans réels, les huit machines du kit en 3D, les neuf organes de la presse Gallus Labelmaster 440 dont l'échenillage qui passe au rouge, la panne suivie en direct dans la supervision jusqu'à l'organe, puis l'historique, la maintenance, l'énergie et la vue de plusieurs usines. Le film se termine sur les chiffres de la démo : 8 machines modélisées, 43 organes, 113 mesures, 5 protocoles, 10 écrans, 2 usines.">
 </p>
 
@@ -169,6 +174,11 @@ Le back cible .NET 10. Avec un SDK 9, `Directory.Build.props` bascule seul en ne
 [Lisibilité de l'interface](docs/UX.md) ·
 [Scénario de démo](docs/DEMO.md) ·
 [Kit machines](data/kit/README.md)
+
+## Licence
+
+Code sous licence MIT, voir [LICENSE](LICENSE). Les données géographiques gardent leurs propres licences, citées
+ci-dessous. Une faille se signale en privé : [SECURITY.md](SECURITY.md).
 
 <sub>Données : © IGN (BD TOPO®, BD ORTHO®), © contributeurs OpenStreetMap, imagerie © Esri. Modèles 3D du kit
 (`data/kit/`) : rendus illustratifs, proportions approximatives, sans logo de marque.</sub>

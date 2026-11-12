@@ -13,20 +13,30 @@ public sealed class ActionsMembres : IDisposable
     public const int Rafale = 10;
     public static readonly TimeSpan Attente = TimeSpan.FromSeconds(10);
 
-    private readonly PartitionedRateLimiter<string> _parAdministrateur =
-        PartitionedRateLimiter.Create<string, string>(cle => RateLimitPartition.GetTokenBucketLimiter(cle, _ => new TokenBucketRateLimiterOptions
+    private readonly TimeSpan _attente;
+    private readonly PartitionedRateLimiter<string> _parAdministrateur;
+
+    /// <param name="attente">
+    /// Délai avant qu'une action de plus soit rendue, <see cref="Attente"/> par défaut. Le seau se remplit sur l'horloge
+    /// réelle : un test l'allonge pour que la lenteur d'une machine ne lui rende pas d'action en cours de route.
+    /// </param>
+    public ActionsMembres(TimeSpan? attente = null)
+    {
+        _attente = attente ?? Attente;
+        _parAdministrateur = PartitionedRateLimiter.Create<string, string>(cle => RateLimitPartition.GetTokenBucketLimiter(cle, _ => new TokenBucketRateLimiterOptions
         {
             TokenLimit = Rafale,
             TokensPerPeriod = 1,
-            ReplenishmentPeriod = Attente,
+            ReplenishmentPeriod = _attente,
             QueueLimit = 0,
         }));
+    }
 
     /// <summary>Attente avant la prochaine action de cet administrateur, ou null si celle-ci est permise (et comptée).</summary>
     public TimeSpan? Prendre(string administrateurId)
     {
         using var jeton = _parAdministrateur.AttemptAcquire(administrateurId);
-        return jeton.IsAcquired ? null : Attente;
+        return jeton.IsAcquired ? null : _attente;
     }
 
     public void Dispose() => _parAdministrateur.Dispose();

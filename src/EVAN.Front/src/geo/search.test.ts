@@ -23,17 +23,17 @@ describe('recherche', () => {
 
   it('dépouille une adresse SIRENE des mentions qui font échouer le géocodeur', () => {
     expect(variantesAdresse('ZI DU MENNETON AVENUE THERESE VOISIN 37000 TOURS')).toContain('AVENUE THERESE VOISIN 37000 TOURS');
-    const v = variantesAdresse('PARC D ACTIVITES DU MOULIN 12 BIS AVENUE DES PINS BP 45 27100 VAL DE REUIL CEDEX');
-    expect(v[0]).toBe('PARC D ACTIVITES DU MOULIN 12 BIS AVENUE DES PINS BP 45 27100 VAL DE REUIL CEDEX');
-    expect(v).toContain('12 BIS AVENUE DES PINS 27100 VAL DE REUIL');
+    const v = variantesAdresse('PARC D ACTIVITES DU MOULIN 12 BIS AVENUE DES PINS BP 45 37700 SAINT PIERRE DES CORPS CEDEX');
+    expect(v[0]).toBe('PARC D ACTIVITES DU MOULIN 12 BIS AVENUE DES PINS BP 45 37700 SAINT PIERRE DES CORPS CEDEX');
+    expect(v).toContain('12 BIS AVENUE DES PINS 37700 SAINT PIERRE DES CORPS');
     expect(v.every((x) => !/\bCEDEX\b|\bBP 45\b/.test(x) || x === v[0])).toBe(true);
   });
 
   it('extrait la commune d’une adresse pour nommer l’usine', () => {
     expect(communeDe('48 Rue Paul Sabatier 71530 Crissey')).toBe('Crissey');
     expect(communeDe('ZI DU MENNETON AVENUE THERESE VOISIN 37000 TOURS')).toBe('Tours');
-    expect(communeDe('12 BIS AVENUE DES PINS BP 45 27100 VAL DE REUIL CEDEX')).toBe('Val de Reuil');
-    expect(communeDe('58 AV LIBERATION 59300 AULNOY-LEZ-VALENCIENNES')).toBe('Aulnoy-lez-Valenciennes');
+    expect(communeDe('12 BIS AVENUE DES PINS BP 45 37700 SAINT PIERRE DES CORPS CEDEX')).toBe('Saint Pierre des Corps');
+    expect(communeDe('58 AV LIBERATION 37170 CHAMBRAY-LES-TOURS')).toBe('Chambray-les-Tours');
     expect(communeDe('Point GPS 47.38, 0.67')).toBeUndefined();
   });
 });
