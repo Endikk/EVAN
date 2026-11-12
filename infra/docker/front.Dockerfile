@@ -19,7 +19,7 @@ RUN find src/EVAN.Front/dist -type f \( -name '*.js' -o -name '*.mjs' -o -name '
       -o -name '*.svg' -o -name '*.json' -o -name '*.glb' \) -size +1k \
       -exec sh -c 'gzip -9 -n -c "$1" > "$1.gz"' _ {} \;
 
-FROM nginx:1.29-alpine
+FROM nginx:1.31-alpine
 COPY infra/nginx/default.conf /etc/nginx/conf.d/default.conf
 # Ce qui précède nginx : rien par défaut ; docker-compose.prod.yml monte relais-tls.conf à sa place (Caddy en HTTPS).
 COPY infra/nginx/relais.conf /etc/nginx/evan/relais.conf
